@@ -12,14 +12,25 @@ const { useState: dsUseState } = React;
 
 function Gear(){return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>;}
 
-function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle }) {
+// font presets the gear can swap live (families fall back to system fonts so the
+// change is visible without loading anything extra)
+const FONT_PRESETS = {
+  warm:   { label: "Warm",   fonts: null }, // the built-in look
+  system: { label: "System", fonts: { display: "system-ui, sans-serif", body: "system-ui, sans-serif", mono: "ui-monospace, monospace", hand: "system-ui, sans-serif" } },
+  serif:  { label: "Serif",  fonts: { display: 'Georgia, "Times New Roman", serif', body: "Georgia, serif", mono: "ui-monospace, monospace", hand: "Georgia, serif" } },
+};
+
+function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle, scenarios, sceneKey, setSceneKey, setFont }) {
   const [open, setOpen] = dsUseState(false);
+  const [fontKey, setFontKey] = dsUseState("warm");
+  const [scale, setScale] = dsUseState(1);
   const def = window.AgentTheme.normalize({}).displayName; // built-in label defaults
   const brainCfg = icons.brain || { kind: "default" };
   const toolCfg = icons.toolbox || { kind: "default" };
   const setBrain = (cfg) => setIcons({ ...icons, brain: cfg });
   const setTool = (cfg) => setIcons({ ...icons, toolbox: cfg });
   const setName = (k, v) => setLabels({ ...labels, [k]: v });
+  const applyFont = (k, s) => { setFontKey(k); setScale(s); setFont && setFont({ ...(FONT_PRESETS[k].fonts || {}), scale: s }); };
   const lbl = { fontSize: 10.5, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: '#A2917C', margin: '13px 0 6px' };
   const inp = { width: '100%', font: 'inherit', fontSize: 13, padding: '6px 9px', border: '1px solid #E6D8C2', borderRadius: 8, background: '#fff', color: '#2C1F15', boxSizing: 'border-box' };
   const chip = (on) => ({ font: 'inherit', fontSize: 13, padding: '5px 11px', border: '1px solid ' + (on ? '#C0531F' : '#E6D8C2'), borderRadius: 8, background: on ? '#F6E4D6' : '#fff', cursor: 'pointer' });
@@ -33,6 +44,12 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
           <div style={{ ...lbl, color: '#C0531F', marginTop: 14 }}>Live props · demo</div>
           <button onClick={() => setOpen(false)} title="Close" style={{ border: 'none', background: 'transparent', fontSize: 22, color: '#A2917C', cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
         </div>
+        {scenarios && scenarios.length > 1 && <>
+          <div style={lbl}>Scenario</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {scenarios.map(s => <button key={s.key} style={chip(sceneKey === s.key)} onClick={() => setSceneKey(s.key)}>{s.label}</button>)}
+          </div>
+        </>}
         <div style={lbl}>Brand colour</div>
         <div style={{ display: 'flex', gap: 8 }}>{['#C0531F', '#2563EB', '#1F8A5B', '#7A5AE0'].map(c => <button key={c} onClick={() => setBrand(c)} style={{ width: 26, height: 26, borderRadius: 8, background: c, border: '2px solid #fff', boxShadow: '0 0 0 ' + (brand === c ? '2px' : '1px') + ' ' + (brand === c ? '#C0531F' : '#E6D8C2'), cursor: 'pointer' }} />)}</div>
         <div style={lbl}>Display names</div>
@@ -49,6 +66,14 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
           <button style={chip(toolCfg.kind === 'default')} onClick={() => setTool({ kind: 'default' })}>drawn</button>
           <button style={chip(toolCfg.value === '🧰')} onClick={() => setTool({ kind: 'emoji', value: '🧰' })}>🧰</button>
           <button style={chip(toolCfg.value === '🛠️')} onClick={() => setTool({ kind: 'emoji', value: '🛠️' })}>🛠️</button>
+        </div>
+        <div style={lbl}>Typeface</div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {Object.keys(FONT_PRESETS).map(k => <button key={k} style={{ ...chip(fontKey === k), fontFamily: (FONT_PRESETS[k].fonts || {}).body || 'inherit' }} onClick={() => applyFont(k, scale)}>{FONT_PRESETS[k].label}</button>)}
+        </div>
+        <div style={lbl}>Text size</div>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {[['A', 0.9], ['A', 1], ['A', 1.1]].map(([t, s], i) => <button key={i} style={{ ...chip(Math.abs(scale - s) < 0.01), fontSize: 11 + i * 3, lineHeight: 1, padding: '4px 12px' }} onClick={() => applyFont(fontKey, s)}>{t}</button>)}
         </div>
       </div>
     </div>,

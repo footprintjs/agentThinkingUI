@@ -49,15 +49,20 @@
     // plus the live-props gear anchored inside the phone screen.
     function MobileApp() {
       const { useState, useMemo } = React;
+      const TRACES = window.AGENT_TRACES || { offsite: window.AGENT_TRACE };
+      const SCENARIOS = Object.keys(TRACES).map(k => ({ key: k, label: TRACES[k].title || k }));
       const [brand, setBrand] = useState(null);
       const [labels, setLabels] = useState({});
       const [icons, setIcons] = useState({});
-      const theme = useMemo(() => (brand ? { colors: { brand } } : {}), [brand]);
+      const [font, setFont] = useState(null);
+      const [sceneKey, setSceneKey] = useState(SCENARIOS[0].key);
+      const theme = useMemo(() => ({ ...(brand ? { colors: { brand } } : {}), ...(font ? { fonts: font } : {}) }), [brand, font]);
       return (
         <>
-          <AgentThinkingUI trace={window.AGENT_TRACE} mobile theme={theme} labels={labels} icons={icons} />
+          <AgentThinkingUI key={sceneKey} trace={TRACES[sceneKey]} mobile theme={theme} labels={labels} icons={icons} />
           <DemoSettings brand={brand} setBrand={setBrand} labels={labels} setLabels={setLabels}
             icons={icons} setIcons={setIcons}
+            scenarios={SCENARIOS} sceneKey={sceneKey} setSceneKey={setSceneKey} setFont={setFont}
             containerStyle={{ position: 'absolute', top: 14, right: 14, zIndex: 60 }} />
         </>
       );

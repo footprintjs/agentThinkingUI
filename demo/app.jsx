@@ -1,6 +1,7 @@
 /* global React, ReactDOM, AgentThinkingUI, DemoSettings, useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakToggle */
 const { useState, useMemo, useEffect } = React;
-const TRACE = window.AGENT_TRACE;
+const TRACES = window.AGENT_TRACES || { offsite: window.AGENT_TRACE };
+const SCENARIOS = Object.keys(TRACES).map(k => ({ key: k, label: TRACES[k].title || k }));
 
 // responsive: below the breakpoint the demo renders the player's mobile layout
 // (stacked tabs + footer transport) — so index.html adapts on its own.
@@ -50,7 +51,10 @@ function App() {
   const [brand, setBrand] = useState(null);
   const [labels, setLabels] = useState({});
   const [icons, setIcons] = useState({});
+  const [font, setFont] = useState(null);
+  const [sceneKey, setSceneKey] = useState(SCENARIOS[0].key);
   const isMobile = useIsMobile(760);
+  const trace = TRACES[sceneKey] || TRACES[SCENARIOS[0].key];
 
   const acc = ACCENTS[t.accent] || ACCENTS["teal-amber"];
   const theme = useMemo(() => ({
@@ -59,14 +63,16 @@ function App() {
       instruction: { base: acc.instr[0], deep: acc.instr[1], tint: acc.instr[2] },
       ...(brand ? { brand } : {}),
     },
-  }), [t.accent, brand]);
+    ...(font ? { fonts: font } : {}),
+  }), [t.accent, brand, font]);
 
   return (
     <>
-      <AgentThinkingUI trace={TRACE} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
+      <AgentThinkingUI key={sceneKey} trace={trace} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
         theme={theme} labels={labels} icons={icons} />
       <DemoSettings brand={brand} setBrand={setBrand}
-        labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons} />
+        labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons}
+        scenarios={SCENARIOS} sceneKey={sceneKey} setSceneKey={setSceneKey} setFont={setFont} />
       {!isMobile && <DemoCredit />}
       {/* the accent/storytelling side panel is desktop-only chrome; the gear
           modal covers branding on small screens */}

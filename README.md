@@ -1,8 +1,10 @@
 # AgentThinkingUI
 
-[![npm](https://img.shields.io/npm/v/agentthinkingui.svg)](https://www.npmjs.com/package/agentthinkingui)
-[![Deploy](https://github.com/footprintjs/agentThinkingUI/actions/workflows/pages.yml/badge.svg)](https://github.com/footprintjs/agentThinkingUI/actions/workflows/pages.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+<p align="center">
+  <a href="https://www.npmjs.com/package/agentthinkingui"><img alt="npm" src="https://img.shields.io/npm/v/agentthinkingui?style=flat-square&color=C0531F&label=npm"></a>
+  <a href="https://github.com/footprintjs/agentThinkingUI/actions/workflows/pages.yml"><img alt="Demo deploy" src="https://img.shields.io/github/actions/workflow/status/footprintjs/agentThinkingUI/pages.yml?style=flat-square&label=demo"></a>
+  <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square"></a>
+</p>
 
 <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="docs/assets/hero-dark.svg">
