@@ -1,11 +1,12 @@
-/* global React */
+/* global React, ReactDOM */
 /* ============================================================
-   DEMO-only live-props panel (gear). Shared by index.html (desktop)
-   and mobile.html so both previews can rebrand the player live.
-   It edits the SAME theme/labels/icons props the host would pass —
+   DEMO-only live-props panel (gear). Shared by index.html (desktop +
+   responsive) and mobile.html so both previews can rebrand the player
+   live. It edits the SAME theme/labels/icons props the host would pass —
    pure controlled state, no DOM or global poking.
-   `containerStyle` lets each demo anchor the gear (viewport-fixed on
-   desktop, absolute inside the phone screen on mobile).
+   Clicking the gear opens a centred modal over a dimmed, non-interactive
+   backdrop (portaled into #root so it covers the app — including inside
+   the phone frame). `containerStyle` anchors the gear trigger.
    ============================================================ */
 const { useState: dsUseState } = React;
 
@@ -22,31 +23,42 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
   const lbl = { fontSize: 10.5, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: '#A2917C', margin: '13px 0 6px' };
   const inp = { width: '100%', font: 'inherit', fontSize: 13, padding: '6px 9px', border: '1px solid #E6D8C2', borderRadius: 8, background: '#fff', color: '#2C1F15', boxSizing: 'border-box' };
   const chip = (on) => ({ font: 'inherit', fontSize: 13, padding: '5px 11px', border: '1px solid ' + (on ? '#C0531F' : '#E6D8C2'), borderRadius: 8, background: on ? '#F6E4D6' : '#fff', cursor: 'pointer' });
+
+  const modal = open && ReactDOM.createPortal(
+    <div onClick={() => setOpen(false)}
+      style={{ position: 'absolute', inset: 0, background: 'rgba(48,44,40,.46)', backdropFilter: 'blur(1px)', display: 'grid', placeItems: 'center', zIndex: 80, padding: 16 }}>
+      <div onClick={e => e.stopPropagation()}
+        style={{ width: 300, maxWidth: '88%', maxHeight: '86%', overflowY: 'auto', background: '#FFFDF8', border: '1px solid #E6D8C2', borderRadius: 18, boxShadow: '0 24px 70px rgba(70,45,25,.32)', padding: '4px 20px 20px', fontFamily: 'var(--font-body)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ ...lbl, color: '#C0531F', marginTop: 14 }}>Live props · demo</div>
+          <button onClick={() => setOpen(false)} title="Close" style={{ border: 'none', background: 'transparent', fontSize: 22, color: '#A2917C', cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
+        </div>
+        <div style={lbl}>Brand colour</div>
+        <div style={{ display: 'flex', gap: 8 }}>{['#C0531F', '#2563EB', '#1F8A5B', '#7A5AE0'].map(c => <button key={c} onClick={() => setBrand(c)} style={{ width: 26, height: 26, borderRadius: 8, background: c, border: '2px solid #fff', boxShadow: '0 0 0 ' + (brand === c ? '2px' : '1px') + ' ' + (brand === c ? '#C0531F' : '#E6D8C2'), cursor: 'pointer' }} />)}</div>
+        <div style={lbl}>Display names</div>
+        <input style={{ ...inp, marginBottom: 7 }} defaultValue={labels.agent != null ? labels.agent : def.agent} onChange={e => setName('agent', e.target.value)} />
+        <input style={inp} defaultValue={labels.toolbox != null ? labels.toolbox : def.toolbox} onChange={e => setName('toolbox', e.target.value)} />
+        <div style={lbl}>Brain icon</div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button style={chip(brainCfg.kind === 'default')} onClick={() => setBrain({ kind: 'default' })}>drawn</button>
+          <button style={chip(brainCfg.value === '🧠')} onClick={() => setBrain({ kind: 'emoji', value: '🧠' })}>🧠</button>
+          <button style={chip(brainCfg.value === '🤖')} onClick={() => setBrain({ kind: 'emoji', value: '🤖' })}>🤖</button>
+        </div>
+        <div style={lbl}>Toolbox icon</div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button style={chip(toolCfg.kind === 'default')} onClick={() => setTool({ kind: 'default' })}>drawn</button>
+          <button style={chip(toolCfg.value === '🧰')} onClick={() => setTool({ kind: 'emoji', value: '🧰' })}>🧰</button>
+          <button style={chip(toolCfg.value === '🛠️')} onClick={() => setTool({ kind: 'emoji', value: '🛠️' })}>🛠️</button>
+        </div>
+      </div>
+    </div>,
+    document.getElementById('root') || document.body
+  );
+
   return (
     <div style={containerStyle || { position: 'fixed', top: 18, right: 22, zIndex: 60 }}>
       <button onClick={() => setOpen(o => !o)} title="Live props" style={{ width: 38, height: 38, borderRadius: 11, border: '1px solid #E6D8C2', background: '#fff', color: '#6E5C49', display: 'grid', placeItems: 'center', boxShadow: '0 2px 8px rgba(70,45,25,.1)', cursor: 'pointer' }}><Gear /></button>
-      {open && (
-        <div style={{ position: 'absolute', top: 46, right: 0, width: 236, background: '#FFFDF8', border: '1px solid #E6D8C2', borderRadius: 16, boxShadow: '0 18px 50px rgba(70,45,25,.18)', padding: '6px 16px 16px', fontFamily: 'var(--font-body)' }}>
-          <div style={{ ...lbl, color: '#C0531F', marginTop: 8 }}>Live props · demo</div>
-          <div style={lbl}>Brand colour</div>
-          <div style={{ display: 'flex', gap: 8 }}>{['#C0531F', '#2563EB', '#1F8A5B', '#7A5AE0'].map(c => <button key={c} onClick={() => setBrand(c)} style={{ width: 26, height: 26, borderRadius: 8, background: c, border: '2px solid #fff', boxShadow: '0 0 0 ' + (brand === c ? '2px' : '1px') + ' ' + (brand === c ? '#C0531F' : '#E6D8C2'), cursor: 'pointer' }} />)}</div>
-          <div style={lbl}>Display names</div>
-          <input style={{ ...inp, marginBottom: 7 }} defaultValue={labels.agent != null ? labels.agent : def.agent} onChange={e => setName('agent', e.target.value)} />
-          <input style={inp} defaultValue={labels.toolbox != null ? labels.toolbox : def.toolbox} onChange={e => setName('toolbox', e.target.value)} />
-          <div style={lbl}>Brain icon</div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button style={chip(brainCfg.kind === 'default')} onClick={() => setBrain({ kind: 'default' })}>drawn</button>
-            <button style={chip(brainCfg.value === '🧠')} onClick={() => setBrain({ kind: 'emoji', value: '🧠' })}>🧠</button>
-            <button style={chip(brainCfg.value === '🤖')} onClick={() => setBrain({ kind: 'emoji', value: '🤖' })}>🤖</button>
-          </div>
-          <div style={lbl}>Toolbox icon</div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button style={chip(toolCfg.kind === 'default')} onClick={() => setTool({ kind: 'default' })}>drawn</button>
-            <button style={chip(toolCfg.value === '🧰')} onClick={() => setTool({ kind: 'emoji', value: '🧰' })}>🧰</button>
-            <button style={chip(toolCfg.value === '🛠️')} onClick={() => setTool({ kind: 'emoji', value: '🛠️' })}>🛠️</button>
-          </div>
-        </div>
-      )}
+      {modal}
     </div>
   );
 }

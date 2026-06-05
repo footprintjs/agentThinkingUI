@@ -172,9 +172,6 @@ function SceneInner({ step, dims, metaphor, straight }) {
     by = h * ((window.AF_LAYOUT && window.AF_LAYOUT.brainY) || 0.6);
   }
   const G = window.arcLayout(w, h, by, straight);
-  // cap a very tall callout to the room above the brain (only bites at the clamp)
-  const maxThought = Math.max(110, by - BRAIN_H / 2 - GAP - TOP);
-  const thoughtStyle = straight ? { maxHeight: maxThought, overflowY: "auto" } : undefined;
   const active = isTool ? (dir === "ask" ? G.down : G.up) : null;
 
   const cloudTag =
@@ -194,9 +191,9 @@ function SceneInner({ step, dims, metaphor, straight }) {
       </div>
     );
   } else if (isAct) {
-    thought = <div className="thoughtpos" ref={thoughtRef} style={thoughtStyle}><SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} /></div>;
+    thought = <div className="thoughtpos" ref={thoughtRef}><SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} /></div>;
   } else {
-    thought = <div className="thoughtpos" ref={thoughtRef} style={thoughtStyle}><Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} /></div>;
+    thought = <div className="thoughtpos" ref={thoughtRef}><Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} /></div>;
   }
 
   const brainMode = isAct ? "act" : "reason";
