@@ -75,8 +75,11 @@ const theme = {
     call: "#94A3B8",           // tool call
     paper: "#FFFFFF", ink: "#0F172A",
   },
-  fonts: { display: "Söhne, sans-serif", body: "Inter, sans-serif",
-           mono: "ui-monospace", hand: "Caveat, cursive" },
+  fonts: {
+    display: "Söhne, sans-serif", body: "Inter, sans-serif",
+    mono: "ui-monospace", hand: "Caveat, cursive",
+    scale: 1,                  // multiplies every text size — match the host's density
+  },
 };
 
 <AgentFootprint
@@ -90,6 +93,12 @@ const theme = {
 A color may be a single hex (its `deep`/`tint` shades are derived) or a full
 `{ base, deep, tint }` triad for exact control. Change a prop and the player
 re-themes live — no reload, no global mutation.
+
+**Typography.** The four font *roles* — `display` / `body` / `mono` / `hand` —
+are themeable so text picks up the host's families (the host loads the fonts;
+unknown families fall back to `system-ui` / `cursive`). `fonts.scale` is a single
+multiplier over the whole type ramp (`--af-text-scale`) so the player can match
+a denser or larger host layout without restyling.
 
 **Back-compat — page-level globals.** For zero-build script-tag embeds you can
 still define `window.AGENT_THEME` (plus `window.AGENT_DISPLAY_NAME` /

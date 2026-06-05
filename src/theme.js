@@ -41,6 +41,7 @@
       body:    '"Hanken Grotesque", system-ui, sans-serif',
       mono:    '"Space Mono", ui-monospace, monospace',
       hand:    '"Caveat", cursive',
+      scale:   1,   // multiplies every text size so the player matches the host's density
     },
     displayName: { agent: "LLM as Human Brain", toolbox: "toolbox" },
     icons: {
@@ -102,6 +103,7 @@
       "--call": c.call.base, "--call-deep": c.call.deep, "--call-tint": c.call.tint,
       "--brain-from": c.brainFrom, "--brain-to": c.brainTo,
       "--font-display": f.display, "--font-body": f.body, "--font-mono": f.mono, "--font-hand": f.hand,
+      "--af-text-scale": f.scale,
     };
   }
 
