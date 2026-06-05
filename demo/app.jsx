@@ -31,18 +31,31 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 
 // the demo just composes the library's <AgentFootprint> + demo-only chrome
 // (tweaks + gear), passing all branding through its theme/labels/icons props.
-// demo-only credit — links back to the repo + author (kept out of the library)
+const GhIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/>
+  </svg>
+);
+
+// demo-only credit — two link-buttons: the library repo + the author (kept out
+// of the library itself)
 function DemoCredit() {
+  const btn = { display: "flex", alignItems: "center", gap: 6, padding: "5px 11px", borderRadius: 999,
+    border: "1px solid #E6D8C2", background: "#fff", textDecoration: "none", color: "#2C1F15",
+    fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap" };
   return (
-    <a href="https://github.com/footprintjs/agentThinkingUI" target="_blank" rel="noopener noreferrer"
-      style={{ position: "fixed", bottom: 14, left: "50%", transform: "translateX(-50%)", zIndex: 55,
-        display: "flex", alignItems: "center", gap: 8, padding: "6px 13px", borderRadius: 999,
-        background: "rgba(255,253,248,.9)", border: "1px solid #E6D8C2", boxShadow: "0 2px 12px rgba(70,45,25,.12)",
-        backdropFilter: "blur(4px)", textDecoration: "none", color: "#6E5C49", fontSize: 12.5 }}>
-      <b style={{ color: "#2C1F15" }}>AgentThinkingUI</b>
-      <span style={{ opacity: .45 }}>·</span>
-      <span>by Sanjay Krishna Anbalagan</span>
-    </a>
+    <div style={{ position: "fixed", bottom: 14, left: "50%", transform: "translateX(-50%)", zIndex: 55,
+      display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 999,
+      background: "rgba(255,253,248,.92)", border: "1px solid #E6D8C2", boxShadow: "0 2px 12px rgba(70,45,25,.12)",
+      backdropFilter: "blur(4px)", fontSize: 12.5, color: "#6E5C49" }}>
+      <span style={{ paddingLeft: 6, color: "#6E5C49" }}>Built with <b style={{ color: "#2C1F15" }}>AgentThinkingUI</b></span>
+      <a href="https://github.com/footprintjs/agentThinkingUI" target="_blank" rel="noopener noreferrer" title="Library on GitHub" style={btn}>
+        <GhIcon /> GitHub
+      </a>
+      <a href="https://github.com/sanjay1909" target="_blank" rel="noopener noreferrer" title="Author on GitHub" style={{ ...btn, fontWeight: 500, color: "#6E5C49" }}>
+        <GhIcon /> Sanjay Krishna Anbalagan
+      </a>
+    </div>
   );
 }
 
