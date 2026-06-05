@@ -1,0 +1,40 @@
+{
+  "name": "agentthinkingui",
+  "version": "0.1.0",
+  "description": "Framework-agnostic player that replays an agent's runtime footprint (a recorded trace) as an animated, scrubbable story — the LLM brain calling tools and getting back data (reason), an instruction (act), or both.",
+  "keywords": [
+    "agent", "ai", "llm", "agentic", "trace", "replay", "observability",
+    "visualization", "react", "context-engineering", "tool-use"
+  ],
+  "homepage": "https://footprintjs.github.io/agentThinkingUI/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/footprintjs/agentThinkingUI.git"
+  },
+  "bugs": {
+    "url": "https://github.com/footprintjs/agentThinkingUI/issues"
+  },
+  "author": "Sanjay Krishna Anbalagan (https://github.com/sanjay1909)",
+  "license": "MIT",
+  "type": "module",
+  "types": "types/trace.d.ts",
+  "unpkg": "src/footprint.jsx",
+  "files": [
+    "src",
+    "types",
+    "docs/assets/hero-light.svg",
+    "docs/assets/hero-dark.svg",
+    "AGENTS.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "hero": "node docs/assets/gen-hero.mjs",
+    "serve": "python3 -m http.server"
+  },
+  "sideEffects": [
+    "src/*.jsx",
+    "src/*.js",
+    "src/styles.css"
+  ]
+}

@@ -30,6 +30,21 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 
 // the demo just composes the library's <AgentFootprint> + demo-only chrome
 // (tweaks + gear), passing all branding through its theme/labels/icons props.
+// demo-only credit — links back to the repo + author (kept out of the library)
+function DemoCredit() {
+  return (
+    <a href="https://github.com/footprintjs/agentThinkingUI" target="_blank" rel="noopener noreferrer"
+      style={{ position: "fixed", bottom: 14, left: "50%", transform: "translateX(-50%)", zIndex: 55,
+        display: "flex", alignItems: "center", gap: 8, padding: "6px 13px", borderRadius: 999,
+        background: "rgba(255,253,248,.9)", border: "1px solid #E6D8C2", boxShadow: "0 2px 12px rgba(70,45,25,.12)",
+        backdropFilter: "blur(4px)", textDecoration: "none", color: "#6E5C49", fontSize: 12.5 }}>
+      <b style={{ color: "#2C1F15" }}>AgentThinkingUI</b>
+      <span style={{ opacity: .45 }}>·</span>
+      <span>by Sanjay Krishna Anbalagan</span>
+    </a>
+  );
+}
+
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [brand, setBrand] = useState(null);
@@ -52,6 +67,7 @@ function App() {
         theme={theme} labels={labels} icons={icons} />
       <DemoSettings brand={brand} setBrand={setBrand}
         labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons} />
+      {!isMobile && <DemoCredit />}
       {/* the accent/storytelling side panel is desktop-only chrome; the gear
           modal covers branding on small screens */}
       {!isMobile && (

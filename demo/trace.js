@@ -9,6 +9,7 @@
 window.AGENT_TRACE = {
   agent: "offsite-planner",
   model: "claude-loop",
+  title: "Lisbon offsite",
   task: "Plan a 3-day team offsite in Lisbon for 8 people. Keep it under $5,000.",
   asker: "Priya, Ops",
   steps: [

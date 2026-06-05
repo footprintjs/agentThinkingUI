@@ -1,12 +1,22 @@
 # AgentThinkingUI
 
-**▶️ [Live demo](https://footprintjs.github.io/agentThinkingUI/)**
+[![npm](https://img.shields.io/npm/v/agentthinkingui.svg)](https://www.npmjs.com/package/agentthinkingui)
+[![Deploy](https://github.com/footprintjs/agentThinkingUI/actions/workflows/pages.yml/badge.svg)](https://github.com/footprintjs/agentThinkingUI/actions/workflows/pages.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="docs/assets/hero-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/hero-light.svg">
   <img alt="AgentThinkingUI — the LLM brain thinks, asks a tool, and gets back data (reason), an instruction (act), or both, looping to the answer." src="docs/assets/hero-light.svg" width="100%">
 </picture>
+
+<p align="center">
+  <a href="https://footprintjs.github.io/agentThinkingUI/"><img alt="Live demo — see it think" src="https://img.shields.io/badge/%E2%96%B6%20Live%20demo-see%20it%20think-C0531F?style=for-the-badge&labelColor=2C1F15"></a>
+</p>
+
+> The brain thinks → asks a tool → the reply is **data** (reason over facts), an
+> **instruction** — a **skill / steering** doc that says *how to act* — or **both**,
+> and it loops to the answer.
 
 **Watch any agent think.** AgentThinkingUI is a drop-in, framework-agnostic player
 for an agent's *runtime footprint*: feed it a recorded trace and it replays the
@@ -55,6 +65,41 @@ That gives you the full experience — scene, inspector, notepad, timeline, and
 playback, in a resizable split. Prefer your own layout? Drop the four view
 components in yourself (below). To embed: copy `src/`, point a `trace.js` at your
 own recorded run, and load it the way `demo/index.html` does.
+
+## Trace schema (the contract)
+
+This is what you produce — read it first. The trace is deliberately generic: it
+describes the *shape* of an agent loop, not any one framework. It's **typed** —
+the full declarations ship in [`types/trace.d.ts`](types/trace.d.ts) (and the npm
+package points `types` at them), so your recorder gets autocomplete and checking.
+
+```ts
+type Trace = {
+  task: string;
+  title?: string;        // optional short label for the "replay" pill (falls back to task)
+  agent: string; model: string; asker: string;
+  steps: Step[];
+};
+
+type Step =
+  | { kind: "prompt";  brain: string; cost: Cost }                       // the task comes in
+  | { kind: "ask";     tool: string; toolName?: string; input: object;   // brain reaches for a tool
+      brain: string; cost: Cost }
+  | { kind: "return";  tool: string; toolName?: string;                  // the tool replies
+      replyType: "data" | "instruction" | "both";
+      output: object; brain: string; cost: Cost;
+      brainMode?: "reason" | "act";        // data → reason, instruction → act
+      skill?: string; actChecklist?: { text: string }[];   // for instruction / both (skill / steering)
+      actNote?: string }                    // the "acts on the instruction" note (both)
+  | { kind: "answer";  to: string; brain: string; answer: Answer; cost: Cost };
+
+type Cost = { ms: number; tokens: number };
+```
+
+The three `replyType`s are the model from the hero: **data** (reason),
+**instruction** (act on a **skill / steering** doc), and **both** — the mixed
+case, where the reply carried data **and** an instruction, so the brain reasons on
+one half and acts on the other (two bubbles).
 
 ## Layout
 
@@ -154,37 +199,6 @@ win over globals.
 The engine is reusable on its own via `window.AgentTheme`:
 `normalize(opts)` → resolved tokens, `toVars(resolved)` → a CSS-variable map,
 `apply(el, opts)` → write the vars onto any element.
-
-## Trace schema
-
-The trace is deliberately generic — it describes the *shape* of an agent loop,
-not any one framework. Record your run into this and AgentThinkingUI plays it.
-
-```ts
-type Trace = {
-  task: string; agent: string; model: string; asker: string;
-  steps: Step[];
-};
-
-type Step =
-  | { kind: "prompt";  brain: string; cost: Cost }                       // the task comes in
-  | { kind: "ask";     tool: string; toolName?: string; input: object;   // brain reaches for a tool
-      brain: string; cost: Cost }
-  | { kind: "return";  tool: string; toolName?: string;                  // the tool replies
-      replyType: "data" | "instruction" | "both";
-      output: object; brain: string; cost: Cost;
-      brainMode?: "reason" | "act";        // data → reason, instruction → act
-      skill?: string; actChecklist?: { text: string }[];   // for instruction / both
-      actNote?: string }                    // the "acts on the instruction" note (both)
-  | { kind: "answer";  to: string; brain: string; answer: Answer; cost: Cost };
-
-type Cost = { ms: number; tokens: number };
-```
-
-The three `replyType`s are the model from above: **data** (reason), **instruction**
-(act on a skill), and **both** — the mixed case, where the reply carried data
-**and** an instruction, so the brain reasons on one half and acts on the other
-(two bubbles).
 
 ## Embedding
 
