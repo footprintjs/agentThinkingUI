@@ -9,7 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesque:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet" />
   <!-- library styles -->
   <link rel="stylesheet" href="../src/styles.css" />
-  <!-- DEMO: three separate, optional config objects. Uncomment to rebrand. -->
+  <!--
+    Branding is driven by props: <AgentFootprint theme labels icons /> \u2014 see the
+    live gear in app.jsx. The globals below are the OPTIONAL back-compat path:
+    define them before theme.js to set page-level defaults; props still win.
+  -->
   <!--
   <script>
     window.AGENT_THEME = { colors: { brand: "#2563EB", data: "#0EA5E9", instruction: "#F59E0B" } };

@@ -10,9 +10,18 @@
    <AgentFootprint trace={...} /> for the full experience, or drop the
    four components into their own layout (they're each independent).
    ============================================================ */
-function AgentFootprint({ trace, metaphor = true, loop = false, style, mobile }) {
-  const { useState, useRef } = React;
+function AgentFootprint({ trace, theme, labels, icons, metaphor = true, loop = false, style, mobile }) {
+  const { useState, useRef, useMemo, useContext } = React;
   const { index, seek, playing, setPlaying, speed, setSpeed } = usePlayback(trace, { loop });
+
+  // Resolve theme/labels/icons and scope them to THIS player's element:
+  // CSS variables ride on the .app container (not :root), so multiple players
+  // can wear different brands and nothing leaks into the host app. The four
+  // sub-components read the resolved icons/labels from context below.
+  const TC = window.AgentThemeContext || (window.AgentThemeContext = React.createContext(null));
+  const resolved = useMemo(() => window.AgentTheme.normalize({ theme, labels, icons }), [theme, labels, icons]);
+  const themeVars = useMemo(() => window.AgentTheme.toVars(resolved), [resolved]);
+  const rootStyle = { ...themeVars, ...style }; // explicit style still wins (back-compat)
   const [runtimePct, setRuntimePct] = useState(58);
   const [inspOpen, setInspOpen] = useState(true);
   const [rightView, setRightView] = useState("inspector");
@@ -40,7 +49,8 @@ function AgentFootprint({ trace, metaphor = true, loop = false, style, mobile })
 
   if (mobile) {
     return (
-      <div className="app mobile" style={style}>
+      <TC.Provider value={resolved}>
+      <div className="app mobile" style={rootStyle}>
         <div className="topbar">
           <div className="brandmark"><div className="brand-dot" /><div className="brand-name">Agent<b>ThinkingUI</b></div></div>
           <div className="task-pill"><span className="rec" /><span className="lbl">replay</span><span className="txt">{trace.task}</span></div>
@@ -56,11 +66,13 @@ function AgentFootprint({ trace, metaphor = true, loop = false, style, mobile })
         </div>
         <Timeline trace={trace} index={index} setIndex={seek} playing={playing} setPlaying={setPlaying} speed={speed} setSpeed={setSpeed} minimal />
       </div>
+      </TC.Provider>
     );
   }
 
   return (
-    <div className={"app" + (mobile ? " mobile" : "")} style={style}>
+    <TC.Provider value={resolved}>
+    <div className={"app" + (mobile ? " mobile" : "")} style={rootStyle}>
       <div className="topbar">
         <div className="brandmark">
           <div className="brand-dot" />
@@ -102,6 +114,7 @@ function AgentFootprint({ trace, metaphor = true, loop = false, style, mobile })
         )}
       </div>
     </div>
+    </TC.Provider>
   );
 }
 

@@ -1,14 +1,24 @@
 /* ============================================================
-   AgentFootprint — THEME
-   Drop the player into any app's brand. Define window.AGENT_THEME
-   BEFORE this script to override any token; anything you omit falls
-   back to the defaults below (which are exactly the built-in look).
+   AgentFootprint — THEME engine
+   Turns a loose theme config into resolved tokens + CSS variables.
 
-   Three SEPARATE object configs (define any before this script loads):
-     window.AGENT_THEME       = { colors, fonts }      // visual tokens
-     window.AGENT_DISPLAY_NAME = { agent, toolbox }     // display names
-     window.AGENT_ICONS       = { brain, toolbox }      // each {kind:'default'|'emoji'|'image', value}
-   Anything omitted falls back to the built-in defaults below.
+   Preferred (reactive, scoped, multi-instance):
+     <AgentFootprint theme={...} labels={...} icons={...} />
+   The container normalizes the config and applies the variables to its
+   OWN element, so two players can wear different brands on one page and
+   nothing leaks into the host app.
+
+   Back-compat (zero-build script-tag embeds): define any of these globals
+   BEFORE this script and they become the page-level defaults, applied to
+   :root at load — exactly as before.
+     window.AGENT_THEME        = { colors, fonts }   // visual tokens
+     window.AGENT_DISPLAY_NAME = { agent, toolbox }  // display names
+     window.AGENT_ICONS        = { brain, toolbox }  // {kind:'default'|'emoji'|'image', value}
+
+   Public API (window.AgentTheme):
+     normalize(opts) -> resolved { colors, fonts, displayName, icons }
+     toVars(resolved) -> { '--data': '#…', … }   (a CSS-custom-property map)
+     apply(targetEl, opts) -> resolved            (normalizes + writes the vars)
 
    A color may be a single hex (deep/tint are derived) or a full
    { base, deep, tint } triad for exact control.
@@ -51,39 +61,62 @@
     return { base, deep: v.deep || darken(base, 0.28), tint: v.tint || tintOf(base) };
   }
 
-  const T = window.AGENT_THEME || {};
-  const dc = DEFAULTS.colors, tc = T.colors || {};
-  const colors = {
-    paper: tc.paper || dc.paper,
-    ink:   tc.ink   || dc.ink,
-    brand:       triad(tc.brand, dc.brand),
-    call:        triad(tc.call, dc.call),
-    data:        triad(tc.data, dc.data),
-    instruction: triad(tc.instruction, dc.instruction),
-    answer:      triad(tc.answer, dc.answer),
-    brainFrom: tc.brainFrom || (tc.brand ? triad(tc.brand, dc.brand).base : dc.brainFrom),
-    brainTo:   tc.brainTo   || (tc.brand ? triad(tc.brand, dc.brand).deep : dc.brainTo),
-  };
-  const fonts = Object.assign({}, DEFAULTS.fonts, T.fonts);
-  // display names + icons are SEPARATE object configs from the visual theme
-  const displayName = Object.assign({}, DEFAULTS.displayName, T.displayName, T.labels, window.AGENT_DISPLAY_NAME, window.AGENT_LABELS);
-  const AI = window.AGENT_ICONS || {}, TI = T.icons || {};
-  const icons = {
-    brain:   Object.assign({}, DEFAULTS.icons.brain,   T.brain, TI.brain, AI.brain),     // T.brain = back-compat
-    toolbox: Object.assign({}, DEFAULTS.icons.toolbox, TI.toolbox, AI.toolbox),
-  };
+  // Resolve a loose config into concrete tokens. Each input falls back to the
+  // matching window.AGENT_* global, then to the built-in defaults — so passing
+  // nothing reproduces the original load-time behaviour exactly.
+  function normalize(opts) {
+    opts = opts || {};
+    const T = opts.theme || window.AGENT_THEME || {};
+    const dc = DEFAULTS.colors, tc = T.colors || {};
+    const colors = {
+      paper: tc.paper || dc.paper,
+      ink:   tc.ink   || dc.ink,
+      brand:       triad(tc.brand, dc.brand),
+      call:        triad(tc.call, dc.call),
+      data:        triad(tc.data, dc.data),
+      instruction: triad(tc.instruction, dc.instruction),
+      answer:      triad(tc.answer, dc.answer),
+      brainFrom: tc.brainFrom || (tc.brand ? triad(tc.brand, dc.brand).base : dc.brainFrom),
+      brainTo:   tc.brainTo   || (tc.brand ? triad(tc.brand, dc.brand).deep : dc.brainTo),
+    };
+    const fonts = Object.assign({}, DEFAULTS.fonts, T.fonts, opts.fonts);
+    // display names + icons are SEPARATE configs from the visual theme
+    const displayName = Object.assign({}, DEFAULTS.displayName, T.displayName, T.labels, window.AGENT_DISPLAY_NAME, window.AGENT_LABELS, opts.labels);
+    const AI = opts.icons || window.AGENT_ICONS || {}, TI = T.icons || {};
+    const icons = {
+      brain:   Object.assign({}, DEFAULTS.icons.brain,   T.brain, TI.brain, AI.brain),     // T.brain = back-compat
+      toolbox: Object.assign({}, DEFAULTS.icons.toolbox, TI.toolbox, AI.toolbox),
+    };
+    return { colors, fonts, displayName, icons };
+  }
 
-  const root = document.documentElement;
-  const S = (k, v) => root.style.setProperty(k, v);
-  S("--paper", colors.paper); S("--ink", colors.ink);
-  S("--rust", colors.brand.base);   S("--rust-deep", colors.brand.deep);   S("--rust-tint", colors.brand.tint);
-  S("--data", colors.data.base);    S("--data-deep", colors.data.deep);    S("--data-tint", colors.data.tint);
-  S("--instr", colors.instruction.base); S("--instr-deep", colors.instruction.deep); S("--instr-tint", colors.instruction.tint);
-  S("--answer", colors.answer.base); S("--answer-deep", colors.answer.deep); S("--answer-tint", colors.answer.tint);
-  S("--call", colors.call.base);    S("--call-deep", colors.call.deep);    S("--call-tint", colors.call.tint);
-  S("--brain-from", colors.brainFrom); S("--brain-to", colors.brainTo);
-  S("--font-display", fonts.display); S("--font-body", fonts.body); S("--font-mono", fonts.mono); S("--font-hand", fonts.hand);
+  // Resolved tokens -> the CSS custom properties the stylesheet reads.
+  function toVars(R) {
+    const c = R.colors, f = R.fonts;
+    return {
+      "--paper": c.paper, "--ink": c.ink,
+      "--rust": c.brand.base, "--rust-deep": c.brand.deep, "--rust-tint": c.brand.tint,
+      "--data": c.data.base, "--data-deep": c.data.deep, "--data-tint": c.data.tint,
+      "--instr": c.instruction.base, "--instr-deep": c.instruction.deep, "--instr-tint": c.instruction.tint,
+      "--answer": c.answer.base, "--answer-deep": c.answer.deep, "--answer-tint": c.answer.tint,
+      "--call": c.call.base, "--call-deep": c.call.deep, "--call-tint": c.call.tint,
+      "--brain-from": c.brainFrom, "--brain-to": c.brainTo,
+      "--font-display": f.display, "--font-body": f.body, "--font-mono": f.mono, "--font-hand": f.hand,
+    };
+  }
 
-  // resolved config, read by the renderer
-  window.AGENT_THEME_RESOLVED = { colors, fonts, displayName, icons };
+  // Normalize + write the variables onto an element (defaults to :root).
+  function apply(target, opts) {
+    const R = normalize(opts);
+    const el = target || document.documentElement;
+    const vars = toVars(R);
+    for (const k in vars) el.style.setProperty(k, vars[k]);
+    return R;
+  }
+
+  window.AgentTheme = { normalize, toVars, apply, DEFAULTS };
+
+  // Back-compat: seed :root from the globals at load and expose the resolved
+  // config, so existing embeds keep working untouched.
+  window.AGENT_THEME_RESOLVED = apply(document.documentElement);
 })();

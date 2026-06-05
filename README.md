@@ -59,11 +59,14 @@ tool/bubble fire in sequence.
 
 ## Theming
 
-Define `window.AGENT_THEME` **before** `theme.js` loads. Omit anything to keep
-the default look.
+**Preferred — pass props.** Theme flows in through `<AgentFootprint>`'s
+`theme` / `labels` / `icons` props. The container normalizes them and applies
+the resulting CSS variables to its **own element** (not `:root`), so themes are
+reactive, scoped, and two players can wear different brands on one page without
+leaking into the host app.
 
-```js
-window.AGENT_THEME = {
+```jsx
+const theme = {
   colors: {
     brand: "#2563EB",          // the brain / agent
     data: "#0EA5E9",           // data → reason   (a hex, or {base,deep,tint})
@@ -72,15 +75,31 @@ window.AGENT_THEME = {
     call: "#94A3B8",           // tool call
     paper: "#FFFFFF", ink: "#0F172A",
   },
-  fonts:  { display: "Söhne, sans-serif", body: "Inter, sans-serif",
-            mono: "ui-monospace", hand: "Caveat, cursive" },
-  brain:  { kind: "emoji", value: "🤖" },        // or { kind: "image", value: "/bot.png" } or { kind: "default" }
-  labels: { agent: "Agent", toolbox: "tools" },
+  fonts: { display: "Söhne, sans-serif", body: "Inter, sans-serif",
+           mono: "ui-monospace", hand: "Caveat, cursive" },
 };
+
+<AgentFootprint
+  trace={trace}
+  theme={theme}
+  labels={{ agent: "Agent", toolbox: "tools" }}
+  icons={{ brain: { kind: "emoji", value: "🤖" } }}  // or {kind:"image",value:"/bot.png"} / {kind:"default"}
+/>
 ```
 
 A color may be a single hex (its `deep`/`tint` shades are derived) or a full
-`{ base, deep, tint }` triad for exact control.
+`{ base, deep, tint }` triad for exact control. Change a prop and the player
+re-themes live — no reload, no global mutation.
+
+**Back-compat — page-level globals.** For zero-build script-tag embeds you can
+still define `window.AGENT_THEME` (plus `window.AGENT_DISPLAY_NAME` /
+`window.AGENT_ICONS`) **before** `theme.js` loads; they seed the defaults on
+`:root` at load. Anything omitted falls back to the built-in look. Props always
+win over globals.
+
+The engine is reusable on its own via `window.AgentTheme`:
+`normalize(opts)` → resolved tokens, `toVars(resolved)` → a CSS-variable map,
+`apply(el, opts)` → write the vars onto any element.
 
 ## Trace schema
 

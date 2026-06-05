@@ -28,7 +28,7 @@ function TypeGlyph({ data }) {
 }
 
 function Brain({ mode }) {
-  const cfg = afIcons().brain || { kind: "default" };
+  const cfg = afIcons(React.useContext(afCtx())).brain || { kind: "default" };
   if (cfg.kind === "image" && cfg.value) {
     return <div className="brain brain-custom"><img src={cfg.value} alt="" /></div>;
   }
@@ -58,11 +58,18 @@ function Brain({ mode }) {
   );
 }
 
-function afIcons() {
-  return (window.AGENT_THEME_RESOLVED && window.AGENT_THEME_RESOLVED.icons) || {};
+// Prefer the resolved theme handed down by <AgentFootprint> via context; fall
+// back to the page-level global so the components still work standalone.
+function afCtx() {
+  return window.AgentThemeContext || (window.AgentThemeContext = React.createContext(null));
 }
-function afLabels() {
-  return (window.AGENT_THEME_RESOLVED && window.AGENT_THEME_RESOLVED.displayName) || { agent: "LLM brain", toolbox: "toolbox" };
+function afIcons(R) {
+  R = R || window.AGENT_THEME_RESOLVED;
+  return (R && R.icons) || {};
+}
+function afLabels(R) {
+  R = R || window.AGENT_THEME_RESOLVED;
+  return (R && R.displayName) || { agent: "LLM brain", toolbox: "toolbox" };
 }
 
 function Dots() { return <span className="dots"><i /><i /><i /></span>; }
@@ -97,8 +104,9 @@ function SkillDoc({ skill, checklist, metaphor, compact }) {
 }
 
 function Toolbox({ active }) {
-  const ic = afIcons().toolbox || { kind: "default" };
-  const label = afLabels().toolbox;
+  const R = React.useContext(afCtx());
+  const ic = afIcons(R).toolbox || { kind: "default" };
+  const label = afLabels(R).toolbox;
   if (ic.kind !== "default" && ic.value) {
     return (
       <div className={"toolbox tb-custom" + (active ? " open" : " idle")}>
@@ -137,6 +145,7 @@ function SceneInner({ step, dims, metaphor, straight }) {
   const { w, h } = dims;
   const thoughtRef = sUseRef(null);
   const [thoughtH, setThoughtH] = sUseState(150);
+  const resolved = React.useContext(afCtx());
   useLayoutEffect(() => {
     if (thoughtRef.current) setThoughtH(thoughtRef.current.offsetHeight);
   }, [step, w]);
@@ -226,7 +235,7 @@ function SceneInner({ step, dims, metaphor, straight }) {
       <div className="brain-node" style={{ left: G.bx, top: G.by }}>
         {thought}
         <Brain mode={brainMode} />
-        <div className="brain-label">{afLabels().agent}</div>
+        <div className="brain-label">{afLabels(resolved).agent}</div>
       </div>
 
       {/* toolbox (right) — the tool pops out the top on a call */}
