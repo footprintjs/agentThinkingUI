@@ -1,5 +1,7 @@
 # AgentFootprint
 
+**▶️ [Live demo](https://footprintjs.github.io/agentThinkingUI/)**
+
 A **player for an agent's runtime footprint**. Feed it a recorded trace and it
 renders the agent loop as an animated, scrubbable story — the LLM *brain* calls
 **tools**, and the reply is either **data** (the brain reasons) or an
