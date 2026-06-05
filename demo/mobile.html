@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgentThinkingUI — mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesque:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../src/styles.css" />
+  <script src="../src/theme.js"></script>
+  <style>
+    body { margin: 0; min-height: 100vh; font-family: var(--font-body);
+      background: radial-gradient(1000px 700px at 70% -10%, #FFFDF8, transparent 60%), #ECE0CB;
+      display: grid; place-items: center; padding: 28px 0; box-sizing: border-box; }
+    .phone { width: 392px; height: 808px; background: #1d140d; border-radius: 50px; padding: 13px;
+      box-shadow: 0 34px 80px rgba(40,25,12,.42), inset 0 0 0 2px #2c2117; }
+    .screen { width: 100%; height: 100%; border-radius: 38px; overflow: hidden; position: relative;
+      background: radial-gradient(1000px 700px at 80% -10%, #FFFDF8, transparent 60%), var(--paper); }
+    .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 116px; height: 25px;
+      background: #1d140d; border-radius: 0 0 16px 16px; z-index: 30; }
+    .screen .grain { position: absolute; inset: 0; z-index: 0; }
+    #root { position: relative; z-index: 1; height: 100%; }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="screen">
+      <div class="grain"></div>
+      <div class="notch"></div>
+      <div id="root"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script src="trace.js"></script>
+  <script src="../src/layout.js"></script>
+  <script type="text/babel" src="../src/playback.js"></script>
+  <script type="text/babel" src="../src/stage.jsx"></script>
+  <script type="text/babel" src="../src/inspector.jsx"></script>
+  <script type="text/babel" src="../src/timeline.jsx"></script>
+  <script type="text/babel" src="../src/footprint.jsx"></script>
+  <script type="text/babel">
+    // the same library shell, in mobile mode (stacked + minimal timeline)
+    ReactDOM.createRoot(document.getElementById("root"))
+      .render(<AgentThinkingUI trace={window.AGENT_TRACE} mobile />);
+  </script>
+</body>
+</html>

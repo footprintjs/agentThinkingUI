@@ -1,0 +1,217 @@
+/* global React, syntax */
+const { useState: inspUseState } = React;
+
+function Chevron({ open }) {
+  return (
+    <svg className={"acc-chev" + (open ? " open" : "")} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+function Section({ label, dot, defaultOpen = true, accentDot, children }) {
+  const [open, setOpen] = inspUseState(defaultOpen);
+  return (
+    <div className={"acc" + (open ? " open" : "")}>
+      <button className="acc-head" onClick={() => setOpen((o) => !o)}>
+        <Chevron open={open} />
+        <span className="acc-label">{dot && <span className="tagdot" style={accentDot ? { background: accentDot } : null} />}{label}</span>
+      </button>
+      <div className="acc-body" style={{ display: open ? "block" : "none" }}>
+        <div className="acc-inner">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function PanelTabs({ view, setView }) {
+  return (
+    <div className="panel-tabs">
+      <button className={view === "inspector" ? "on" : ""} onClick={() => setView("inspector")}>Inspector</button>
+      <button className={view === "notepad" ? "on" : ""} onClick={() => setView("notepad")}>Notepad</button>
+    </div>
+  );
+}
+
+// one journal line per beat — a header + its commentary
+function journal(step) {
+  const t = step.toolName || step.tool;
+  if (step.kind === "prompt") return { title: "Task comes in", note: step.brain };
+  if (step.kind === "ask")    return { title: "LLM → asks " + t, note: step.brain };
+  if (step.kind === "answer") return { title: "Answer delivered to " + step.to, note: step.answer.headline };
+  if (step.replyType === "data")        return { title: t + " → returns data", note: "LLM reasons — " + step.brain };
+  if (step.replyType === "instruction") return { title: t + " → returns instruction", note: "LLM follows " + step.skill + " — " + step.brain };
+  return { title: t + " → returns data + instruction", note: step.brain + " " + (step.actNote || "") };
+}
+
+function fmtLatency(ms) {
+  const s = ms / 1000;
+  if (s < 60) return (s < 10 ? s.toFixed(1) : Math.round(s)) + "s";
+  const m = Math.floor(s / 60);
+  return m + "m " + Math.round(s % 60) + "s";
+}
+
+function NoteEntry({ step, n, active }) {
+  const k = step.kind === "return" ? step.replyType : step.kind;
+  const accent = k === "data" ? "k-data" : k === "instruction" ? "k-instr" : k === "both" ? "k-both"
+    : k === "ask" ? "k-call" : k === "answer" ? "k-answer" : "k-prompt";
+  const j = journal(step);
+  return (
+    <div className={"note " + accent + (active ? " active" : "")}>
+      <span className="note-dot" />
+      <div className="note-nb">
+        <div className="note-head">
+          <span className="note-n">{String(n + 1).padStart(2, "0")}</span>
+          <span className="note-title">{j.title}</span>
+        </div>
+        <div className="note-text">{j.note}</div>
+        <div className="note-meta">⏱ {fmtLatency(step.cost.ms)} · ◇ {step.cost.tokens} tok</div>
+      </div>
+    </div>
+  );
+}
+
+function Notepad({ trace, index, onCollapse, view, setView }) {
+  const listRef = React.useRef(null);
+  React.useEffect(() => {
+    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+  }, [index]);
+  const entries = trace.steps.slice(0, index + 1);
+  return (
+    <div className="panel inspector notepad">
+      <div className="panel-head">
+        <span className="h-title">Agent notepad</span>
+        <PanelTabs view={view} setView={setView} />
+        <button className="insp-collapse" onClick={onCollapse} title="Collapse">›</button>
+      </div>
+      <div className="insp-body note-list" ref={listRef}>
+        {entries.map((s, i) => <NoteEntry key={i} step={s} n={i} active={i === index} />)}
+      </div>
+    </div>
+  );
+}
+
+function Inspector({ step, index, total, onCollapse, view, setView }) {
+  const accentClass =
+    step.kind === "answer" ? "k-answer" :
+    step.kind === "prompt" ? "k-prompt" :
+    step.kind === "ask" ? "k-call" :
+    step.replyType === "both" ? "k-both" :
+    step.replyType === "data" ? "k-data" : "k-instr";
+
+  const isReturn = step.kind === "return";
+  const isBoth = step.replyType === "both";
+  const isAct = isReturn && step.brainMode === "act";
+  const replyLabel = isBoth ? "DATA + INSTRUCTION" : step.replyType === "data" ? "DATA" : "INSTRUCTION";
+  const replyExplain = isBoth
+    ? "This reply carried both — the brain reasons on the data AND follows the instruction."
+    : step.replyType === "data"
+    ? "Raw information. The brain has to reason about what it means and what to do next."
+    : "A skill / steering doc. The brain doesn't deliberate — it just executes the steps.";
+
+  const chip =
+    step.kind === "ask" ? "ask · " + (step.toolName || step.tool) :
+    step.kind === "return" ? "return · " + (step.toolName || step.tool) :
+    step.kind === "prompt" ? "prompt" : "answer";
+
+  return (
+    <div className={"panel inspector " + accentClass}>
+      <div className="panel-head">
+        <span className="h-title">Step inspector</span>
+        <PanelTabs view={view} setView={setView} />
+        <button className="insp-collapse" onClick={onCollapse} title="Collapse inspector">›</button>
+      </div>
+
+      <div className="insp-body">
+        {/* PROMPT */}
+        {step.kind === "prompt" && (
+          <Section label="Task received">
+            <div className="brain-text">{step.brain}</div>
+          </Section>
+        )}
+
+        {/* ASK — the brain calls a tool */}
+        {step.kind === "ask" && (
+          <>
+            <Section label={"Calling · " + (step.toolName || step.tool)} dot>
+              <div className="io-label">input</div>
+              <pre className="code" dangerouslySetInnerHTML={syntax(step.input)} />
+            </Section>
+            <Section label="LLM brain">
+              <div className="brain-text">{step.brain}</div>
+            </Section>
+          </>
+        )}
+
+        {/* RETURN — the tool replies, brain reasons or acts */}
+        {step.kind === "return" && (
+          <>
+            <Section label={"Returned · " + (step.toolName || step.tool)} dot>
+              <div className="io-label">output</div>
+              <pre className="code" dangerouslySetInnerHTML={syntax(step.output)} />
+            </Section>
+
+            <div className="reply-banner">
+              <span className="rb-tag">{replyLabel}</span>
+              <span className="rb-text">{replyExplain}</span>
+            </div>
+
+            <Section label={isAct ? "Brain · acting (no reasoning)" : isBoth ? "Brain · reasons on the data" : "Brain · reasoning"}>
+              {isAct && step.skill && (
+                <div style={{ marginBottom: 9 }}>
+                  <span className="steer-row">steered by · {step.skill}</span>
+                </div>
+              )}
+              <div className={"brain-text " + (step.brainMode || "reason")}>{step.brain}</div>
+            </Section>
+
+            {isBoth && (
+              <Section label="Brain · acts on the instruction">
+                <div style={{ marginBottom: 9 }}>
+                  <span className="steer-row">steered by · {step.skill}</span>
+                </div>
+                <div className="brain-text act">{step.actNote}</div>
+              </Section>
+            )}
+          </>
+        )}
+
+        {/* ANSWER */}
+        {step.kind === "answer" && (
+          <Section label={"Answer to " + step.to} dot>
+            <div className="brain-text" style={{ marginBottom: 12 }}>{step.brain}</div>
+            <div className="answer-card">
+              <div className="ac-head">{step.answer.headline}</div>
+              <ul>{step.answer.plan.map((p, i) => <li key={i}>{p}</li>)}</ul>
+              <table className="budget-tbl">
+                <tbody>
+                  {step.answer.budget.map((row, i) => (
+                    <tr key={i}><td>{row[0]}</td><td>{row[1]}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+              <button className="answer-cta">{step.answer.cta}</button>
+            </div>
+          </Section>
+        )}
+
+        {/* COST */}
+        <Section label="This step cost" defaultOpen={false}>
+          <div className="cost-row">
+            <div className="c-item">
+              <span className="c-val">{(step.cost.ms / 1000).toFixed(1)}s</span>
+              <span className="c-unit">latency</span>
+            </div>
+            <div className="c-item">
+              <span className="c-val">{step.cost.tokens}</span>
+              <span className="c-unit">tokens</span>
+            </div>
+          </div>
+        </Section>
+      </div>
+    </div>
+  );
+}
+
+window.Inspector = Inspector;
+window.Notepad = Notepad;
