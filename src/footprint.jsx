@@ -59,12 +59,13 @@ function AgentFootprint({ trace, theme, labels, icons, metaphor = true, loop = f
           <button className={mobileView === "thinking" ? "on" : ""} onClick={() => setMobileView("thinking")}>Thinking</button>
           <button className={mobileView === "notepad" ? "on" : ""} onClick={() => setMobileView("notepad")}>Agent notepad</button>
         </div>
+        {/* transport sits above the view so it reads first + is shared by both tabs */}
+        <Timeline trace={trace} index={index} setIndex={seek} playing={playing} setPlaying={setPlaying} speed={speed} setSpeed={setSpeed} minimal />
         <div className="m-view">
           {mobileView === "notepad"
             ? <Notepad trace={trace} index={index} onCollapse={() => {}} view="notepad" setView={() => {}} />
             : <Stage trace={trace} step={step} index={index} metaphor={metaphor} straight />}
         </div>
-        <Timeline trace={trace} index={index} setIndex={seek} playing={playing} setPlaying={setPlaying} speed={speed} setSpeed={setSpeed} minimal />
       </div>
       </TC.Provider>
     );

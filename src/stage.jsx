@@ -148,7 +148,7 @@ function SceneInner({ step, dims, metaphor, straight }) {
   const resolved = React.useContext(afCtx());
   useLayoutEffect(() => {
     if (thoughtRef.current) setThoughtH(thoughtRef.current.offsetHeight);
-  }, [step, w]);
+  }, [step, w, h, metaphor]);
 
   const isTool = step.kind === "ask" || step.kind === "return";
   const isReturn = step.kind === "return";
@@ -157,9 +157,24 @@ function SceneInner({ step, dims, metaphor, straight }) {
   const isAct = isReturn && (step.brainMode === "act");
   const dir = step.kind === "ask" ? "ask" : "return";
 
-  // FIXED low position so the brain + toolbox never jump between steps
-  const by = h * ((window.AF_LAYOUT && window.AF_LAYOUT.brainY) || 0.6);
+  // Brain anchor. Desktop keeps the fixed line so it never jumps between steps.
+  // Mobile (straight) is short but tall, and the callout sits ABOVE the brain —
+  // so we vertically centre the [callout · brain · label] stack and clamp it off
+  // both edges. Nothing crops; the brain sits where the content needs it.
+  const BRAIN_H = 98, GAP = 14, TOP = 12, LABEL = 42, BOTTOM = 44;
+  let by;
+  if (straight) {
+    const stack = thoughtH + GAP + BRAIN_H + LABEL;
+    by = (h - stack) / 2 + thoughtH + GAP + BRAIN_H / 2;     // centre the stack
+    by = Math.max(by, TOP + thoughtH + GAP + BRAIN_H / 2);   // no crop at top
+    by = Math.min(by, h - BOTTOM - LABEL - BRAIN_H / 2);     // no crop at bottom
+  } else {
+    by = h * ((window.AF_LAYOUT && window.AF_LAYOUT.brainY) || 0.6);
+  }
   const G = window.arcLayout(w, h, by, straight);
+  // cap a very tall callout to the room above the brain (only bites at the clamp)
+  const maxThought = Math.max(110, by - BRAIN_H / 2 - GAP - TOP);
+  const thoughtStyle = straight ? { maxHeight: maxThought, overflowY: "auto" } : undefined;
   const active = isTool ? (dir === "ask" ? G.down : G.up) : null;
 
   const cloudTag =
@@ -179,9 +194,9 @@ function SceneInner({ step, dims, metaphor, straight }) {
       </div>
     );
   } else if (isAct) {
-    thought = <div className="thoughtpos" ref={thoughtRef}><SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} /></div>;
+    thought = <div className="thoughtpos" ref={thoughtRef} style={thoughtStyle}><SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} /></div>;
   } else {
-    thought = <div className="thoughtpos" ref={thoughtRef}><Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} /></div>;
+    thought = <div className="thoughtpos" ref={thoughtRef} style={thoughtStyle}><Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} /></div>;
   }
 
   const brainMode = isAct ? "act" : "reason";

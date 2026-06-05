@@ -24,9 +24,11 @@ window.arcLayout = function arcLayout(w, h, by, straight) {
   const toolX = tx - 52, toolY = ty - 52;       // the popped tool card (above the box)
 
   if (straight) {
+    // two parallel horizontal lanes, clearly separated on the y-axis
+    const lane = 17;
     return {
-      down: { d: `M ${bRight} ${by + 9} L ${tLeft} ${ty + 9}`, hx: tLeft, hy: ty + 9, ang: 0 },
-      up:   { d: `M ${tLeft} ${ty - 9} L ${bRight} ${by - 9}`, hx: bRight, hy: by - 9, ang: 180 },
+      down: { d: `M ${bRight} ${by + lane} L ${tLeft} ${ty + lane}`, hx: tLeft, hy: ty + lane, ang: 0 },
+      up:   { d: `M ${tLeft} ${ty - lane} L ${bRight} ${by - lane}`, hx: bRight, hy: by - lane, ang: 180 },
       bx, by, tx, ty, midX, off,
     };
   }
