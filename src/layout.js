@@ -7,9 +7,10 @@
    playback, or theming.
    ============================================================ */
 window.AF_LAYOUT = {
-  brainX: 0.25,   // brain centre, fraction of width
-  brainY: 0.60,   // brain centre, fraction of height (fixed → no per-step jump)
-  toolX:  0.73,   // toolbox centre, fraction of width
+  brainX: 0.25,       // brain centre, fraction of width
+  brainY: 0.60,       // brain centre, fraction of height (fixed → no per-step jump)
+  brainYMobile: 0.72, // mobile pins the brain lower so the callout has room above
+  toolX:  0.73,       // toolbox centre, fraction of width
 };
 
 // both sweeping arcs + anchors. ask dips LOW to the toolbox; the reply

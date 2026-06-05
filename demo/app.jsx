@@ -1,4 +1,4 @@
-/* global React, ReactDOM, AgentFootprint, DemoSettings, useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakToggle */
+/* global React, ReactDOM, AgentThinkingUI, DemoSettings, useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakToggle */
 const { useState, useMemo, useEffect } = React;
 const TRACE = window.AGENT_TRACE;
 
@@ -48,7 +48,7 @@ function App() {
 
   return (
     <>
-      <AgentFootprint trace={TRACE} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
+      <AgentThinkingUI trace={TRACE} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
         theme={theme} labels={labels} icons={icons} />
       <DemoSettings brand={brand} setBrand={setBrand}
         labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons} />

@@ -1,16 +1,17 @@
 /* global React, Stage, Inspector, Timeline, Notepad, usePlayback */
 /* ============================================================
-   AgentFootprint — default container.
+   AgentThinkingUI — default container.
    Wires the four view components into the ready-made shell:
      • Timeline   (time-travel transport + scrubber)
      • Stage      (the runtime "thinking" scene)
      • Inspector  (per-step detail)
      • Notepad    (chronological journal)
    plus playback + a resizable split. Consumers can either render
-   <AgentFootprint trace={...} /> for the full experience, or drop the
+   <AgentThinkingUI trace={...} /> for the full experience, or drop the
    four components into their own layout (they're each independent).
+   (window.AgentFootprint remains as a deprecated alias.)
    ============================================================ */
-function AgentFootprint({ trace, theme, labels, icons, metaphor = true, loop = false, style, mobile }) {
+function AgentThinkingUI({ trace, theme, labels, icons, metaphor = true, loop = false, style, mobile }) {
   const { useState, useRef, useMemo, useContext } = React;
   const { index, seek, playing, setPlaying, speed, setSpeed } = usePlayback(trace, { loop });
 
@@ -119,5 +120,5 @@ function AgentFootprint({ trace, theme, labels, icons, metaphor = true, loop = f
   );
 }
 
-window.AgentThinkingUI = AgentFootprint;
-window.AgentFootprint = AgentFootprint; // alias — AgentThinkingUI by the AgentFootprint org
+window.AgentThinkingUI = AgentThinkingUI;
+window.AgentFootprint = AgentThinkingUI; // deprecated alias
