@@ -98,16 +98,18 @@ function build(P) {
   </g>
   <text x="430" y="262" class="name" text-anchor="middle">tools</text>
 
-  <!-- fan from tools to the three reply shapes -->
-  <g fill="none" stroke-linecap="round">
-    <path class="flow" d="M486 168 C540 150 540 116 558 116" stroke="${P.data}" stroke-width="2.2"/>
-    <path class="flow" d="M486 180 H558" stroke="${P.instr}" stroke-width="2.2"/>
-    <path class="flow" d="M486 192 C540 210 540 264 558 264" stroke="${P.inkSoft}" stroke-width="2.2"/>
+  <!-- a tool reply is ONE OF three shapes — a brace, not a fan (a fan implied the
+       toolbox emits all three at once, which is misleading) -->
+  <g fill="none" stroke="${P.inkSoft}" stroke-linecap="round">
+    <path class="flow" d="M486 190 H534" stroke-width="2.2"/>
+    <path d="M540 118 V262" stroke-width="2" opacity=".5"/>
+    <path d="M534 190 H540 M540 116 H558 M540 190 H558 M540 264 H558" stroke-width="2" opacity=".5"/>
   </g>
+  <text x="560" y="74" class="tag">a tool reply is one of —</text>
 
   <!-- the three reply shapes (the mental model) -->
   ${pill(560, 88, 360, 56, P.dataTint, P.line, P.data, "data", "r1", "→ reason")}
-  ${pill(560, 162, 360, 56, P.instrTint, P.line, P.instr, "instruction", "r2", "→ act")}
+  ${pill(560, 162, 360, 56, P.instrTint, P.line, P.instr, "instruction", "r2", "→ act · skill / steering")}
   <g class="r3">
     <rect x="560" y="236" width="360" height="56" rx="28" fill="${P.paper2}" stroke="${P.line}" stroke-width="1.5"/>
     <circle cx="588" cy="264" r="17" fill="${P.data}"/><path d="M571 264 a17 17 0 0 1 34 0 Z" fill="${P.instr}"/>
@@ -115,16 +117,16 @@ function build(P) {
     <text x="904" y="265" class="sub" text-anchor="end" dominant-baseline="middle">→ both</text>
   </g>
 
-  <!-- to the answer -->
+  <!-- …the brain reasons / acts, and the loop ends in the answer -->
   <g fill="none" stroke-linecap="round">
-    <path class="flow" d="M924 180 H986" stroke="${P.answer}" stroke-width="2.4"/>
-    <path d="M982 175 l8 5 l-8 5 Z" fill="${P.answer}" stroke="none"/>
+    <path class="flow" d="M924 190 H986" stroke="${P.answer}" stroke-width="2.4"/>
+    <path d="M982 185 l8 5 l-8 5 Z" fill="${P.answer}" stroke="none"/>
   </g>
   <g class="ans">
-    <circle cx="1044" cy="180" r="36" fill="${P.answer}"/>
-    <path d="M1029 181 l10 10 l20 -22" fill="none" stroke="${P.card}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="1044" cy="190" r="36" fill="${P.answer}"/>
+    <path d="M1029 191 l10 10 l20 -22" fill="none" stroke="${P.card}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
-  <text x="1044" y="240" class="name" text-anchor="middle" fill="${P.answerDeep}">answer</text>
+  <text x="1044" y="250" class="name" text-anchor="middle" fill="${P.answerDeep}">answer</text>
 
   <text x="580" y="336" class="cap" text-anchor="middle">The brain thinks · asks a tool · gets <tspan fill="${P.dataDeep}" font-weight="700">data</tspan> (reason), an <tspan fill="${P.instrDeep}" font-weight="700">instruction</tspan> (act), or both · loops to the answer.</text>
 </svg>
