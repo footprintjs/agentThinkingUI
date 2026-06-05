@@ -1,4 +1,4 @@
-/* AgentFootprint — example recorded trace.
+/* AgentThinkingUI — example recorded trace.
  * Each tool interaction is TWO beats:
  *   ask    → the LLM brain CALLS a tool (request out to the toolbox)
  *   return → the tool GIVES BACK a reply. The reply is either:
@@ -11,13 +11,13 @@ window.AGENT_TRACE = {
   model: "claude-loop",
   title: "Lisbon offsite",
   task: "Plan a 3-day team offsite in Lisbon for 8 people. Keep it under $5,000.",
-  asker: "Priya, Ops",
+  asker: "John",
   steps: [
     {
       kind: "prompt",
       title: "Task received",
       brain:
-        "Okay — 8 people, Lisbon, 3 days, hard cap of $5,000. I need flights, lodging, and a budget I can defend. Start with the biggest cost: flights.",
+        "Okay — 8 people, Lisbon, 3 days, and I can't go over $5,000. I need flights, a hotel, and a budget I can defend. Start with the biggest cost: flights.",
       cost: { ms: 420, tokens: 318 },
     },
 
@@ -25,7 +25,7 @@ window.AGENT_TRACE = {
     {
       kind: "ask", tool: "search_flights", toolName: "Flight search",
       input: { from: "SFO", to: "LIS", pax: 8, dates: "Sep 12–15" },
-      brain: "Calling search_flights to price the weekend dates.",
+      brain: "Pricing the weekend dates with the flight search.",
       cost: { ms: 280, tokens: 124 },
     },
     {
@@ -33,7 +33,7 @@ window.AGENT_TRACE = {
       output: { best: { airline: "TAP Air", price_pp: 418, stops: 1 }, cheapest_window: "midweek" },
       brainMode: "reason",
       brain:
-        "Best weekend fare is $418pp → $3,344 for 8. That eats 67% of the whole budget and leaves only $1,656 for lodging + food. Too tight. I shouldn't freestyle this — load the budget rules.",
+        "Best weekend fare is $418 per person → $3,344 for eight. That's two-thirds of the whole budget and leaves only $1,656 for the hotel and food. Too tight. I shouldn't wing this — let me load the budget rules.",
       cost: { ms: 1010, tokens: 522 },
     },
 
@@ -41,11 +41,11 @@ window.AGENT_TRACE = {
     {
       kind: "ask", tool: "load_skill",
       input: { name: "budget_guardrail" },
-      brain: "Loading the budget_guardrail policy before I spend anything.",
+      brain: "Loading the budget rules before I commit to anything.",
       cost: { ms: 240, tokens: 92 },
     },
     {
-      kind: "return", tool: "load_skill", replyType: "instruction", skill: "budget_guardrail",
+      kind: "return", tool: "load_skill", replyType: "instruction", skill: "budget_guardrail (stay under budget)",
       output: { steps: [
         "Cap travel at 55% of total budget.",
         "Cap lodging at 30%.",
@@ -59,7 +59,7 @@ window.AGENT_TRACE = {
         { text: "Rule 4 → adjust DATES first" },
       ],
       brain:
-        "Following budget_guardrail. No judgment call here — the policy is explicit. Travel cap is $2,750, flights are over, so the rule says re-search with cheaper dates.",
+        "Following the budget rules — no judgment call here, the policy is explicit. The travel cap is $2,750, the flights are over it, so the rule says re-search with cheaper dates.",
       cost: { ms: 360, tokens: 214 },
     },
 
@@ -67,7 +67,7 @@ window.AGENT_TRACE = {
     {
       kind: "ask", tool: "search_flights", toolName: "Flight search",
       input: { from: "SFO", to: "LIS", pax: 8, dates: "Sep 16–19 (Tue–Fri)" },
-      brain: "Re-calling search_flights with midweek dates.",
+      brain: "Searching again with midweek dates.",
       cost: { ms: 280, tokens: 120 },
     },
     {
@@ -75,7 +75,7 @@ window.AGENT_TRACE = {
       output: { best: { airline: "TAP Air", price_pp: 286, stops: 1 } },
       brainMode: "reason",
       brain:
-        "Midweek drops the fare to $286pp → $2,288 for 8. Under the $2,750 cap with room to spare. Lock it. Next: lodging, with a $1,500 cap (30%).",
+        "Midweek drops the fare to $286 per person → $2,288 for eight. Comfortably under the $2,750 cap. Lock it in. Next: the hotel, capped at $1,500 (30%).",
       cost: { ms: 940, tokens: 476 },
     },
 
@@ -83,7 +83,7 @@ window.AGENT_TRACE = {
     {
       kind: "ask", tool: "search_hotels", toolName: "Hotel search",
       input: { city: "Lisbon", checkin: "Sep 16", nights: 3, rooms: 4, max_per_night: 125 },
-      brain: "Calling search_hotels — 4-star or better, under $125/night.",
+      brain: "Looking for a 4-star hotel under $125 a night.",
       cost: { ms: 300, tokens: 126 },
     },
     {
@@ -91,7 +91,7 @@ window.AGENT_TRACE = {
       output: { pick: { name: "Hotel Baixa", stars: 4, per_night: 118, rooms: 4 } },
       brainMode: "reason",
       brain:
-        "Hotel Baixa: 4-star, central, $118/night. 4 rooms × 3 nights = $1,416 — just under the $1,500 cap. Good pick. Book a hold before the rate moves.",
+        "Hotel Baixa — 4-star, central, $118 a night. 4 rooms × 3 nights = $1,416, just under the $1,500 cap. Good pick. Hold it before the rate moves.",
       cost: { ms: 980, tokens: 488 },
     },
 
@@ -99,22 +99,22 @@ window.AGENT_TRACE = {
     {
       kind: "ask", tool: "book_hold", toolName: "Booking hold",
       input: { flights: "TAP Sep16–19", hotel: "Hotel Baixa ×4" },
-      brain: "Placing a 24-hour hold on flights + rooms.",
+      brain: "Placing a 24-hour hold on the flights and rooms.",
       cost: { ms: 300, tokens: 118 },
     },
     {
       kind: "return", tool: "book_hold", toolName: "Booking hold", replyType: "both",
       output: { hold_id: "LX-9F2", expires_in: "24h", total: 3704, flag: "over_approval_limit" },
-      skill: "approval_policy",
+      skill: "approval_policy (who signs off)",
       actChecklist: [
         { text: "$3,704 > $3,000 → needs sign-off" },
         { text: "Attach 24h expiry to request" },
         { text: "CC finance on the hold" },
       ],
       brain:
-        "Held everything for 24h — $3,704 of $5,000, so $1,296 of headroom. Comfortable.",
+        "Held everything for 24 hours — $3,704 of $5,000, so $1,296 to spare. Comfortable.",
       actNote:
-        "The reply ALSO carried a policy. No deliberation on that half — approval_policy says anything over $3,000 needs sign-off, so I just follow it.",
+        "The reply ALSO carried a policy. Nothing to weigh on that half — the approval rules say anything over $3,000 needs sign-off, so I just follow it.",
       cost: { ms: 720, tokens: 360 },
     },
 
@@ -122,11 +122,11 @@ window.AGENT_TRACE = {
     {
       kind: "ask", tool: "load_skill",
       input: { name: "itinerary_format" },
-      brain: "Loading itinerary_format so the answer matches the house style.",
+      brain: "Loading the write-up style so the answer looks right.",
       cost: { ms: 240, tokens: 90 },
     },
     {
-      kind: "return", tool: "load_skill", replyType: "instruction", skill: "itinerary_format",
+      kind: "return", tool: "load_skill", replyType: "instruction", skill: "itinerary_format (how to write it up)",
       output: { steps: [
         "Lead with a day-by-day plan.",
         "Then a budget breakdown table.",
@@ -140,15 +140,15 @@ window.AGENT_TRACE = {
         { text: "Add single Approve CTA" },
       ],
       brain:
-        "Applying itinerary_format. Nothing to decide — just shaping the answer to the house style: plan, then budget, then one Approve button.",
+        "Applying the write-up style — nothing to decide, just shaping the answer: the plan, then the budget, then one Approve button.",
       cost: { ms: 340, tokens: 182 },
     },
 
     // ---- answer ----
     {
-      kind: "answer", to: "Priya, Ops",
+      kind: "answer", to: "John",
       brain:
-        "Done. Plan fits the cap with $1,296 of headroom and a 24h hold so Priya can approve before anything expires.",
+        "Done. The plan fits with $1,296 to spare, and there's a 24-hour hold so John can approve before anything expires.",
       answer: {
         headline: "Lisbon offsite — Sep 16–19, 8 people, $3,704 of $5,000",
         plan: [
