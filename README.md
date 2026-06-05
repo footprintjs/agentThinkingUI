@@ -2,6 +2,12 @@
 
 **▶️ [Live demo](https://footprintjs.github.io/agentThinkingUI/)**
 
+<picture>
+  <source media="(prefers-color-scheme: dark)"  srcset="docs/assets/hero-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/hero-light.svg">
+  <img alt="AgentThinkingUI — the LLM brain thinks, asks a tool, and gets back data (reason), an instruction (act), or both, looping to the answer." src="docs/assets/hero-light.svg" width="100%">
+</picture>
+
 **Watch any agent think.** AgentThinkingUI is a drop-in, framework-agnostic player
 for an agent's *runtime footprint*: feed it a recorded trace and it replays the
 agent loop as an animated, scrubbable story — the LLM **brain** reaching for
@@ -186,3 +192,16 @@ Load order (see `demo/index.html`): your theme globals (optional) → `src/theme
 → React/Babel → your `trace.js` → `src/layout.js` → `src/playback.js` → views →
 your composition. Copy `src/`, point a `trace.js` at your own recorded run, and
 load it the way `demo/index.html` does.
+
+## For AI agents
+
+Building on top of this with a coding agent? Two guides are kept for that:
+
+- [`AGENTS.md`](./AGENTS.md) — how to **use** the library (integration, props, the
+  trace contract to emit) for an agent wiring it into another app.
+- [`CLAUDE.md`](./CLAUDE.md) — how to **work on this repo** (the no-build
+  constraint, globals, theming, how to run/verify).
+
+## License
+
+[MIT](./LICENSE) © [Sanjay Krishna Anbalagan](https://github.com/sanjay1909)

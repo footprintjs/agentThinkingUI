@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 380" role="img" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <title>AgentThinkingUI — the brain thinks, asks a tool, and gets back data (reason), an instruction (act), or both, looping to the answer.</title>
+  <defs>
+    <linearGradient id="brain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E68A52"/><stop offset="1" stop-color="#C0531F"/>
+    </linearGradient>
+  </defs>
+  <style>
+    @keyframes p   { 0%,100%{opacity:1} 50%{opacity:.42} }
+    @keyframes flow{ to{ stroke-dashoffset:-28 } }
+    @keyframes bob { 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-5px) } }
+    .flow  { stroke-dasharray:6 7; animation:flow 1.3s linear infinite; }
+    .brain { animation:bob 5s ease-in-out infinite; }
+    .r1 { animation:p 2.6s ease-in-out infinite 0s; }
+    .r2 { animation:p 2.6s ease-in-out infinite .5s; }
+    .r3 { animation:p 2.6s ease-in-out infinite 1s; }
+    .ans{ animation:p 2.6s ease-in-out infinite 1.5s; }
+    .lbl { fill:#2C1F15; font-size:19px; font-weight:700; }
+    .sub { fill:#6E5C49; font-size:13px; font-weight:600; font-style:italic; }
+    .cap { fill:#6E5C49; font-size:15px; }
+    .tag { fill:#6E5C49; font-size:13px; font-style:italic; }
+    .name{ fill:#6E5C49; font-size:14px; font-weight:700; }
+    @media (prefers-reduced-motion: reduce){ .flow,.brain,.r1,.r2,.r3,.ans{ animation:none } }
+  </style>
+
+  <rect x="1" y="1" width="1158" height="378" rx="26" fill="#FBF6EC" stroke="#E6D8C2"/>
+
+  <!-- connectors brain ⇄ tools -->
+  <g fill="none" stroke-linecap="round">
+    <path class="flow" d="M232 196 Q305 256 376 200" stroke="#A8906E" stroke-width="2.4"/>
+    <path d="M372 205 l8 -7 l-2 10 Z" fill="#A8906E" stroke="none"/>
+    <path class="flow" d="M376 142 Q305 84 234 146" stroke="#6E5C49" stroke-width="2.4"/>
+    <path d="M238 142 l-8 7 l2 -10 Z" fill="#6E5C49" stroke="none"/>
+  </g>
+  <text x="305" y="250" class="tag" text-anchor="middle">asks for what it's missing</text>
+  <text x="305" y="100" class="tag" text-anchor="middle">tool replies</text>
+
+  <!-- brain (outer g positions via attribute; inner g animates so CSS transform
+       doesn't clobber the placement) -->
+  <g transform="translate(111 118) scale(1.05)">
+    <g class="brain">
+      <path d="M56 9 C64 3 77 5 81 14 C92 11 101 20 97 31 C105 36 106 48 97 54 C103 63 98 74 88 75 C85 85 73 89 65 82 C61 88 51 88 47 82 C39 89 27 85 24 75 C14 74 9 63 15 54 C6 48 7 36 15 31 C11 20 20 11 31 14 C35 5 48 3 56 9 Z" fill="url(#brain)" stroke="#FBF6EC" stroke-width="3" stroke-linejoin="round"/>
+      <g fill="#2C1F15"><circle cx="47" cy="46" r="5.5"/><circle cx="65" cy="46" r="5.5"/></g>
+      <path d="M50 60 q6 6 12 0" fill="none" stroke="#2C1F15" stroke-width="3" stroke-linecap="round"/>
+    </g>
+  </g>
+  <text x="170" y="262" class="name" text-anchor="middle">LLM brain</text>
+
+  <!-- toolbox -->
+  <g>
+    <rect x="382" y="132" width="96" height="74" rx="13" fill="#F4EBDB" stroke="#E6D8C2" stroke-width="1.5"/>
+    <rect x="382" y="132" width="96" height="22" rx="11" fill="#E6D8C2"/>
+    <rect x="420" y="126" width="20" height="9" rx="4" fill="#6E5C49"/>
+    <g fill="#A8906E"><rect x="402" y="170" width="9" height="22" rx="2"/><rect x="425" y="170" width="9" height="22" rx="2"/><rect x="448" y="170" width="9" height="22" rx="2"/></g>
+  </g>
+  <text x="430" y="262" class="name" text-anchor="middle">tools</text>
+
+  <!-- fan from tools to the three reply shapes -->
+  <g fill="none" stroke-linecap="round">
+    <path class="flow" d="M486 168 C540 150 540 116 558 116" stroke="#0E8A82" stroke-width="2.2"/>
+    <path class="flow" d="M486 180 H558" stroke="#C98512" stroke-width="2.2"/>
+    <path class="flow" d="M486 192 C540 210 540 264 558 264" stroke="#6E5C49" stroke-width="2.2"/>
+  </g>
+
+  <!-- the three reply shapes (the mental model) -->
+  
+    <g class="r1">
+      <rect x="560" y="88" width="360" height="56" rx="28" fill="#DCF0ED" stroke="#E6D8C2" stroke-width="1.5"/>
+      <circle cx="588" cy="116" r="17" fill="#0E8A82"/>
+      <text x="620" y="117" class="lbl" dominant-baseline="middle">data</text>
+      <text x="904" y="117" class="sub" text-anchor="end" dominant-baseline="middle">→ reason</text>
+    </g>
+  
+    <g class="r2">
+      <rect x="560" y="162" width="360" height="56" rx="28" fill="#F8EBCC" stroke="#E6D8C2" stroke-width="1.5"/>
+      <circle cx="588" cy="190" r="17" fill="#C98512"/>
+      <text x="620" y="191" class="lbl" dominant-baseline="middle">instruction</text>
+      <text x="904" y="191" class="sub" text-anchor="end" dominant-baseline="middle">→ act</text>
+    </g>
+  <g class="r3">
+    <rect x="560" y="236" width="360" height="56" rx="28" fill="#F4EBDB" stroke="#E6D8C2" stroke-width="1.5"/>
+    <circle cx="588" cy="264" r="17" fill="#0E8A82"/><path d="M571 264 a17 17 0 0 1 34 0 Z" fill="#C98512"/>
+    <text x="624" y="265" class="lbl" dominant-baseline="middle">data + instruction</text>
+    <text x="904" y="265" class="sub" text-anchor="end" dominant-baseline="middle">→ both</text>
+  </g>
+
+  <!-- to the answer -->
+  <g fill="none" stroke-linecap="round">
+    <path class="flow" d="M924 180 H986" stroke="#3E9B4F" stroke-width="2.4"/>
+    <path d="M982 175 l8 5 l-8 5 Z" fill="#3E9B4F" stroke="none"/>
+  </g>
+  <g class="ans">
+    <circle cx="1044" cy="180" r="36" fill="#3E9B4F"/>
+    <path d="M1029 181 l10 10 l20 -22" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="1044" y="240" class="name" text-anchor="middle" fill="#2C7339">answer</text>
+
+  <text x="580" y="336" class="cap" text-anchor="middle">The brain thinks · asks a tool · gets <tspan fill="#0A6660" font-weight="700">data</tspan> (reason), an <tspan fill="#9A6306" font-weight="700">instruction</tspan> (act), or both · loops to the answer.</text>
+</svg>
