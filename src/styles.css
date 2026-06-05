@@ -486,7 +486,7 @@ button { font-family: inherit; cursor: pointer; }
 .m-view { flex: 1; min-height: 0; display: flex; }
 .m-view > .panel { flex: 1; min-width: 0; }
 .app.mobile .m-view .panel-head { display: none; }
-.app.mobile .timeline { margin: 0 0 12px; flex: none; }
+.app.mobile .timeline { margin: 12px 0 0; flex: none; }
 .timeline.minimal .tl-readout, .timeline.minimal .tl-meter,
 .timeline.minimal .legend, .timeline.minimal .speed-group, .timeline.minimal .tl-spacer { display: none; }
 .timeline.minimal .tl-controls { justify-content: center; }
