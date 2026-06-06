@@ -43,7 +43,7 @@ describe("<AgentThinkingUI> container", () => {
 
   it("renders the mobile layout (tabs + footer transport) and both tabs", () => {
     const { container, getByText } = render(ui({ trace: TRACE, mobile: true }));
-    expect(container.querySelector(".app.mobile")).toBeTruthy();
+    expect(container.querySelector(".atui.mobile")).toBeTruthy();
     expect(container.querySelector(".m-tabs")).toBeTruthy();
     fireEvent.click(getByText("Agent notepad"));
     fireEvent.click(getByText("Thinking"));
@@ -65,7 +65,7 @@ describe("<AgentThinkingUI> container", () => {
         loop: true,
       })
     );
-    const app = container.querySelector(".app");
+    const app = container.querySelector(".atui");
     expect(app.style.getPropertyValue("--rust")).toBe("#2563EB");
     expect(app.style.getPropertyValue("--af-text-scale")).toBe("1.1");
   });

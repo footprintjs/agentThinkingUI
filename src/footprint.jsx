@@ -62,7 +62,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
   if (mobile) {
     return (
       <TC.Provider value={resolved}>
-      <div className="app mobile" style={rootStyle} onKeyDown={onKeyDown}>
+      <div className="atui mobile" style={rootStyle} onKeyDown={onKeyDown}>
         <div className="topbar">
           {brand && <div className="brandmark"><div className="brand-name">{brand}</div></div>}
         </div>
@@ -84,7 +84,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
 
   return (
     <TC.Provider value={resolved}>
-    <div className={"app" + (mobile ? " mobile" : "")} style={rootStyle} onKeyDown={onKeyDown}>
+    <div className={"atui" + (mobile ? " mobile" : "")} style={rootStyle} onKeyDown={onKeyDown}>
       <div className="topbar">
         {brand && <div className="brandmark"><div className="brand-name">{brand}</div></div>}
         <div className="task-pill">

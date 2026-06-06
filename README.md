@@ -285,6 +285,10 @@ const theme = {
     call: "#94A3B8",           // tool call
     paper: "#FFFFFF", ink: "#0F172A",
   },
+  // neutrals, error, radii, shadows and dark mode are themeable too:
+  // surface (card) / surface2 / surface3 / inkSoft / inkFaint / line / lineSoft,
+  // error, radii: { sm,md,lg,xl }, shadows: { sm,md,lg } (tint derives from ink).
+  mode: "dark",                // "light" (default) | "dark" — swaps the neutral palette
   fonts: {
     display: "Söhne, sans-serif", body: "Inter, sans-serif",
     mono: "ui-monospace", hand: "Caveat, cursive",
@@ -301,8 +305,18 @@ const theme = {
 ```
 
 A color may be a single hex (its `deep`/`tint` shades are derived) or a full
-`{ base, deep, tint }` triad for exact control. Change a prop and the player
-re-themes live — no reload, no global mutation.
+`{ base, deep, tint }` triad for exact control. Foregrounds on coloured fills are
+contrast-aware (white or ink, by luminance), so a light brand never gives you
+white-on-white. Change a prop and the player re-themes live — no reload, no
+global mutation.
+
+**Framework interop (Tailwind / CSS Modules / CSS-in-JS).** Every library rule is
+scoped under the root classes `.atui` / `.atui-swarm` (via `:where(...)`, so
+specificity stays low and easy to override), and the library does **not** style
+`body`/`html` or reset globals — so it won't fight Tailwind Preflight or collide
+with your `.panel`/`.card`/`.note` classes. Theme via the `theme` prop, or set any
+token on a wrapper: `<div className="[--rust:#2563EB] [--card:#0b0f14]">`. Bind a
+Tailwind `dark` class to `theme.mode` to sync dark mode.
 
 **Typography.** The four font *roles* — `display` / `body` / `mono` / `hand` —
 are themeable so text picks up the host's families (the host loads the fonts;

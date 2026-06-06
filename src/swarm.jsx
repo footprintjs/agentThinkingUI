@@ -100,7 +100,7 @@ export function AgentSwarm({ trace, theme, labels, icons, brand, live }) {
   if (sel && byId[sel] && byId[sel].trace) {
     const a = byId[sel];
     return (
-      <div className="app-swarm" style={vars}>
+      <div className="atui-swarm" style={vars}>
         <div className="swarm-bar swarm-detailbar">
           <button className="swarm-back" onClick={() => setSel(null)}>‹ Back to team</button>
           <span className="swarm-bc">
@@ -125,7 +125,7 @@ export function AgentSwarm({ trace, theme, labels, icons, brand, live }) {
 
   return (
     <AgentThemeContext.Provider value={resolved}>
-      <div className="app-swarm" style={vars} onKeyDown={play.onKeyDown}>
+      <div className="atui-swarm" style={vars} onKeyDown={play.onKeyDown}>
         <div className="swarm-bar">
           {brand && <div className="brand-name swarm-brand">{brand}</div>}
           <span className="swarm-task"><span className="rec" /><span className="lbl">flow</span> {task}</span>
