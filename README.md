@@ -227,10 +227,20 @@ const flow = {
 
 ## Adapters — bring your existing traces
 
-Already instrumented with **OpenTelemetry GenAI** (AWS Bedrock AgentCore, LangGraph,
-CrewAI, AutoGen, OpenAI Agents SDK, Google ADK, Pydantic AI, Strands…) or
-**OpenInference** (Arize/Phoenix/LlamaIndex)? Convert OTLP spans with no
-re-instrumentation:
+Already instrumented? Point an adapter at your spans — no re-instrumentation.
+
+**Supported standards:** **OpenTelemetry GenAI** (AWS Bedrock AgentCore, LangGraph,
+CrewAI, AutoGen, OpenAI Agents SDK, Google ADK, Pydantic AI, Strands…) and
+**OpenInference** (Arize / Phoenix / LlamaIndex) — both single- and multi-agent.
+
+**API:**
+
+| function | input | output |
+|---|---|---|
+| `fromOTLP(otlp, opts?)` | OpenTelemetry GenAI spans | `Trace` — one agent |
+| `fromOpenInference(otlp, opts?)` | OpenInference spans | `Trace` — one agent |
+| `fromOTLPMulti(otlp, opts?)` | OpenTelemetry span **tree** | `FlowGraph` — a team |
+| `fromOpenInferenceMulti(otlp, opts?)` | OpenInference span **tree** | `FlowGraph` — a team |
 
 ```js
 import { fromOTLP, fromOpenInference, fromOTLPMulti, fromOpenInferenceMulti } from "agentthinkingui";
