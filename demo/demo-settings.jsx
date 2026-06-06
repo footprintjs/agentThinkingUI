@@ -21,13 +21,15 @@ const FONT_PRESETS = {
   serif:  { label: "Serif",  fonts: { display: 'Georgia, "Times New Roman", serif', body: "Georgia, serif", mono: "ui-monospace, monospace", hand: "Georgia, serif" } },
 };
 
-function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle, scenarios, sceneKey, setSceneKey, setFont, onLive, liveOn, onImport, otlpSample, oiSample, onImportMulti, otlpMultiSample, oiMultiSample, flows, flowKey, setFlowKey }) {
+function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle, scenarios, sceneKey, setSceneKey, setFont, onLive, liveOn, onImport, otlpSample, oiSample, onImportMulti, otlpMultiSample, oiMultiSample, flows, flowKey, setFlowKey, view, setView }) {
   const [open, setOpen] = dsUseState(false);
   const [fmt, setFmt] = dsUseState("otel");
   const taRef = React.useRef(null);
   const [fontKey, setFontKey] = dsUseState("warm");
   const [scale, setScale] = dsUseState(1);
-  const [tab, setTab] = dsUseState(flows ? "multi" : "single");
+  // when the host supports switching views in-app, `view` drives which mode's
+  // controls show (single-agent player vs multi-agent team); else single only.
+  const mode = setView ? (view || "single") : "single";
   const def = window.AgentTheme.normalize({}).displayName; // built-in label defaults
   const brainCfg = icons.brain || { kind: "default" };
   const toolCfg = icons.toolbox || { kind: "default" };
@@ -39,8 +41,10 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
   const inp = { width: '100%', font: 'inherit', fontSize: 13, padding: '6px 9px', border: '1px solid #E6D8C2', borderRadius: 8, background: '#fff', color: '#2C1F15', boxSizing: 'border-box' };
   const chip = (on) => ({ font: 'inherit', fontSize: 13, padding: '5px 11px', border: '1px solid ' + (on ? '#C0531F' : '#E6D8C2'), borderRadius: 8, background: on ? '#F6E4D6' : '#fff', cursor: 'pointer' });
 
-  const tabBtn = (id, label) => (
-    <button onClick={() => setTab(id)} style={{ flex: 1, font: 'inherit', fontSize: 12.5, fontWeight: 700, padding: '7px 8px', border: 'none', borderRadius: 8, cursor: 'pointer', background: tab === id ? '#fff' : 'transparent', color: tab === id ? '#C0531F' : '#6E5C49', boxShadow: tab === id ? '0 1px 3px rgba(70,45,25,.12)' : 'none' }}>{label}</button>
+  // the in-app view switcher (single player ⟷ multi-agent team) — only when the
+  // host wired setView; it swaps the rendered component, not the page
+  const modeBtn = (id, label) => (
+    <button onClick={() => setView(id)} style={{ flex: 1, font: 'inherit', fontSize: 12.5, fontWeight: 700, padding: '7px 8px', border: 'none', borderRadius: 8, cursor: 'pointer', background: mode === id ? '#fff' : 'transparent', color: mode === id ? '#C0531F' : '#6E5C49', boxShadow: mode === id ? '0 1px 3px rgba(70,45,25,.12)' : 'none' }}>{label}</button>
   );
 
   // shared import block — the OpenTelemetry/OpenInference format pill (state `fmt`)
@@ -54,7 +58,7 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
           {[['otel', 'OpenTelemetry'], ['openinference', 'OpenInference']].map(([id, label]) =>
             <button key={id} onClick={() => setFmt(id)} style={{ flex: 1, font: 'inherit', fontSize: 12, fontWeight: 700, padding: '6px 8px', border: 'none', borderRadius: 999, cursor: 'pointer', background: fmt === id ? '#fff' : 'transparent', color: fmt === id ? '#C0531F' : '#6E5C49', boxShadow: fmt === id ? '0 1px 3px rgba(70,45,25,.12)' : 'none' }}>{label}</button>)}
         </div>
-        <textarea key={tab + fmt} ref={taRef} defaultValue={sample()} spellCheck={false}
+        <textarea key={mode + fmt} ref={taRef} defaultValue={sample()} spellCheck={false}
           style={{ width: '100%', height: 110, fontFamily: 'ui-monospace, monospace', fontSize: 11, lineHeight: 1.4, padding: '7px 9px', border: '1px solid #E6D8C2', borderRadius: 8, background: '#fff', color: '#2C1F15', boxSizing: 'border-box', resize: 'vertical' }} />
         <button onClick={() => { setOpen(false); handler((taRef.current && taRef.current.value) || sample(), fmt); }}
           style={{ width: '100%', marginTop: 6, font: 'inherit', fontSize: 13, fontWeight: 700, padding: '8px 12px', border: '1px solid #C0531F', borderRadius: 10, background: '#fff', color: '#C0531F', cursor: 'pointer' }}>
@@ -74,75 +78,65 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
           <div style={{ ...lbl, margin: 0, color: '#C0531F' }}>Live props · demo</div>
           <button onClick={() => setOpen(false)} title="Close" style={{ border: 'none', background: 'transparent', fontSize: 22, color: '#A2917C', cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
         </div>
-        <div style={{ display: 'flex', gap: 3, margin: '12px 20px 0', background: '#F4EBDB', border: '1px solid #E6D8C2', borderRadius: 11, padding: 3 }}>
-          {tabBtn('single', flows ? 'Appearance' : 'Single agent')}{tabBtn('multi', flows ? 'Flow & agents' : 'Multi-agent')}
-        </div>
-        <div style={{ overflowY: 'auto', padding: '2px 20px 20px' }}>
-          {tab === 'single' && <>
-            <div style={lbl}>Brand colour</div>
-            <div style={{ display: 'flex', gap: 8 }}>{['#C0531F', '#2563EB', '#1F8A5B', '#7A5AE0'].map(c => <button key={c} onClick={() => setBrand(c)} style={{ width: 26, height: 26, borderRadius: 8, background: c, border: '2px solid #fff', boxShadow: '0 0 0 ' + (brand === c ? '2px' : '1px') + ' ' + (brand === c ? '#C0531F' : '#E6D8C2'), cursor: 'pointer' }} />)}</div>
-            <div style={lbl}>Display names</div>
-            <input style={{ ...inp, marginBottom: 7 }} defaultValue={labels.agent != null ? labels.agent : def.agent} onChange={e => setName('agent', e.target.value)} />
-            <input style={inp} defaultValue={labels.toolbox != null ? labels.toolbox : def.toolbox} onChange={e => setName('toolbox', e.target.value)} />
-            <div style={lbl}>Brain icon</div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button style={chip(brainCfg.kind === 'default')} onClick={() => setBrain({ kind: 'default' })}>drawn</button>
-              <button style={chip(brainCfg.value === '🧠')} onClick={() => setBrain({ kind: 'emoji', value: '🧠' })}>🧠</button>
-              <button style={chip(brainCfg.value === '🤖')} onClick={() => setBrain({ kind: 'emoji', value: '🤖' })}>🤖</button>
+        {setView && (
+          <div style={{ display: 'flex', gap: 3, margin: '12px 20px 0', background: '#F4EBDB', border: '1px solid #E6D8C2', borderRadius: 11, padding: 3 }}>
+            {modeBtn('single', 'Single agent')}{modeBtn('multi', 'Multi-agent team')}
+          </div>
+        )}
+        <div style={{ overflowY: 'auto', padding: (setView ? '4px' : '14px') + ' 20px 20px' }}>
+          {/* Appearance — shared, applies to whichever view is on screen */}
+          <div style={lbl}>Brand colour</div>
+          <div style={{ display: 'flex', gap: 8 }}>{['#C0531F', '#2563EB', '#1F8A5B', '#7A5AE0'].map(c => <button key={c} onClick={() => setBrand(c)} style={{ width: 26, height: 26, borderRadius: 8, background: c, border: '2px solid #fff', boxShadow: '0 0 0 ' + (brand === c ? '2px' : '1px') + ' ' + (brand === c ? '#C0531F' : '#E6D8C2'), cursor: 'pointer' }} />)}</div>
+          <div style={lbl}>Display names</div>
+          <input style={{ ...inp, marginBottom: 7 }} defaultValue={labels.agent != null ? labels.agent : def.agent} onChange={e => setName('agent', e.target.value)} />
+          <input style={inp} defaultValue={labels.toolbox != null ? labels.toolbox : def.toolbox} onChange={e => setName('toolbox', e.target.value)} />
+          <div style={lbl}>Brain icon</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button style={chip(brainCfg.kind === 'default')} onClick={() => setBrain({ kind: 'default' })}>drawn</button>
+            <button style={chip(brainCfg.value === '🧠')} onClick={() => setBrain({ kind: 'emoji', value: '🧠' })}>🧠</button>
+            <button style={chip(brainCfg.value === '🤖')} onClick={() => setBrain({ kind: 'emoji', value: '🤖' })}>🤖</button>
+          </div>
+          <div style={lbl}>Toolbox icon</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button style={chip(toolCfg.kind === 'default')} onClick={() => setTool({ kind: 'default' })}>drawn</button>
+            <button style={chip(toolCfg.value === '🧰')} onClick={() => setTool({ kind: 'emoji', value: '🧰' })}>🧰</button>
+            <button style={chip(toolCfg.value === '🛠️')} onClick={() => setTool({ kind: 'emoji', value: '🛠️' })}>🛠️</button>
+          </div>
+          <div style={lbl}>Typeface</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {Object.keys(FONT_PRESETS).map(k => <button key={k} style={{ ...chip(fontKey === k), fontFamily: (FONT_PRESETS[k].fonts || {}).body || 'inherit' }} onClick={() => applyFont(k, scale)}>{FONT_PRESETS[k].label}</button>)}
+          </div>
+          <div style={lbl}>Text size</div>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {[['A', 0.9], ['A', 1], ['A', 1.1]].map(([t, s], i) => <button key={i} style={{ ...chip(Math.abs(scale - s) < 0.01), fontSize: 11 + i * 3, lineHeight: 1, padding: '4px 12px' }} onClick={() => applyFont(fontKey, s)}>{t}</button>)}
+          </div>
+
+          {mode === 'single' && scenarios && scenarios.length > 1 && <>
+            <div style={lbl}>Scenario</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {scenarios.map(s => <button key={s.key} style={chip(sceneKey === s.key)} onClick={() => setSceneKey(s.key)}>{s.label}</button>)}
             </div>
-            <div style={lbl}>Toolbox icon</div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button style={chip(toolCfg.kind === 'default')} onClick={() => setTool({ kind: 'default' })}>drawn</button>
-              <button style={chip(toolCfg.value === '🧰')} onClick={() => setTool({ kind: 'emoji', value: '🧰' })}>🧰</button>
-              <button style={chip(toolCfg.value === '🛠️')} onClick={() => setTool({ kind: 'emoji', value: '🛠️' })}>🛠️</button>
-            </div>
-            <div style={lbl}>Typeface</div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {Object.keys(FONT_PRESETS).map(k => <button key={k} style={{ ...chip(fontKey === k), fontFamily: (FONT_PRESETS[k].fonts || {}).body || 'inherit' }} onClick={() => applyFont(k, scale)}>{FONT_PRESETS[k].label}</button>)}
-            </div>
-            <div style={lbl}>Text size</div>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              {[['A', 0.9], ['A', 1], ['A', 1.1]].map(([t, s], i) => <button key={i} style={{ ...chip(Math.abs(scale - s) < 0.01), fontSize: 11 + i * 3, lineHeight: 1, padding: '4px 12px' }} onClick={() => applyFont(fontKey, s)}>{t}</button>)}
-            </div>
-            {scenarios && scenarios.length > 1 && <>
-              <div style={lbl}>Scenario</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {scenarios.map(s => <button key={s.key} style={chip(sceneKey === s.key)} onClick={() => setSceneKey(s.key)}>{s.label}</button>)}
-              </div>
-            </>}
-            {onLive && !flows && <>
-              <div style={lbl}>Live monitoring</div>
-              <button onClick={() => { setOpen(false); onLive(); }}
-                style={{ width: '100%', font: 'inherit', fontSize: 13, fontWeight: 700, padding: '9px 12px', border: 'none', borderRadius: 10, background: '#C0531F', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff', boxShadow: '0 0 0 3px rgba(255,255,255,.35)' }} />
-                {liveOn ? 'Restart live stream' : 'Start live stream'}
-              </button>
-              <div style={{ fontSize: 11.5, color: '#A2917C', marginTop: 5 }}>Streams the beats in one at a time — watch the scene + timeline fill in real time.</div>
-            </>}
-            {onImport && importBlock(onImport, otlpSample, oiSample, 'an agent trace')}
           </>}
-          {tab === 'multi' && (flows ? <>
+          {mode === 'multi' && flows && <>
             <div style={lbl}>Control-flow pattern</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {flows.map(f => <button key={f.key} style={chip(flowKey === f.key)} onClick={() => setFlowKey(f.key)}>{f.label}</button>)}
             </div>
             <div style={{ fontSize: 11.5, color: '#A2917C', margin: '5px 0 2px' }}>Sequence · parallel · conditional · loop — click any agent on the map to drill in.</div>
-            {onLive && <>
-              <div style={lbl}>Live monitoring</div>
-              <button onClick={() => { setOpen(false); onLive(); }}
-                style={{ width: '100%', font: 'inherit', fontSize: 13, fontWeight: 700, padding: '9px 12px', border: 'none', borderRadius: 10, background: '#C0531F', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff', boxShadow: '0 0 0 3px rgba(255,255,255,.35)' }} />
-                {liveOn ? 'Restart live stream' : 'Stream the team in'}
-              </button>
-            </>}
-            {onImportMulti && importBlock(onImportMulti, otlpMultiSample, oiMultiSample, 'a multi-agent trace')}
-            <a href="./index.html" style={{ display: 'block', marginTop: 12, fontSize: 12, fontWeight: 700, color: '#6E5C49', textDecoration: 'none' }}>‹ Back to single-agent demo</a>
-          </> : <>
-            <div style={lbl}>Multi-agent</div>
-            <div style={{ fontSize: 12.5, color: '#6E5C49', lineHeight: 1.5, margin: '2px 0 10px' }}>See a whole team as a control-flow graph — sequence, parallel, conditional and loop — and click any agent to drill into this same single-agent view.</div>
-            <a href="./swarm.html" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', font: 'inherit', fontSize: 13, fontWeight: 700, padding: '10px 12px', borderRadius: 10, background: '#C0531F', color: '#fff' }}>Open the multi-agent demo →</a>
-            <div style={{ fontSize: 11.5, color: '#A2917C', marginTop: 8 }}>Brand, names, icons and type carry over. Build one from real telemetry with fromOTLPMulti.</div>
-          </>)}
+          </>}
+
+          {onLive && <>
+            <div style={lbl}>Live monitoring</div>
+            <button onClick={() => { setOpen(false); onLive(); }}
+              style={{ width: '100%', font: 'inherit', fontSize: 13, fontWeight: 700, padding: '9px 12px', border: 'none', borderRadius: 10, background: '#C0531F', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff', boxShadow: '0 0 0 3px rgba(255,255,255,.35)' }} />
+              {liveOn ? 'Restart live stream' : (mode === 'multi' ? 'Stream the team in' : 'Start live stream')}
+            </button>
+            <div style={{ fontSize: 11.5, color: '#A2917C', marginTop: 5 }}>{mode === 'multi' ? 'Reveals the team one agent at a time — watch the graph fill in.' : 'Streams the beats in one at a time — watch the scene + timeline fill in real time.'}</div>
+          </>}
+
+          {mode === 'single' && onImport && importBlock(onImport, otlpSample, oiSample, 'an agent trace')}
+          {mode === 'multi' && onImportMulti && importBlock(onImportMulti, otlpMultiSample, oiMultiSample, 'a multi-agent trace')}
         </div>
       </div>
     </div>,
