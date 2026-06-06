@@ -21,13 +21,13 @@ const FONT_PRESETS = {
   serif:  { label: "Serif",  fonts: { display: 'Georgia, "Times New Roman", serif', body: "Georgia, serif", mono: "ui-monospace, monospace", hand: "Georgia, serif" } },
 };
 
-function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle, scenarios, sceneKey, setSceneKey, setFont, onLive, liveOn, onImport, otlpSample, oiSample }) {
+function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle, scenarios, sceneKey, setSceneKey, setFont, onLive, liveOn, onImport, otlpSample, oiSample, flows, flowKey, setFlowKey }) {
   const [open, setOpen] = dsUseState(false);
   const [fmt, setFmt] = dsUseState("otel");
   const taRef = React.useRef(null);
   const [fontKey, setFontKey] = dsUseState("warm");
   const [scale, setScale] = dsUseState(1);
-  const [tab, setTab] = dsUseState("single");
+  const [tab, setTab] = dsUseState(flows ? "multi" : "single");
   const def = window.AgentTheme.normalize({}).displayName; // built-in label defaults
   const brainCfg = icons.brain || { kind: "default" };
   const toolCfg = icons.toolbox || { kind: "default" };
@@ -88,7 +88,7 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
                 {scenarios.map(s => <button key={s.key} style={chip(sceneKey === s.key)} onClick={() => setSceneKey(s.key)}>{s.label}</button>)}
               </div>
             </>}
-            {onLive && <>
+            {onLive && !flows && <>
               <div style={lbl}>Live monitoring</div>
               <button onClick={() => { setOpen(false); onLive(); }}
                 style={{ width: '100%', font: 'inherit', fontSize: 13, fontWeight: 700, padding: '9px 12px', border: 'none', borderRadius: 10, background: '#C0531F', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -112,12 +112,27 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
               <div style={{ fontSize: 11.5, color: '#A2917C', marginTop: 5 }}>Spans from any {fmt === 'otel' ? 'OpenTelemetry GenAI' : 'OpenInference'} agent → played as a trace.</div>
             </>}
           </>}
-          {tab === 'multi' && <>
+          {tab === 'multi' && (flows ? <>
+            <div style={lbl}>Control-flow pattern</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {flows.map(f => <button key={f.key} style={chip(flowKey === f.key)} onClick={() => setFlowKey(f.key)}>{f.label}</button>)}
+            </div>
+            <div style={{ fontSize: 11.5, color: '#A2917C', margin: '5px 0 2px' }}>Sequence · parallel · conditional · loop — click any agent on the map to drill in.</div>
+            {onLive && <>
+              <div style={lbl}>Live monitoring</div>
+              <button onClick={() => { setOpen(false); onLive(); }}
+                style={{ width: '100%', font: 'inherit', fontSize: 13, fontWeight: 700, padding: '9px 12px', border: 'none', borderRadius: 10, background: '#C0531F', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff', boxShadow: '0 0 0 3px rgba(255,255,255,.35)' }} />
+                {liveOn ? 'Restart live stream' : 'Stream the team in'}
+              </button>
+            </>}
+            <a href="./index.html" style={{ display: 'block', marginTop: 12, fontSize: 12, fontWeight: 700, color: '#6E5C49', textDecoration: 'none' }}>‹ Back to single-agent demo</a>
+          </> : <>
             <div style={lbl}>Multi-agent</div>
             <div style={{ fontSize: 12.5, color: '#6E5C49', lineHeight: 1.5, margin: '2px 0 10px' }}>See a whole team as a control-flow graph — sequence, parallel, conditional and loop — and click any agent to drill into this same single-agent view.</div>
             <a href="./swarm.html" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', font: 'inherit', fontSize: 13, fontWeight: 700, padding: '10px 12px', borderRadius: 10, background: '#C0531F', color: '#fff' }}>Open the multi-agent demo →</a>
             <div style={{ fontSize: 11.5, color: '#A2917C', marginTop: 8 }}>Brand, names, icons and type carry over. Build one from real telemetry with fromOTLPMulti.</div>
-          </>}
+          </>)}
         </div>
       </div>
     </div>,
