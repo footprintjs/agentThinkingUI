@@ -86,6 +86,36 @@ type Cost = { ms: number; tokens: number };
 - `replyType: "both"` → both bubbles; include data in `output` and the
   `skill`/`actChecklist`/`actNote` for the instruction half.
 
+## Bring your existing traces (OpenTelemetry / OpenInference)
+
+Already instrumented with OpenTelemetry GenAI (AWS Bedrock AgentCore, LangGraph,
+CrewAI, AutoGen, OpenAI Agents SDK, Google ADK, Pydantic AI, Strands…) or
+OpenInference (Arize/Phoenix/LlamaIndex)? Convert OTLP spans straight to a trace —
+no re-instrumentation:
+
+```js
+import { fromOTLP, fromOpenInference } from "agentthinkingui";
+
+const trace = fromOTLP(otlpJson, { asker: "Sam" }); // or fromOpenInference(spans)
+<AgentThinkingUI trace={trace} />
+```
+
+It maps agent span → trace, tool executions → ask+return, the first user message →
+prompt, the final assistant message → answer, and span duration + token usage →
+cost. The **reply type** (`data`/`instruction`/`both`) isn't in those standards, so
+it's decided by, in order: an `opts.classify(toolName, attrs)` hook → opt-in span
+attributes `agentthinkingui.reply_type` / `.skill` → a heuristic (skill/steering/
+policy/guardrail tools → instruction, else data).
+
+**Live monitoring:** accumulate spans as they finish and re-run the adapter on the
+growing set, feeding the result to `<AgentThinkingUI live trace={…} />` — the player
+tails the newest beat:
+
+```js
+const acc = [];
+onSpanEnd((span) => { acc.push(span); setTrace(fromOTLP(acc, opts)); });
+```
+
 ## Theming (match the host app)
 
 Pass `theme` / `labels` / `icons` as props — they normalize and apply CSS

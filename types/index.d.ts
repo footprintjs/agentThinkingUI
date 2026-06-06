@@ -54,3 +54,22 @@ export interface PlaybackState {
   setSpeed: (s: number) => void;
 }
 export function usePlayback(trace: Trace, opts?: { loop?: boolean; live?: boolean; storageKey?: string }): PlaybackState;
+
+/** Options for the trace adapters. */
+export interface AdapterOptions {
+  asker?: string;
+  title?: string;
+  task?: string;
+  cta?: string;
+  /** decide a tool reply's shape (overrides the built-in heuristic) */
+  classify?: (toolName: string, attrs: Record<string, unknown>) => {
+    replyType: "data" | "instruction" | "both";
+    skill?: string;
+    actChecklist?: { text: string }[];
+    actNote?: string;
+  } | undefined;
+}
+/** OpenTelemetry GenAI (OTLP/JSON or a flat span array) → Trace. */
+export function fromOTLP(otlp: unknown, opts?: AdapterOptions): Trace;
+/** OpenInference (Arize/Phoenix/LlamaIndex) spans → Trace. */
+export function fromOpenInference(otlp: unknown, opts?: AdapterOptions): Trace;
