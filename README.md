@@ -143,7 +143,7 @@ src/                 # the library — ES modules (import/export, scoped)
   timeline.jsx       <Timeline>  — time-travel scrubber + transport + legend
   footprint.jsx      <AgentThinkingUI> — ready-made shell wiring all four together
   swarm.jsx          <AgentSwarm> — multi-agent control-flow map + drill-down
-  adapters/otlp.js   fromOTLP · fromOpenInference · fromOTLPMulti (OpenTelemetry → trace/graph)
+  adapters/otlp.js   fromOTLP · fromOpenInference · fromOTLPMulti · fromOpenInferenceMulti (telemetry → trace/graph)
   context.js         the shared React context the views read the theme from
   index.jsx          ESM entry (re-exports)   ·   global.jsx  UMD entry (window.*)
   styles.css         Design tokens + component styles (all keyed off theme variables)
@@ -231,11 +231,12 @@ CrewAI, AutoGen, OpenAI Agents SDK, Google ADK, Pydantic AI, Strands…) or
 re-instrumentation:
 
 ```js
-import { fromOTLP, fromOpenInference, fromOTLPMulti } from "agentthinkingui";
+import { fromOTLP, fromOpenInference, fromOTLPMulti, fromOpenInferenceMulti } from "agentthinkingui";
 
 const trace = fromOTLP(otlpJson, { asker: "Sam" });      // OTel GenAI → Trace
 const trace2 = fromOpenInference(spans);                  // OpenInference → Trace
-const flow = fromOTLPMulti(otlpJson, { asker: "Sam" });   // span tree → multi-agent FlowGraph
+const flow = fromOTLPMulti(otlpJson, { asker: "Sam" });   // OTel span tree → multi-agent FlowGraph
+const flow2 = fromOpenInferenceMulti(spans);              // OpenInference span tree → FlowGraph
 ```
 
 Mapping: agent span → trace/agent-node, tool execution → ask+return, first user

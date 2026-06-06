@@ -80,5 +80,19 @@
     flows.fromotel = { label: "From OTel ⚡", graph: window.AgentAdapters.fromOTLPMulti(OTLP_MULTI, { asker: "you" }) };
   }
 
+  // an OpenInference multi-agent span tree (same shape, OI keys) — proves
+  // fromOpenInferenceMulti and feeds the gear's "Import a multi-agent trace" box
+  const oisp = (spanId, parent, attrs) => ({ spanId, parentSpanId: parent, startTimeUnixNano: "1700000000000000000", endTimeUnixNano: "1700000000600000000", attributes: tv(attrs) });
+  const OI_MULTI = { resourceSpans: [{ scopeSpans: [{ spans: [
+    oisp("o", undefined, { "openinference.span.kind": "AGENT", "agent.name": "Coordinator", "llm.input_messages.0.message.content": "Triage ticket #4471", "llm.output_messages.0.message.content": "Routed to billing, drafted a reply." }),
+    oisp("b", "o", { "openinference.span.kind": "AGENT", "agent.name": "Billing" }),
+    oisp("bt", "b", { "openinference.span.kind": "TOOL", "tool.name": "lookup_invoice", "input.value": '{"id":4471}', "output.value": '{"overdue":false}' }),
+    oisp("w", "o", { "openinference.span.kind": "AGENT", "agent.name": "Writer" }),
+    oisp("wt", "w", { "openinference.span.kind": "TOOL", "tool.name": "draft_reply", "input.value": "{}", "output.value": '{"tone":"warm"}' }),
+  ] }] }] };
+
+  // expose the raw span trees so the demo gear can prefill its import box (both formats)
+  window.AGENT_OTLP_MULTI = OTLP_MULTI;
+  window.AGENT_OI_MULTI = OI_MULTI;
   window.AGENT_FLOWS = flows;
 })();

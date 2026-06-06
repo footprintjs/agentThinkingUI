@@ -13,7 +13,7 @@ import { usePlayback, AF_DWELL } from "./playback.js";
 import { arcLayout, AF_LAYOUT } from "./layout.js";
 import { AgentThemeContext } from "./context.js";
 import * as AgentTheme from "./theme.js";
-import { fromOTLP, fromOpenInference, fromOTLPMulti } from "./adapters/otlp.js";
+import { fromOTLP, fromOpenInference, fromOTLPMulti, fromOpenInferenceMulti } from "./adapters/otlp.js";
 
 const w = typeof window !== "undefined" ? window : {};
 Object.assign(w, {
@@ -23,7 +23,7 @@ Object.assign(w, {
   Stage, ToolIcon, Inspector, Notepad, Timeline,
   usePlayback, AF_DWELL, arcLayout, AF_LAYOUT,
   AgentTheme, AgentThemeContext,
-  AgentAdapters: { fromOTLP, fromOpenInference, fromOTLPMulti },
+  AgentAdapters: { fromOTLP, fromOpenInference, fromOTLPMulti, fromOpenInferenceMulti },
 });
 
 // back-compat: seed :root from page-level globals at load, as the old build did
