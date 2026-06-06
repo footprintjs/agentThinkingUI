@@ -454,6 +454,37 @@ Point a `trace` at your own recorded run (live or replay) and render — that's 
   OpenInference import and the multi-agent patterns, live.
 - **[Changelog](./CHANGELOG.md)** — what changed per release.
 
+## FAQ
+
+**OpenTelemetry didn't capture the agent's reasoning — can I still show "the
+thinking"?** Yes. OTel/OpenInference capture *structure* (tools, timing, tokens),
+not always the reasoning. The library renders a `Trace`, not spans — so the
+adapter is just one source. **Compose** the Trace from the OTel skeleton + whatever
+your app stored elsewhere, joined by `spanId` (the adapters stamp it), or render
+arbitrary per-step content with the `renderDetail` slot. Recipe:
+[`docs/integrations.md`](docs/integrations.md#backfill-what-otel-drops-compose-your-trace).
+
+**Does it send my data anywhere?** No. It's a pure client component — no network
+calls, no telemetry. It renders the trace you pass; any fetching is yours.
+
+**Is it tied to a framework or vendor?** No. Feed it any recorded run; adapters
+cover OpenTelemetry GenAI + OpenInference (LangGraph, CrewAI, OpenAI Agents SDK,
+Arize Phoenix, LlamaIndex, …), single and multi-agent.
+
+**Is it a replacement for Langfuse / Phoenix / LangSmith?** No — it's
+**complementary**: they record + evaluate; this is the user-facing replay you embed
+in your product. See [integrations](docs/integrations.md).
+
+**Does it play with Tailwind / CSS Modules / CSS-in-JS?** Yes. Every rule is scoped
+under `.atui` / `.atui-swarm` and it doesn't style `body`/globals — no Preflight
+clash, no class collisions. Theme via the `theme` prop, light or dark.
+
+**How big is it?** ~13 KB gzipped JS + ~10 KB CSS. React is a **peer dependency**
+(React 18+), not bundled.
+
+**Can I use just one piece?** Yes — `Stage` / `Inspector` / `Notepad` / `Timeline`
+are exported, with `usePlayback` for the transport. Compose your own layout.
+
 ## For AI agents
 
 Building on top of this with a coding agent? Two guides are kept for that:

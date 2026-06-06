@@ -45,6 +45,7 @@ playback in a resizable split.
 | `onRender` | `(m: `[`RenderMetric`](#rendermetric)`) => void` | — | opt-in UI render metrics (wraps the tree in React's `<Profiler>`) |
 | `onSelect` | `(step: Step, index: number) => void` | — | fires on every beat; the step carries `spanId`/`traceId` (analytics / deep-link / sync) |
 | `linkResolver` | `(step: Step) => string \| null` | — | return a URL → renders an "open ↗" deep-link for the current step |
+| `renderDetail` | `(step: Step, index) => ReactNode` | — | render extra content for the step in the inspector (raw logs / custom widgets / data OTel didn't capture) |
 
 `AgentFootprint` is a **deprecated alias** of `AgentThinkingUI`. The player also
 dispatches a DOM `CustomEvent("agentthinkingui:select", { detail: { step, index,
@@ -64,6 +65,7 @@ The multi-agent control-flow map; click an agent node to drill into its own
 | `onSelect` | `(step, index) => void` | — | fires on every team beat (the step carries `_agent` + `spanId`) |
 | `onNodeOpen` | `(node: FlowNode) => void` | — | fires when an agent node is drilled into |
 | `linkResolver` | `(node: FlowNode) => string \| null` | — | return a URL → renders an "↗" deep-link on the agent card |
+| `renderDetail` | `(step, index) => ReactNode` | — | forwarded to the drilled-in agent's inspector |
 
 ---
 

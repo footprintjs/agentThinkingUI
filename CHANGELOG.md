@@ -6,6 +6,16 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **`renderDetail(step)` slot** on `<AgentThinkingUI>` (forwarded to the drilled-in
+  agent by `<MultiAgentFlow>`) — render arbitrary per-step content in the inspector
+  (raw logs / custom widgets / data OTel didn't capture).
+
+### Docs
+- README **FAQ**; `docs/integrations.md` "Backfill what OTel drops (compose your
+  Trace)" — assemble a Trace from the OTel skeleton + your own store, joined by
+  `spanId`, so the reasoning OTel doesn't capture still renders.
+
 ## [0.7.0] - 2026-06-06
 
 ### Added

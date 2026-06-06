@@ -72,6 +72,31 @@ These keep their own data model but can emit/export **OpenTelemetry** spans. Poi
 their OTLP export at your store, then render with `fromOTLP` (single) or
 `fromOTLPMulti` (a multi-agent span tree → `<MultiAgentFlow>`).
 
+## Backfill what OTel drops (compose your Trace)
+
+OTel/OpenInference reliably capture *structure* (tools, timing, tokens, status)
+but often **not the reasoning** — "the thinking" — or surrounding context; that
+isn't always in the protocol. The library renders a **`Trace`**, not spans, so the
+adapter is just *one* source. Compose the Trace from the OTel skeleton **plus**
+whatever your app kept elsewhere, joined by `spanId` (the adapters stamp it):
+
+```js
+const trace = fromOpenInference(spans);            // structure (may lack the reasoning)
+for (const step of trace.steps) {
+  const extra = yourStore.get(step.spanId);        // the reasoning/context you stored
+  if (extra) { step.brain = extra.reasoning; step.output = { ...step.output, ...extra.context }; }
+}
+<AgentThinkingUI trace={trace} />                  // renders the full thinking, backfilled
+```
+
+For content that doesn't fit the schema (a raw log blob, your own widget), render
+it per step with the **`renderDetail`** slot — it appears in the inspector body:
+
+```jsx
+<AgentThinkingUI trace={trace} renderDetail={(step) => <RawLog spanId={step.spanId} />} />
+// <MultiAgentFlow renderDetail={…} /> forwards it to the drilled-in agent's inspector
+```
+
 ## Live monitoring
 
 For a run in progress, accumulate spans as they arrive and tail the newest beat

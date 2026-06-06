@@ -663,3 +663,6 @@
 :where(.atui, .atui-swarm) .insp-link:hover { text-decoration: underline; }
 :where(.atui-swarm) .agent-card .ac-extlink { position: absolute; top: 8px; right: 9px; font-size: 13px; line-height: 1; color: var(--ink-faint); cursor: pointer; padding: 2px; border-radius: 6px; }
 :where(.atui-swarm) .agent-card .ac-extlink:hover { color: var(--rust); background: var(--rust-tint); }
+
+/* host-supplied per-step detail slot (renderDetail) — sits under the inspector sections */
+:where(.atui, .atui-swarm) .insp-extra { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }

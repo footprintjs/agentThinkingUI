@@ -42,6 +42,16 @@ describe("<AgentThinkingUI> host hooks", () => {
     expect(link.getAttribute("href")).toBe("https://obs.example/span/S0");
   });
 
+  it("renders host-supplied detail via renderDetail (content OTel didn't capture)", () => {
+    const { container } = render(React.createElement(AgentThinkingUI, {
+      trace, storageKey: null,
+      renderDetail: (s) => React.createElement("div", { "data-testid": "raw" }, "raw log for " + s.spanId),
+    }));
+    const extra = container.querySelector(".insp-extra [data-testid=raw]");
+    expect(extra).toBeTruthy();
+    expect(extra.textContent).toBe("raw log for S0");
+  });
+
   it("dispatches a DOM CustomEvent for non-React hosts", () => {
     const { container } = render(React.createElement(AgentThinkingUI, { trace, storageKey: null }));
     const seen = [];

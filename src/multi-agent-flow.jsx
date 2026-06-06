@@ -38,7 +38,7 @@ function TeamNote({ s, n, active }) {
    See docs/multi-agent-flow.md.
    ============================================================ */
 
-export function MultiAgentFlow({ trace, theme, labels, icons, brand, live, onRender, onSelect, onNodeOpen, linkResolver }) {
+export function MultiAgentFlow({ trace, theme, labels, icons, brand, live, onRender, onSelect, onNodeOpen, linkResolver, renderDetail }) {
   const [sel, setSel] = useState(null);
   const rootRef = React.useRef(null);
   const resolved = useMemo(() => AgentTheme.normalize({ theme, labels, icons }), [theme, labels, icons]);
@@ -101,7 +101,7 @@ export function MultiAgentFlow({ trace, theme, labels, icons, brand, live, onRen
           </span>
           <span className="swarm-bc-task">{task}</span>
         </div>
-        <div className="swarm-detail"><AgentThinkingUI trace={a.trace} theme={theme} labels={labels} icons={icons} /></div>
+        <div className="swarm-detail"><AgentThinkingUI trace={a.trace} theme={theme} labels={labels} icons={icons} renderDetail={renderDetail} /></div>
       </div>
     );
   }

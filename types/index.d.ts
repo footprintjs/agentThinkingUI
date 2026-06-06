@@ -52,6 +52,8 @@ export interface AgentThinkingUIProps {
   onSelect?: (step: Step, index: number) => void;
   /** return a URL for a step → renders an "open ↗" affordance (host builds the link, e.g. to Langfuse/Phoenix) */
   linkResolver?: (step: Step) => string | null | undefined;
+  /** render extra content for the current step in the inspector (raw logs / custom widgets / data OTel didn't capture) */
+  renderDetail?: (step: Step, index: number) => ReactNode;
 }
 
 /** UI render metric — React Profiler timing, enriched with player context. */
@@ -112,6 +114,8 @@ export interface MultiAgentFlowProps {
   onNodeOpen?: (node: FlowNode) => void;
   /** return a URL for an agent node → renders an "↗" deep-link on its card */
   linkResolver?: (node: FlowNode) => string | null | undefined;
+  /** render extra per-step content in the drilled-in agent's inspector */
+  renderDetail?: (step: Step, index: number) => ReactNode;
 }
 /** Multi-agent control-flow map; agent nodes drill into their AgentThinkingUI. */
 export const MultiAgentFlow: FC<MultiAgentFlowProps>;
