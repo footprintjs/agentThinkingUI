@@ -65,7 +65,8 @@
     "coverage:badge": "node scripts/coverage-badge.mjs",
     "lint": "eslint .",
     "hero": "node docs/assets/gen-hero.mjs",
-    "serve": "npm run build && python3 -m http.server"
+    "serve": "npm run build && python3 -m http.server",
+    "perf": "node scripts/perf.mjs"
   },
   "peerDependencies": {
     "react": ">=18",

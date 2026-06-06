@@ -103,6 +103,11 @@ const trace = fromOTLP(otlpJson, { asker: "Sam" });    // or fromOpenInference(s
 // trace is built from that agent span's children). OTel or OpenInference:
 const flow = fromOTLPMulti(otlpJson, { asker: "Sam" }); // or fromOpenInferenceMulti(spans)
 <AgentSwarm trace={flow} />
+
+// live monitoring: push spans as they arrive, feed the result to a `live` player
+import { createMonitor } from "agentthinkingui";
+const mon = createMonitor({ format: "otel" });          // { multi:true } → FlowGraph
+exporter.onBatch((batch) => setTrace(mon.push(batch))); // pass a custom `reader` for other conventions
 ```
 
 It maps agent span → trace, tool executions → ask+return, the first user message →

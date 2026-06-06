@@ -262,3 +262,33 @@ export function fromOpenInferenceMulti(otlp, opts = {}) { return buildMulti(otlp
      const acc = [];
      onSpanEnd(span => { acc.push(span); setTrace(fromOTLP(acc, opts)); });
 */
+
+/**
+ * Push-based monitor for live sources. Feed it spans as they arrive (an OTLP
+ * payload or a flat array, in either convention) and read the up-to-date
+ * Trace/FlowGraph to hand to <AgentThinkingUI live> / <AgentSwarm live>.
+ *
+ *   const mon = createMonitor({ format: "otel", asker: "you" });
+ *   exporter.onBatch(otlp => setTrace(mon.push(otlp)));   // single agent
+ *   // or { multi: true } → returns a FlowGraph for <AgentSwarm>
+ *
+ * Re-derives from the accumulated spans on each push (O(n)); for typical live
+ * runs that's negligible. `format` selects the reader (otel | openinference);
+ * pass `reader` to plug a custom convention (see the reader maps above).
+ */
+export function createMonitor(opts = {}) {
+  const reader = opts.reader || (opts.format === "openinference" ? OPENINFERENCE : OTEL);
+  const spans = [];
+  const build = () => (opts.multi ? buildMulti(spans, reader, opts) : buildTrace(spans, reader, opts));
+  let current = build();
+  return {
+    /** append spans (OTLP object or flat array) and return the updated result */
+    push(input) { for (const s of collectSpans(input)) spans.push(s); current = build(); return current; },
+    /** the current Trace (or FlowGraph when `multi`) */
+    get result() { return current; },
+    /** a copy of the accumulated raw spans */
+    get spans() { return spans.slice(); },
+    /** clear and start over */
+    reset() { spans.length = 0; current = build(); return current; },
+  };
+}

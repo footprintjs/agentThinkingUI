@@ -264,8 +264,46 @@ nested `invoke_agent` spans become the agent graph. The **reply type**
 `.skill` span attributes → a heuristic (skill/steering/policy/guardrail → instruction).
 **Errors are universal:** a span with status `ERROR` (or an `exception` event) becomes
 a red error beat (and a red agent node in the swarm) — same for both adapters.
-For **live monitoring**, accumulate spans and re-run the adapter on the growing set,
-feeding `<AgentThinkingUI live>` / `<AgentSwarm live>`.
+### Live monitoring
+
+For live runs, use **`createMonitor`** — a push-based ingestion handle. Feed it
+spans as they arrive (an OTLP payload or a flat array, OTel or OpenInference) and
+hand the result to the `live` player, which tails the newest beat:
+
+```js
+import { createMonitor } from "agentthinkingui";
+
+const mon = createMonitor({ format: "otel", asker: "you" }); // { multi:true } → FlowGraph
+exporter.onBatch((otlpBatch) => setTrace(mon.push(otlpBatch)));
+
+<AgentThinkingUI live trace={trace} />   // or <AgentSwarm live trace={graph} />
+```
+
+**Bring your own source.** Anything that maps to OTLP-shaped spans works; to
+support a vendor convention with different keys, pass a `reader` (the same shape
+as the built-in OTel/OpenInference reader maps) to `createMonitor`/`fromOTLP`.
+
+## Performance
+
+The pure cores are linear in their input. Benchmarks (`npm run perf`, Node 22,
+one core — your numbers will vary):
+
+| operation | time | throughput |
+|---|---|---|
+| `fromOTLP` — 1,000 tool spans | 1.4 ms | ~710k spans/s |
+| `fromOTLP` — 10,000 tool spans | 15 ms | ~650k spans/s |
+| `fromOTLPMulti` — 500 agents | 1.7 ms | ~290k agents/s |
+| `layoutFlow` — 1,200 nodes / 14k edges (fully connected) | ~100 ms | worst case |
+| `createMonitor` — 2,000 incremental pushes | ~1.5 s | re-derive each push |
+
+Notes: graph layout is O(V+E) to lay out and only does crossing-reduction work
+proportional to edges — the 14k-edge row is a fully-connected stress case; real
+agent graphs are sparse and lay out in well under a millisecond. The renderer is
+bounded too: the timeline switches to a single gradient track past ~240 steps and
+the inspector caps oversized tool I/O, so a long live run won't flood the DOM.
+`createMonitor` re-derives from all accumulated spans per push (O(n)); for the
+typical tens-to-hundreds of beats that's instant — for very high-frequency
+streams, batch pushes.
 
 ## Theming
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fromOTLP, fromOpenInference, fromOTLPMulti, fromOpenInferenceMulti } from "../src/adapters/otlp.js";
+import { fromOTLP, fromOpenInference, fromOTLPMulti, fromOpenInferenceMulti, createMonitor } from "../src/adapters/otlp.js";
 
 // build OTLP/JSON typed attributes + a span helper
 const A = (o) => Object.entries(o).map(([key, v]) => ({
@@ -119,6 +119,40 @@ describe("fromOTLPMulti (multi-agent span tree → FlowGraph)", () => {
     expect(flights.trace.steps.some((s) => s.kind === "ask" && s.tool === "search_flights")).toBe(true);
     const planner = g.nodes.find((n) => n.name === "Planner");
     expect(planner.trace.steps.some((s) => s.kind === "ask")).toBe(false);
+  });
+});
+
+describe("createMonitor (push-based live ingestion)", () => {
+  const tool = (i) => span({ "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "t" + i, "gen_ai.tool.call.arguments": "{}" }, [{ name: "gen_ai.tool.message", attrs: { content: "{}" } }]);
+
+  it("accumulates pushed spans and re-derives the trace each time", () => {
+    const mon = createMonitor({ format: "otel", asker: "you" });
+    const r1 = mon.push(otlp([span({ "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "a" }), tool(0)]));
+    const n1 = r1.steps.length;
+    const r2 = mon.push(otlp([tool(1), tool(2)]));
+    expect(r2.steps.length).toBeGreaterThan(n1); // grew as spans arrived
+    expect(mon.result).toBe(r2);
+    expect(mon.spans.length).toBe(4); // agent + 3 tools accumulated
+    expect(mon.reset().steps.length).toBeLessThan(r2.steps.length); // cleared
+  });
+
+  it("supports multi mode → a FlowGraph that grows", () => {
+    const mon = createMonitor({ multi: true });
+    mon.push(otlp([
+      { spanId: "o", ...span({ "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "Root" }) },
+      { spanId: "w", parentSpanId: "o", ...span({ "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "Worker" }) },
+    ]));
+    expect(mon.result.nodes.map((n) => n.name).sort()).toEqual(["Root", "Worker"]);
+  });
+});
+
+describe("scale (load) — large traces build correctly", () => {
+  it("turns 5,000 tool spans into 2 + 2·N steps without error", () => {
+    const spans = [span({ "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "a", "gen_ai.request.model": "m" },
+      [{ name: "gen_ai.user.message", attrs: { content: "go" } }, { name: "gen_ai.assistant.message", attrs: { content: "done" } }])];
+    for (let i = 0; i < 5000; i++) spans.push(span({ "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "t", "gen_ai.tool.call.arguments": "{}" }));
+    const tr = fromOTLP(otlp(spans));
+    expect(tr.steps.length).toBe(2 + 2 * 5000); // prompt + N·(ask+return) + answer
   });
 });
 

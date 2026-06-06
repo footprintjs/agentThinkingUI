@@ -36,10 +36,12 @@ library; `demo/` is a runnable example.
 ## Layout
 
 ```
-src/        theme.js · layout.js · playback.js · context.js · stage.jsx ·
-            inspector.jsx · timeline.jsx · footprint.jsx ·
+src/        theme.js · layout.js · flow-layout.js (pure swarm graph layout) ·
+            playback.js · context.js · stage.jsx · inspector.jsx · timeline.jsx ·
+            footprint.jsx · swarm.jsx · adapters/otlp.js ·
             index.jsx (ESM entry) · global.jsx (UMD entry) · styles.css
 build.mjs   esbuild → dist/ (ESM + UMD + css)
+scripts/    coverage-badge.mjs · perf.mjs (load benchmark → `npm run perf`)
 demo/       index.html (responsive; single ⟷ multi switched in-app via the gear) ·
             demo.css (page chrome — body/grain, NOT the library) ·
             mobile.html · trace.js · flow-trace.js · app.jsx · demo-settings.jsx ·

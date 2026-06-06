@@ -121,3 +121,22 @@ export function fromOpenInference(otlp: unknown, opts?: AdapterOptions): Trace;
 export function fromOTLPMulti(otlp: unknown, opts?: AdapterOptions): FlowGraph;
 /** OpenInference span tree → a multi-agent FlowGraph (for <AgentSwarm>). */
 export function fromOpenInferenceMulti(otlp: unknown, opts?: AdapterOptions): FlowGraph;
+
+/** Push-based monitor for live sources: feed spans, read the updated Trace/FlowGraph. */
+export interface Monitor<T> {
+  /** append spans (OTLP object or flat array) and return the updated result */
+  push(input: unknown): T;
+  /** the current Trace (or FlowGraph when `multi`) */
+  readonly result: T;
+  /** a copy of the accumulated raw spans */
+  readonly spans: unknown[];
+  /** clear and start over */
+  reset(): T;
+}
+export function createMonitor(opts?: AdapterOptions & { format?: "otel" | "openinference"; reader?: unknown; multi?: false }): Monitor<Trace>;
+export function createMonitor(opts: AdapterOptions & { format?: "otel" | "openinference"; reader?: unknown; multi: true }): Monitor<FlowGraph>;
+
+/** Pure layered graph layout (longest-path + barycenter crossing reduction). */
+export function layoutFlow(nodes: FlowNode[], edges: FlowEdge[]): { pos: Record<string, { cx: number; cy: number }>; W: number; H: number; bottomY: number };
+/** Count edge crossings in a positioned graph. */
+export function countCrossings(nodes: FlowNode[], edges: FlowEdge[], pos: Record<string, { cx: number; cy: number }>): number;
