@@ -298,12 +298,37 @@ one core — your numbers will vary):
 
 Notes: graph layout is O(V+E) to lay out and only does crossing-reduction work
 proportional to edges — the 14k-edge row is a fully-connected stress case; real
-agent graphs are sparse and lay out in well under a millisecond. The renderer is
-bounded too: the timeline switches to a single gradient track past ~240 steps and
-the inspector caps oversized tool I/O, so a long live run won't flood the DOM.
+agent graphs are sparse and lay out in well under a millisecond.
 `createMonitor` re-derives from all accumulated spans per push (O(n)); for the
 typical tens-to-hundreds of beats that's instant — for very high-frequency
 streams, batch pushes.
+
+### UI rendering — render cost is flat in trace length
+
+The player's **DOM footprint stays bounded** as the trace grows: the timeline
+switches to a single gradient track past ~240 steps and the inspector shows only
+the current step (and caps oversized tool I/O), so a 1,000-step live run renders
+as cheaply as a 10-step one.
+
+| trace | DOM nodes |
+|---|---|
+| 22 steps | ~146 |
+| 1,202 steps | ~126 |
+
+**Measure it yourself.** Pass an `onRender` callback to get UI render metrics —
+it wraps the player in React's [`<Profiler>`](https://react.dev/reference/react/Profiler)
+and forwards the timing, enriched with the current step (web-vitals-style; opt-in,
+zero overhead when unused, and — like React's Profiler — active in dev/profiling
+builds):
+
+```jsx
+<AgentThinkingUI trace={trace} onRender={(m) => {
+  // { id, phase: "mount"|"update", actualMs, baseMs, step, steps, commitTime }
+  analytics.track("agentthinkingui_render", m);
+}} />
+```
+
+(Or wrap it in your own `<Profiler>` — `onRender` is just that, done for you.)
 
 ## Theming
 

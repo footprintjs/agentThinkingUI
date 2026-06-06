@@ -38,7 +38,7 @@ function SwarmNote({ s, n, active }) {
    See docs/multi-agent-flow.md.
    ============================================================ */
 
-export function AgentSwarm({ trace, theme, labels, icons, brand, live }) {
+export function AgentSwarm({ trace, theme, labels, icons, brand, live, onRender }) {
   const [sel, setSel] = useState(null);
   const resolved = useMemo(() => AgentTheme.normalize({ theme, labels, icons }), [theme, labels, icons]);
   const vars = useMemo(() => AgentTheme.toVars(resolved), [resolved]);
@@ -69,9 +69,15 @@ export function AgentSwarm({ trace, theme, labels, icons, brand, live }) {
   const cur = teamSteps[idx];
   const phaseOf = (id) => { const rr = ranges[id]; if (!rr) return "done"; if (idx < rr.start) return "future"; if (idx > rr.end) return "done"; return "current"; };
 
+  // opt-in UI render metrics (React Profiler), enriched with team context
+  const wrap = (tree) => onRender
+    ? <React.Profiler id="agentswarm" onRender={(id, phase, actualDuration, baseDuration, startTime, commitTime) =>
+        onRender({ id, phase, actualMs: actualDuration, baseMs: baseDuration, startTime, commitTime, step: idx, steps: teamTrace.steps.length, agents: nodes.length })}>{tree}</React.Profiler>
+    : tree;
+
   if (sel && byId[sel] && byId[sel].trace) {
     const a = byId[sel];
-    return (
+    return wrap(
       <div className="atui-swarm" style={vars}>
         <div className="swarm-bar swarm-detailbar">
           <button className="swarm-back" onClick={() => setSel(null)}>‹ Back to team</button>
@@ -95,7 +101,7 @@ export function AgentSwarm({ trace, theme, labels, icons, brand, live }) {
     return { x: p.cx, y: p.cy + d.h / 2 }; // bottom
   };
 
-  return (
+  return wrap(
     <AgentThemeContext.Provider value={resolved}>
       <div className="atui-swarm" style={vars} onKeyDown={play.onKeyDown}>
         <div className="swarm-bar">

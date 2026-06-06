@@ -44,6 +44,28 @@ export interface AgentThinkingUIProps {
   /** stacked mobile layout */
   mobile?: boolean;
   style?: Record<string, string | number>;
+  /** persist scrub position under this key (default: derived from the trace; null disables) */
+  storageKey?: string | null;
+  /** opt-in UI render metrics (wraps the tree in React's <Profiler>) */
+  onRender?: (metric: RenderMetric) => void;
+}
+
+/** UI render metric — React Profiler timing, enriched with player context. */
+export interface RenderMetric {
+  id: string;
+  phase: "mount" | "update" | "nested-update";
+  /** ms spent rendering this commit (React Profiler actualDuration) */
+  actualMs: number;
+  /** ms without memoization (React Profiler baseDuration) */
+  baseMs: number;
+  startTime: number;
+  commitTime: number;
+  /** current step index */
+  step: number;
+  /** total steps in the (team) trace */
+  steps: number;
+  /** agent count (AgentSwarm only) */
+  agents?: number;
 }
 
 /** The ready-made container: scene + inspector + notepad + timeline + playback. */
@@ -78,6 +100,8 @@ export interface AgentSwarmProps {
   brand?: ReactNode;
   /** tail the team timeline to the newest beat as the graph grows */
   live?: boolean;
+  /** opt-in UI render metrics (wraps the tree in React's <Profiler>) */
+  onRender?: (metric: RenderMetric) => void;
 }
 /** Multi-agent control-flow map; agent nodes drill into their AgentThinkingUI. */
 export const AgentSwarm: FC<AgentSwarmProps>;

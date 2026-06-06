@@ -18,7 +18,7 @@ import * as AgentTheme from "./theme.js";
    four components into their own layout (they're each independent).
    (window.AgentFootprint remains as a deprecated alias.)
    ============================================================ */
-export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, live = false, style, mobile, storageKey }) {
+export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, live = false, style, mobile, storageKey, onRender }) {
   const { useState, useRef, useMemo } = React;
   // persist scrub position per-trace so two players on one page don't collide;
   // pass storageKey={null} to disable, or a custom string to override.
@@ -59,8 +59,18 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
 
   const step = trace.steps[Math.min(index, trace.steps.length - 1)] || trace.steps[0];
 
+  // Opt-in UI render metrics. When `onRender` is supplied we wrap the tree in
+  // React's <Profiler> (the standard) and forward its timing, enriched with the
+  // domain context React can't know (current step / total). Zero overhead when
+  // the prop is absent; like React's own Profiler it only fires in dev/profiling
+  // builds. Consumers can equally wrap <AgentThinkingUI> in their own <Profiler>.
+  const wrap = (tree) => onRender
+    ? <React.Profiler id="agentthinkingui" onRender={(id, phase, actualDuration, baseDuration, startTime, commitTime) =>
+        onRender({ id, phase, actualMs: actualDuration, baseMs: baseDuration, startTime, commitTime, step: index, steps: trace.steps.length })}>{tree}</React.Profiler>
+    : tree;
+
   if (mobile) {
-    return (
+    return wrap(
       <TC.Provider value={resolved}>
       <div className="atui mobile" style={rootStyle} onKeyDown={onKeyDown}>
         <div className="topbar">
@@ -82,7 +92,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
     );
   }
 
-  return (
+  return wrap(
     <TC.Provider value={resolved}>
     <div className={"atui" + (mobile ? " mobile" : "")} style={rootStyle} onKeyDown={onKeyDown}>
       <div className="topbar">
