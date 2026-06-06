@@ -43,6 +43,7 @@ src/        theme.js · layout.js · flow-layout.js (pure swarm graph layout) ·
 build.mjs   esbuild → dist/ (ESM + UMD + css)
 scripts/    coverage-badge.mjs · perf.mjs (load benchmark → `npm run perf`)
 demo/       index.html (responsive; single ⟷ multi switched in-app via the gear) ·
+            explorer.html (no-build component explorer: controls + props table) ·
             demo.css (page chrome — body/grain, NOT the library) ·
             mobile.html · trace.js · flow-trace.js · app.jsx · demo-settings.jsx ·
             tweaks-panel.jsx   (loads the prebuilt ../dist; swarm.html → redirects to index)
