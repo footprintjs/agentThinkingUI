@@ -64,7 +64,7 @@ describe("accessible timeline scrubber", () => {
 describe("keyboard is scoped to the player (no host hijack)", () => {
   it("advances on keydown within the player root, but ignores window keydown", () => {
     const { container } = render(ui({ trace: trace() }));
-    const app = container.querySelector(".app");
+    const app = container.querySelector(".atui");
     const now = () => container.querySelector(".tl-readout .step-n").textContent;
     fireEvent.keyDown(app, { key: "ArrowRight" });
     expect(now()).toContain("02");
@@ -77,14 +77,14 @@ describe("keyboard is scoped to the player (no host hijack)", () => {
 describe("per-instance scrub persistence", () => {
   it("keys storage by trace identity so two players don't collide", () => {
     const { container } = render(ui({ trace: trace({ title: "A" }) }));
-    fireEvent.keyDown(container.querySelector(".app"), { key: "ArrowRight" });
+    fireEvent.keyDown(container.querySelector(".atui"), { key: "ArrowRight" });
     expect(localStorage.getItem("agentthinkingui.index:A")).toBe("1");
     expect(localStorage.getItem("agentthinkingui.index:B")).toBeNull(); // a different trace is isolated
   });
 
   it("storageKey={null} disables persistence entirely", () => {
     const { container } = render(ui({ trace: trace({ title: "A" }), storageKey: null }));
-    fireEvent.keyDown(container.querySelector(".app"), { key: "ArrowRight" });
+    fireEvent.keyDown(container.querySelector(".atui"), { key: "ArrowRight" });
     expect(localStorage.getItem("agentthinkingui.index:A")).toBeNull();
   });
 });
