@@ -41,6 +41,11 @@ const SAMPLE_OTLP = { resourceSpans: [{ scopeSpans: [{ spans: [
   sp({ "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "refund_policy", "gen_ai.tool.call.arguments": "{}" },
      [{ name: "gen_ai.tool.message", attrs: { content: '{"full_refund_within_days":14}' } }], 700, 250),
 ] }] }] };
+// the OpenInference flavour (Arize/Phoenix/LlamaIndex) — same shape, different keys
+const SAMPLE_OI = { resourceSpans: [{ scopeSpans: [{ spans: [
+  sp({ "openinference.span.kind": "AGENT", "agent.name": "qa-agent", "llm.model_name": "gpt-4o-mini", "llm.input_messages.0.message.content": "What's the return policy?", "llm.output_messages.0.message.content": "Returns accepted within 30 days with a receipt." }, [], 0, 900),
+  sp({ "openinference.span.kind": "TOOL", "tool.name": "search_docs", "input.value": '{"q":"returns"}', "output.value": '{"hits":3}' }, [], 200, 300),
+] }] }] };
 
 // the demo just composes the library's <AgentFootprint> + demo-only chrome
 // (tweaks + gear), passing all branding through its theme/labels/icons props.
@@ -90,14 +95,16 @@ function App() {
   // imported (OTel) wins; else live grows a trace one step at a time; else the scenario
   const trace = imported || (live && liveSteps ? { ...base, steps: liveSteps } : base);
 
-  // convert a pasted OpenTelemetry (OTLP/JSON) trace and play it
-  const onImport = (text) => {
+  // convert a pasted trace (OpenTelemetry or OpenInference) and play it
+  const onImport = (text, fmt) => {
     try {
-      const tr = window.AgentAdapters.fromOTLP(JSON.parse(text), { asker: "you", title: "Imported · OTel" });
+      const otlp = JSON.parse(text);
+      const fn = fmt === "openinference" ? window.AgentAdapters.fromOpenInference : window.AgentAdapters.fromOTLP;
+      const tr = fn(otlp, { asker: "you", title: "Imported · " + (fmt === "openinference" ? "OpenInference" : "OTel") });
       if (!tr.steps || !tr.steps.length) throw new Error("no steps found");
       if (liveTimer.current) clearInterval(liveTimer.current);
       setLive(false); setLiveSteps(null); setImported(tr);
-    } catch (e) { window.alert("Couldn't read that as OpenTelemetry OTLP/JSON:\n" + e.message); }
+    } catch (e) { window.alert("Couldn't read that trace:\n" + e.message); }
   };
 
   // simulate a live agent: start from the first beat, append the rest on a timer
@@ -134,7 +141,8 @@ function App() {
       <DemoSettings brand={brand} setBrand={setBrand}
         labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons}
         scenarios={SCENARIOS} sceneKey={sceneKey} setSceneKey={selectScenario} setFont={setFont}
-        onLive={startLiveReset} liveOn={live} onImport={onImport} otlpSample={JSON.stringify(SAMPLE_OTLP, null, 2)} />
+        onLive={startLiveReset} liveOn={live} onImport={onImport}
+        otlpSample={JSON.stringify(SAMPLE_OTLP, null, 2)} oiSample={JSON.stringify(SAMPLE_OI, null, 2)} />
       {!isMobile && <DemoCredit />}
       {/* the accent/storytelling side panel is desktop-only chrome; the gear
           modal covers branding on small screens */}

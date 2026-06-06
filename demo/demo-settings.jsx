@@ -21,8 +21,9 @@ const FONT_PRESETS = {
   serif:  { label: "Serif",  fonts: { display: 'Georgia, "Times New Roman", serif', body: "Georgia, serif", mono: "ui-monospace, monospace", hand: "Georgia, serif" } },
 };
 
-function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle, scenarios, sceneKey, setSceneKey, setFont, onLive, liveOn, onImport, otlpSample }) {
+function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle, scenarios, sceneKey, setSceneKey, setFont, onLive, liveOn, onImport, otlpSample, oiSample }) {
   const [open, setOpen] = dsUseState(false);
+  const [fmt, setFmt] = dsUseState("otel");
   const taRef = React.useRef(null);
   const [fontKey, setFontKey] = dsUseState("warm");
   const [scale, setScale] = dsUseState(1);
@@ -56,14 +57,18 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
           <div style={{ fontSize: 11.5, color: '#A2917C', marginTop: 5 }}>Streams the beats in one at a time — watch the scene + timeline fill in real time.</div>
         </>}
         {onImport && <>
-          <div style={lbl}>Import an OpenTelemetry trace</div>
-          <textarea ref={taRef} defaultValue={otlpSample} spellCheck={false}
+          <div style={lbl}>Import an agent trace</div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+            <button style={chip(fmt === 'otel')} onClick={() => setFmt('otel')}>OpenTelemetry</button>
+            <button style={chip(fmt === 'openinference')} onClick={() => setFmt('openinference')}>OpenInference</button>
+          </div>
+          <textarea key={fmt} ref={taRef} defaultValue={fmt === 'otel' ? otlpSample : oiSample} spellCheck={false}
             style={{ width: '100%', height: 84, fontFamily: 'ui-monospace, monospace', fontSize: 11, lineHeight: 1.4, padding: '7px 9px', border: '1px solid #E6D8C2', borderRadius: 8, background: '#fff', color: '#2C1F15', boxSizing: 'border-box', resize: 'vertical' }} />
-          <button onClick={() => { setOpen(false); onImport((taRef.current && taRef.current.value) || otlpSample); }}
+          <button onClick={() => { setOpen(false); onImport((taRef.current && taRef.current.value) || (fmt === 'otel' ? otlpSample : oiSample), fmt); }}
             style={{ width: '100%', marginTop: 6, font: 'inherit', fontSize: 13, fontWeight: 700, padding: '8px 12px', border: '1px solid #C0531F', borderRadius: 10, background: '#fff', color: '#C0531F', cursor: 'pointer' }}>
             Convert &amp; play
           </button>
-          <div style={{ fontSize: 11.5, color: '#A2917C', marginTop: 5 }}>OTLP/JSON from any OpenTelemetry GenAI agent → played as a trace.</div>
+          <div style={{ fontSize: 11.5, color: '#A2917C', marginTop: 5 }}>Spans from any {fmt === 'otel' ? 'OpenTelemetry GenAI' : 'OpenInference'} agent → played as a trace.</div>
         </>}
         {scenarios && scenarios.length > 1 && <>
           <div style={lbl}>Scenario</div>
