@@ -462,6 +462,9 @@ Point a `trace` at your own recorded run (live or replay) and render — that's 
 - **Essay — [Data, or instruction?](./docs/blog/data-or-instruction.md)** — the
   design bet: model an agent as a brain + a tool, and label every reply as data
   (reason) or instruction (act).
+- **Essay — [The protocol is the floor, not the ceiling](./docs/blog/protocol-is-the-floor.md)** —
+  why OTel/OpenInference can't carry everything, and how you fill the domain
+  content (compose by `spanId` · `classify` · `renderDetail`).
 
 ## FAQ
 

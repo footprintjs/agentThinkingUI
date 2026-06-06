@@ -13,6 +13,9 @@ to [Semantic Versioning](https://semver.org/).
 - Essay — **[Data, or instruction?](docs/blog/data-or-instruction.md)**: the design
   rationale — model an agent as a brain + a tool, and label every reply data (reason)
   or instruction (act); that's where content drives the decision.
+- Essay — **[The protocol is the floor, not the ceiling](docs/blog/protocol-is-the-floor.md)**:
+  why OTel/OpenInference can't carry all the domain content, and the seam (compose by
+  `spanId` · `classify` · `renderDetail`) that fills it.
 
 ## [0.8.0] - 2026-06-06
 
