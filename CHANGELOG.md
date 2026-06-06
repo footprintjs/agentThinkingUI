@@ -6,6 +6,10 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Docs
+- Essay — **[Who debugs the agent?](docs/blog/who-debugs-the-agent.md)**: the case
+  for visual agent replay now that domain experts (not engineers) build the agents.
+
 ## [0.8.0] - 2026-06-06
 
 ### Added
