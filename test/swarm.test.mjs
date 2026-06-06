@@ -1,7 +1,7 @@
 import React from "react";
 import { describe, it, expect, afterEach } from "vitest";
 import { render, cleanup, fireEvent } from "@testing-library/react";
-import { AgentSwarm } from "../src/swarm.jsx";
+import { AgentSwarm, layoutFlow, countCrossings } from "../src/swarm.jsx";
 
 const mini = (task) => ({
   task, agent: "a", model: "m", asker: "x",
@@ -29,6 +29,38 @@ const G = {
 };
 
 afterEach(cleanup);
+
+describe("layoutFlow — layered layout + barycenter crossing reduction", () => {
+  it("untangles a graph that crosses under naive insertion order", () => {
+    // A,B are sources (col 0); X,Y are sinks (col 1). The edges A→Y and B→X
+    // cross if col 1 keeps insertion order [X,Y]; barycenter should flip it.
+    const nodes = [
+      { id: "A", kind: "agent" }, { id: "B", kind: "agent" },
+      { id: "X", kind: "agent" }, { id: "Y", kind: "agent" },
+    ];
+    const edges = [{ from: "A", to: "Y", kind: "seq" }, { from: "B", to: "X", kind: "seq" }];
+    const { pos } = layoutFlow(nodes, edges);
+    // two columns are formed
+    expect(new Set(Object.values(pos).map((p) => p.cx)).size).toBe(2);
+    // and the layout is crossing-free
+    expect(countCrossings(nodes, edges, pos)).toBe(0);
+  });
+
+  it("countCrossings actually detects a crossing (metric isn't trivially zero)", () => {
+    const nodes = [{ id: "A" }, { id: "B" }, { id: "X" }, { id: "Y" }];
+    const edges = [{ from: "A", to: "Y", kind: "seq" }, { from: "B", to: "X", kind: "seq" }];
+    // hand-built positions in the crossing (insertion) order: A,X top; B,Y bottom
+    const pos = { A: { cx: 0, cy: 0 }, B: { cx: 0, cy: 100 }, X: { cx: 200, cy: 0 }, Y: { cx: 200, cy: 100 } };
+    expect(countCrossings(nodes, edges, pos)).toBe(1);
+  });
+
+  it("keeps the longest-path column count (loops don't add columns)", () => {
+    const nodes = [{ id: "d" }, { id: "f" }];
+    const edges = [{ from: "d", to: "f", kind: "seq" }, { from: "f", to: "d", kind: "loop" }];
+    const { pos } = layoutFlow(nodes, edges);
+    expect(pos.f.cx).toBeGreaterThan(pos.d.cx); // f is one column to the right; the loop is ignored
+  });
+});
 
 describe("<AgentSwarm> control-flow graph", () => {
   it("renders agent cards, a decision diamond, a merge, and the edges", () => {
