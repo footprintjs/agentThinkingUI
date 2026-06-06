@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-06
+
 ### Added
 - **Live monitoring interface** — `createMonitor({ format, multi, reader })`: a
   push-based handle (`push`/`result`/`spans`/`reset`) that re-derives the
@@ -13,11 +15,13 @@ to [Semantic Versioning](https://semver.org/).
 - **UI render metrics** — opt-in `onRender` prop on `<AgentThinkingUI>` and
   `<AgentSwarm>`; wraps the tree in React's `<Profiler>` and reports
   `{ phase, actualMs, baseMs, step, steps, … }`.
+- **Component explorer** — `demo/explorer.html`, a no-build Storybook-style props
+  playground (controls + live preview + generated JSX + prop table).
 - **Performance benchmark** — `npm run perf` (load test over the pure cores); a
   Performance section in the README.
 - `layoutFlow` / `countCrossings` extracted to `src/flow-layout.js` (pure,
   exported) and **barycenter crossing reduction** added to the graph layout.
-- API reference (`docs/API.md`) and this changelog.
+- **API reference** (`docs/API.md`) and this changelog.
 
 ### Changed / Fixed
 - Graph layout is now **O(V+E)** (adjacency list + index-pointer queue); adapter
@@ -25,6 +29,8 @@ to [Semantic Versioning](https://semver.org/).
 - **Bounded rendering at scale**: the timeline switches to a single gradient
   track past ~240 steps; the inspector caps oversized tool I/O; `buildMulti`
   parses attributes / resolves nearest-agent once.
+- **Dev tooling**: pinned Vite 8 (transitive via the test runner only — the
+  library builds with esbuild and ships no Vite).
 
 ## [0.4.0]
 
@@ -76,7 +82,8 @@ to [Semantic Versioning](https://semver.org/).
   prop-first scoped theming, and the `fromOTLP` / `fromOpenInference` /
   `fromOTLPMulti` adapters. Scoped ES modules with an ESM + UMD dual build.
 
-[Unreleased]: https://github.com/footprintjs/agentThinkingUI/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/footprintjs/agentThinkingUI/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.5.0
 [0.4.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.4.0
 [0.3.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.3.0
 [0.2.1]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.2.1
