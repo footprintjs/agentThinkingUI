@@ -16,6 +16,9 @@ to [Semantic Versioning](https://semver.org/).
 - Essay — **[The protocol is the floor, not the ceiling](docs/blog/protocol-is-the-floor.md)**:
   why OTel/OpenInference can't carry all the domain content, and the seam (compose by
   `spanId` · `classify` · `renderDetail`) that fills it.
+- Essay — **[Everything is a prop](docs/blog/everything-is-a-prop.md)**: every seam
+  (look, data, semantic layer, debug context) is a React prop — a component you own,
+  not a platform you configure.
 
 ## [0.8.0] - 2026-06-06
 

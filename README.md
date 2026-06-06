@@ -465,6 +465,9 @@ Point a `trace` at your own recorded run (live or replay) and render — that's 
 - **Essay — [The protocol is the floor, not the ceiling](./docs/blog/protocol-is-the-floor.md)** —
   why OTel/OpenInference can't carry everything, and how you fill the domain
   content (compose by `spanId` · `classify` · `renderDetail`).
+- **Essay — [Everything is a prop](./docs/blog/everything-is-a-prop.md)** — every
+  seam (branding, data, the semantic layer, debug context) is a React prop, so the
+  player is a component you own, not a platform you configure.
 
 ## FAQ
 
