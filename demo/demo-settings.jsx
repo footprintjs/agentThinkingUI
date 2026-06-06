@@ -21,7 +21,7 @@ const FONT_PRESETS = {
   serif:  { label: "Serif",  fonts: { display: 'Georgia, "Times New Roman", serif', body: "Georgia, serif", mono: "ui-monospace, monospace", hand: "Georgia, serif" } },
 };
 
-function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle, scenarios, sceneKey, setSceneKey, setFont, onLive, liveOn, onImport, otlpSample, oiSample, flows, flowKey, setFlowKey }) {
+function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle, scenarios, sceneKey, setSceneKey, setFont, onLive, liveOn, onImport, otlpSample, oiSample, onImportMulti, otlpMultiSample, oiMultiSample, flows, flowKey, setFlowKey }) {
   const [open, setOpen] = dsUseState(false);
   const [fmt, setFmt] = dsUseState("otel");
   const taRef = React.useRef(null);
@@ -42,6 +42,28 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
   const tabBtn = (id, label) => (
     <button onClick={() => setTab(id)} style={{ flex: 1, font: 'inherit', fontSize: 12.5, fontWeight: 700, padding: '7px 8px', border: 'none', borderRadius: 8, cursor: 'pointer', background: tab === id ? '#fff' : 'transparent', color: tab === id ? '#C0531F' : '#6E5C49', boxShadow: tab === id ? '0 1px 3px rgba(70,45,25,.12)' : 'none' }}>{label}</button>
   );
+
+  // shared import block — the OpenTelemetry/OpenInference format pill (state `fmt`)
+  // is COMMON to both tabs; each tab just supplies its own samples + convert handler.
+  const importBlock = (handler, otSample, oiSampleLocal, noun) => {
+    const sample = () => (fmt === 'otel' ? otSample : oiSampleLocal);
+    return (
+      <>
+        <div style={lbl}>Import {noun}</div>
+        <div style={{ display: 'flex', gap: 3, marginBottom: 8, background: '#F4EBDB', border: '1px solid #E6D8C2', borderRadius: 999, padding: 3 }}>
+          {[['otel', 'OpenTelemetry'], ['openinference', 'OpenInference']].map(([id, label]) =>
+            <button key={id} onClick={() => setFmt(id)} style={{ flex: 1, font: 'inherit', fontSize: 12, fontWeight: 700, padding: '6px 8px', border: 'none', borderRadius: 999, cursor: 'pointer', background: fmt === id ? '#fff' : 'transparent', color: fmt === id ? '#C0531F' : '#6E5C49', boxShadow: fmt === id ? '0 1px 3px rgba(70,45,25,.12)' : 'none' }}>{label}</button>)}
+        </div>
+        <textarea key={tab + fmt} ref={taRef} defaultValue={sample()} spellCheck={false}
+          style={{ width: '100%', height: 110, fontFamily: 'ui-monospace, monospace', fontSize: 11, lineHeight: 1.4, padding: '7px 9px', border: '1px solid #E6D8C2', borderRadius: 8, background: '#fff', color: '#2C1F15', boxSizing: 'border-box', resize: 'vertical' }} />
+        <button onClick={() => { setOpen(false); handler((taRef.current && taRef.current.value) || sample(), fmt); }}
+          style={{ width: '100%', marginTop: 6, font: 'inherit', fontSize: 13, fontWeight: 700, padding: '8px 12px', border: '1px solid #C0531F', borderRadius: 10, background: '#fff', color: '#C0531F', cursor: 'pointer' }}>
+          Convert &amp; play
+        </button>
+        <div style={{ fontSize: 11.5, color: '#A2917C', marginTop: 5 }}>Spans from any {fmt === 'otel' ? 'OpenTelemetry GenAI' : 'OpenInference'} {noun} → built into a {noun.indexOf('multi') >= 0 ? 'flow graph' : 'trace'} programmatically.</div>
+      </>
+    );
+  };
 
   const modal = open && ReactDOM.createPortal(
     <div onClick={() => setOpen(false)}
@@ -97,20 +119,7 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
               </button>
               <div style={{ fontSize: 11.5, color: '#A2917C', marginTop: 5 }}>Streams the beats in one at a time — watch the scene + timeline fill in real time.</div>
             </>}
-            {onImport && <>
-              <div style={lbl}>Import an agent trace</div>
-              <div style={{ display: 'flex', gap: 3, marginBottom: 8, background: '#F4EBDB', border: '1px solid #E6D8C2', borderRadius: 999, padding: 3 }}>
-                {[['otel', 'OpenTelemetry'], ['openinference', 'OpenInference']].map(([id, label]) =>
-                  <button key={id} onClick={() => setFmt(id)} style={{ flex: 1, font: 'inherit', fontSize: 12, fontWeight: 700, padding: '6px 8px', border: 'none', borderRadius: 999, cursor: 'pointer', background: fmt === id ? '#fff' : 'transparent', color: fmt === id ? '#C0531F' : '#6E5C49', boxShadow: fmt === id ? '0 1px 3px rgba(70,45,25,.12)' : 'none' }}>{label}</button>)}
-              </div>
-              <textarea key={fmt} ref={taRef} defaultValue={fmt === 'otel' ? otlpSample : oiSample} spellCheck={false}
-                style={{ width: '100%', height: 110, fontFamily: 'ui-monospace, monospace', fontSize: 11, lineHeight: 1.4, padding: '7px 9px', border: '1px solid #E6D8C2', borderRadius: 8, background: '#fff', color: '#2C1F15', boxSizing: 'border-box', resize: 'vertical' }} />
-              <button onClick={() => { setOpen(false); onImport((taRef.current && taRef.current.value) || (fmt === 'otel' ? otlpSample : oiSample), fmt); }}
-                style={{ width: '100%', marginTop: 6, font: 'inherit', fontSize: 13, fontWeight: 700, padding: '8px 12px', border: '1px solid #C0531F', borderRadius: 10, background: '#fff', color: '#C0531F', cursor: 'pointer' }}>
-                Convert &amp; play
-              </button>
-              <div style={{ fontSize: 11.5, color: '#A2917C', marginTop: 5 }}>Spans from any {fmt === 'otel' ? 'OpenTelemetry GenAI' : 'OpenInference'} agent → played as a trace.</div>
-            </>}
+            {onImport && importBlock(onImport, otlpSample, oiSample, 'an agent trace')}
           </>}
           {tab === 'multi' && (flows ? <>
             <div style={lbl}>Control-flow pattern</div>
@@ -126,6 +135,7 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
                 {liveOn ? 'Restart live stream' : 'Stream the team in'}
               </button>
             </>}
+            {onImportMulti && importBlock(onImportMulti, otlpMultiSample, oiMultiSample, 'a multi-agent trace')}
             <a href="./index.html" style={{ display: 'block', marginTop: 12, fontSize: 12, fontWeight: 700, color: '#6E5C49', textDecoration: 'none' }}>‹ Back to single-agent demo</a>
           </> : <>
             <div style={lbl}>Multi-agent</div>

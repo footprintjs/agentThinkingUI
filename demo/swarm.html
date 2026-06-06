@@ -30,27 +30,42 @@
       const flowList = Object.keys(flows).map((key) => ({ key, label: flows[key].label }));
       const [k, setK] = useState(flowList[0].key);
       const [reveal, setReveal] = useState(0); // 0 = whole graph; >0 = live-stream up to N nodes
+      const [imported, setImported] = useState(null); // a FlowGraph built from pasted telemetry
       const [brand, setBrand] = useState(null);
       const [labels, setLabels] = useState({});
       const [icons, setIcons] = useState({});
       const [font, setFont] = useState(null);
       const timer = useRef(null);
-      const full = flows[k].graph;
+      const full = imported || flows[k].graph;
       const live = reveal > 0;
       const graph = live ? { ...full, nodes: full.nodes.slice(0, reveal) } : full;
       const theme = (brand || font) ? { ...(brand ? { colors: { brand } } : {}), ...(font ? { fonts: font } : {}) } : undefined;
 
       const stopLive = () => { if (timer.current) clearInterval(timer.current); timer.current = null; };
       const startLive = () => { stopLive(); setReveal(1); let n = 1; timer.current = setInterval(() => { n += 1; setReveal(n); if (n >= full.nodes.length) stopLive(); }, 1100); };
-      const pick = (key) => { stopLive(); setReveal(0); setK(key); };
+      const pick = (key) => { stopLive(); setReveal(0); setImported(null); setK(key); };
       useEffect(() => stopLive, []);
 
-      // The control-flow patterns + live stream now live in the gear's Multi-agent tab.
+      // build a multi-agent FlowGraph from pasted telemetry, programmatically — the
+      // per-agent drill-down trace comes from each agent span's child spans.
+      const onImportMulti = (text, fmt) => {
+        try {
+          const otlp = JSON.parse(text);
+          const fn = fmt === "openinference" ? window.AgentAdapters.fromOpenInferenceMulti : window.AgentAdapters.fromOTLPMulti;
+          const g = fn(otlp, { asker: "you" });
+          if (!g.nodes || !g.nodes.length) throw new Error("no agents found");
+          stopLive(); setReveal(0); setImported(g);
+        } catch (e) { window.alert("Couldn't read that trace:\n" + e.message); }
+      };
+
+      // The control-flow patterns, live stream + import live in the gear's Flow tab.
       return (
         <>
-          <AgentSwarm key={k} trace={graph} live={live} theme={theme} labels={labels} icons={icons} brand={<>Agent<b>ThinkingUI</b></>} />
+          <AgentSwarm key={imported ? "import" : k} trace={graph} live={live} theme={theme} labels={labels} icons={icons} brand={<>Agent<b>ThinkingUI</b></>} />
           <DemoSettings brand={brand} setBrand={setBrand} labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons}
-            setFont={setFont} flows={flowList} flowKey={k} setFlowKey={pick} onLive={startLive} liveOn={live} />
+            setFont={setFont} flows={flowList} flowKey={k} setFlowKey={pick} onLive={startLive} liveOn={live}
+            onImportMulti={onImportMulti}
+            otlpMultiSample={JSON.stringify(window.AGENT_OTLP_MULTI, null, 2)} oiMultiSample={JSON.stringify(window.AGENT_OI_MULTI, null, 2)} />
         </>
       );
     }

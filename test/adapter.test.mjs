@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fromOTLP, fromOpenInference, fromOTLPMulti } from "../src/adapters/otlp.js";
+import { fromOTLP, fromOpenInference, fromOTLPMulti, fromOpenInferenceMulti } from "../src/adapters/otlp.js";
 
 // build OTLP/JSON typed attributes + a span helper
 const A = (o) => Object.entries(o).map(([key, v]) => ({
@@ -107,6 +107,24 @@ describe("fromOTLPMulti (multi-agent span tree → FlowGraph)", () => {
     expect(flights.trace.steps.some((s) => s.kind === "ask" && s.tool === "search_flights")).toBe(true);
     const planner = g.nodes.find((n) => n.name === "Planner");
     expect(planner.trace.steps.some((s) => s.kind === "ask")).toBe(false);
+  });
+});
+
+describe("fromOpenInferenceMulti (OI span tree → FlowGraph)", () => {
+  const mspan = (spanId, parentSpanId, attrs) => ({ spanId, parentSpanId, ...span(attrs) });
+  const g = fromOpenInferenceMulti(otlp([
+    mspan("o", undefined, { "openinference.span.kind": "AGENT", "agent.name": "Coordinator", "llm.input_messages.0.message.content": "Triage", "llm.output_messages.0.message.content": "Routed." }),
+    mspan("b", "o", { "openinference.span.kind": "AGENT", "agent.name": "Billing" }),
+    mspan("bt", "b", { "openinference.span.kind": "TOOL", "tool.name": "lookup_invoice", "input.value": "{}", "output.value": "{}" }),
+  ]), { asker: "you" });
+
+  it("makes an agent node per AGENT span (OI keys)", () => {
+    expect(g.nodes.map((n) => n.name).sort()).toEqual(["Billing", "Coordinator"]);
+  });
+  it("links parent → child and builds the child's trace from its own tools", () => {
+    expect(g.edges.some((e) => e.from === "o" && e.to === "b")).toBe(true);
+    const billing = g.nodes.find((n) => n.name === "Billing");
+    expect(billing.trace.steps.some((s) => s.kind === "ask" && s.tool === "lookup_invoice")).toBe(true);
   });
 });
 

@@ -94,13 +94,14 @@ OpenInference (Arize/Phoenix/LlamaIndex)? Convert OTLP spans straight to a trace
 no re-instrumentation:
 
 ```js
-import { fromOTLP, fromOpenInference, fromOTLPMulti } from "agentthinkingui";
+import { fromOTLP, fromOpenInference, fromOTLPMulti, fromOpenInferenceMulti } from "agentthinkingui";
 
 const trace = fromOTLP(otlpJson, { asker: "Sam" });    // or fromOpenInference(spans)
 <AgentThinkingUI trace={trace} />
 
-// multi-agent: an OTel span tree → a FlowGraph for <AgentSwarm>
-const flow = fromOTLPMulti(otlpJson, { asker: "Sam" });
+// multi-agent: a span tree → a FlowGraph for <AgentSwarm> (each agent's drill-down
+// trace is built from that agent span's children). OTel or OpenInference:
+const flow = fromOTLPMulti(otlpJson, { asker: "Sam" }); // or fromOpenInferenceMulti(spans)
 <AgentSwarm trace={flow} />
 ```
 

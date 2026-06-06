@@ -169,16 +169,12 @@ export function fromOTLP(otlp, opts = {}) { return buildTrace(otlp, OTEL, opts);
 /** OpenInference (Arize/Phoenix/LlamaIndex) spans → Trace. */
 export function fromOpenInference(otlp, opts = {}) { return buildTrace(otlp, OPENINFERENCE, opts); }
 
-/** OpenTelemetry span TREE → a multi-agent FlowGraph for <AgentSwarm>.
-    Each invoke_agent span becomes an agent node (its Trace built from its own
-    subtree, excluding nested agents); parent→child agent links become edges
-    (parallel when a parent has several child agents, else seq). */
-export function fromOTLPMulti(otlp, opts = {}) {
-  const R = OTEL;
+// shared span-TREE → FlowGraph builder (reader-agnostic, like buildTrace)
+function buildMulti(otlp, R, opts = {}) {
   const spans = collectSpans(otlp);
   const byId = {}; spans.forEach((s) => { if (s.spanId) byId[s.spanId] = s; });
   const kids = {}; spans.forEach((s) => { if (s.parentSpanId) (kids[s.parentSpanId] = kids[s.parentSpanId] || []).push(s); });
-  const isAgent = (s) => { const a = flatAttrs(s); const op = R.op(a); return op === "invoke_agent" || op === "create_agent" || !!a["gen_ai.agent.name"]; };
+  const isAgent = (s) => { const op = R.op(flatAttrs(s)); return op === "invoke_agent" || op === "create_agent" || op === "AGENT" || !!R.agent(flatAttrs(s)); };
   const agentSpans = spans.filter(isAgent);
 
   // 0–1 agents → a single-agent graph wrapping the whole run
@@ -210,6 +206,16 @@ export function fromOTLPMulti(otlp, opts = {}) {
   const rootNode = nodes.find((n) => n.id === root.spanId);
   return { task: opts.task || (rootNode && rootNode.trace.task) || "multi-agent run", asker: opts.asker || "user", nodes, edges };
 }
+
+/** OpenTelemetry GenAI span TREE → a multi-agent FlowGraph for <AgentSwarm>.
+    Each invoke_agent span becomes an agent node (its Trace built from its own
+    subtree, excluding nested agents); parent→child agent links become edges
+    (parallel when a parent has several child agents, else seq). The drill-down
+    Trace per agent is built programmatically from that agent's child spans. */
+export function fromOTLPMulti(otlp, opts = {}) { return buildMulti(otlp, OTEL, opts); }
+
+/** OpenInference span TREE → a multi-agent FlowGraph (same as fromOTLPMulti, OI keys). */
+export function fromOpenInferenceMulti(otlp, opts = {}) { return buildMulti(otlp, OPENINFERENCE, opts); }
 
 /* Live monitoring: accumulate spans as they finish and re-run the adapter on the
    growing set, then hand the result to <AgentThinkingUI live trace={...} />.

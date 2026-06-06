@@ -106,3 +106,5 @@ export function fromOTLP(otlp: unknown, opts?: AdapterOptions): Trace;
 export function fromOpenInference(otlp: unknown, opts?: AdapterOptions): Trace;
 /** OpenTelemetry span tree → a multi-agent FlowGraph (for <AgentSwarm>). */
 export function fromOTLPMulti(otlp: unknown, opts?: AdapterOptions): FlowGraph;
+/** OpenInference span tree → a multi-agent FlowGraph (for <AgentSwarm>). */
+export function fromOpenInferenceMulti(otlp: unknown, opts?: AdapterOptions): FlowGraph;
