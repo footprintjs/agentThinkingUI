@@ -26,7 +26,8 @@ function Timeline({ trace, index, setIndex, playing, setPlaying, speed, setSpeed
     acc += s.cost.ms;
     return { start, w };
   });
-  const head = segs[index].start + segs[index].w / 2;
+  const cur = Math.min(index, steps.length - 1); // live traces can grow/shrink under us
+  const head = segs[cur].start + segs[cur].w / 2;
 
   const elapsedMs = steps.slice(0, index + 1).reduce((a, s) => a + s.cost.ms, 0);
   const elapsedTok = steps.slice(0, index + 1).reduce((a, s) => a + s.cost.tokens, 0);
@@ -62,7 +63,7 @@ function Timeline({ trace, index, setIndex, playing, setPlaying, speed, setSpeed
           {steps.map((s, i) => (
             <div
               key={i}
-              className={"tl-seg s-" + segKind(s) + (i > index ? " future" : "")}
+              className={"tl-seg s-" + segKind(s) + (i > cur ? " future" : "")}
               style={{ width: segs[i].w + "%" }}
               title={`Step ${i + 1}`}
               onPointerDown={(e) => { e.stopPropagation(); setPlaying(false); setIndex(i); }}
@@ -83,7 +84,7 @@ function Timeline({ trace, index, setIndex, playing, setPlaying, speed, setSpeed
         </div>
 
         <div className="tl-readout">
-          <span className="step-n">{String(index + 1).padStart(2, "0")} <span>/ {String(steps.length).padStart(2, "0")}</span></span>
+          <span className="step-n">{String(cur + 1).padStart(2, "0")} <span>/ {String(steps.length).padStart(2, "0")}</span></span>
         </div>
 
         <div className="tl-meter">

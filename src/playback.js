@@ -13,16 +13,21 @@ function usePlayback(trace, opts) {
   opts = opts || {};
   const storageKey = opts.storageKey || "agentfootprint.index";
   const loop = !!opts.loop;
+  const live = !!opts.live; // live monitoring: tail the latest step as the trace grows
   const n = trace.steps.length;
 
   const [index, setIndexRaw] = useState(() => {
+    if (live) return Math.max(0, n - 1);
     const v = parseInt(localStorage.getItem(storageKey), 10);
     return Number.isFinite(v) && v >= 0 && v < n ? v : 0;
   });
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
 
-  const setIndex = (i) => { setIndexRaw(i); localStorage.setItem(storageKey, String(i)); };
+  const setIndex = (i) => { setIndexRaw(i); if (!live) localStorage.setItem(storageKey, String(i)); };
+
+  // live: jump to the newest beat whenever the trace grows (and don't persist)
+  useEffect(() => { if (live) setIndexRaw(Math.max(0, n - 1)); }, [live, n]);
 
   // auto-advance, dwell scaled by step kind + speed
   const timer = useRef(null);

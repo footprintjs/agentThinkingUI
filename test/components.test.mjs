@@ -134,6 +134,20 @@ describe("auto-advance + loop", () => {
   });
 });
 
+describe("live mode (tail the stream)", () => {
+  it("follows the newest beat and grows the timeline as steps arrive", () => {
+    const slice = (k) => ({ ...TRACE, steps: TRACE.steps.slice(0, k) });
+    const { container, rerender } = render(ui({ trace: slice(2), brand: "Demo", live: true }));
+    const readout = () => container.querySelector(".tl-readout .step-n").textContent;
+    expect(readout()).toContain("02"); // tailed to the last of 2
+    expect(container.querySelectorAll(".tl-seg").length).toBe(2);
+
+    rerender(ui({ trace: slice(5), brand: "Demo", live: true })); // stream grows
+    expect(readout()).toContain("05"); // followed to the new tail
+    expect(container.querySelectorAll(".tl-seg").length).toBe(5); // timeline grew
+  });
+});
+
 describe("keyboard navigation (usePlayback)", () => {
   it("advances and rewinds with arrow keys", () => {
     const { container } = render(ui({ trace: TRACE, brand: "Demo" }));

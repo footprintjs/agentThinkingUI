@@ -60,14 +60,37 @@ function DemoCredit() {
 }
 
 function App() {
+  const { useRef } = React;
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [brand, setBrand] = useState(null);
   const [labels, setLabels] = useState({});
   const [icons, setIcons] = useState({});
   const [font, setFont] = useState(null);
   const [sceneKey, setSceneKey] = useState(SCENARIOS[0].key);
+  const [live, setLive] = useState(false);
+  const [liveSteps, setLiveSteps] = useState(null);
+  const liveTimer = useRef(null);
   const isMobile = useIsMobile(760);
-  const trace = TRACES[sceneKey] || TRACES[SCENARIOS[0].key];
+
+  const base = TRACES[sceneKey] || TRACES[SCENARIOS[0].key];
+  // in live mode we feed a trace that GROWS one step at a time (a simulated stream)
+  const trace = live && liveSteps ? { ...base, steps: liveSteps } : base;
+
+  // simulate a live agent: start from the first beat, append the rest on a timer
+  const startLive = () => {
+    if (liveTimer.current) clearInterval(liveTimer.current);
+    setLive(true);
+    setLiveSteps([base.steps[0]]);
+    let i = 1;
+    liveTimer.current = setInterval(() => {
+      setLiveSteps((cur) => {
+        if (!cur || i >= base.steps.length) { clearInterval(liveTimer.current); liveTimer.current = null; return cur; }
+        return [...cur, base.steps[i++]];
+      });
+    }, 1200);
+  };
+  const selectScenario = (k) => { if (liveTimer.current) clearInterval(liveTimer.current); setLive(false); setLiveSteps(null); setSceneKey(k); };
+  useEffect(() => () => liveTimer.current && clearInterval(liveTimer.current), []);
 
   const acc = ACCENTS[t.accent] || ACCENTS["teal-amber"];
   const theme = useMemo(() => ({
@@ -82,10 +105,11 @@ function App() {
   return (
     <>
       <AgentThinkingUI key={sceneKey} trace={trace} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
-        theme={theme} labels={labels} icons={icons} brand={<>Agent<b>ThinkingUI</b></>} />
+        live={live} theme={theme} labels={labels} icons={icons} brand={<>Agent<b>ThinkingUI</b></>} />
       <DemoSettings brand={brand} setBrand={setBrand}
         labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons}
-        scenarios={SCENARIOS} sceneKey={sceneKey} setSceneKey={setSceneKey} setFont={setFont} />
+        scenarios={SCENARIOS} sceneKey={sceneKey} setSceneKey={selectScenario} setFont={setFont}
+        onLive={startLive} liveOn={live} />
       {!isMobile && <DemoCredit />}
       {/* the accent/storytelling side panel is desktop-only chrome; the gear
           modal covers branding on small screens */}

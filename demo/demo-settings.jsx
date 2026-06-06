@@ -21,7 +21,7 @@ const FONT_PRESETS = {
   serif:  { label: "Serif",  fonts: { display: 'Georgia, "Times New Roman", serif', body: "Georgia, serif", mono: "ui-monospace, monospace", hand: "Georgia, serif" } },
 };
 
-function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle, scenarios, sceneKey, setSceneKey, setFont }) {
+function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle, scenarios, sceneKey, setSceneKey, setFont, onLive, liveOn }) {
   const [open, setOpen] = dsUseState(false);
   const [fontKey, setFontKey] = dsUseState("warm");
   const [scale, setScale] = dsUseState(1);
@@ -45,6 +45,15 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
           <div style={{ ...lbl, color: '#C0531F', marginTop: 14 }}>Live props · demo</div>
           <button onClick={() => setOpen(false)} title="Close" style={{ border: 'none', background: 'transparent', fontSize: 22, color: '#A2917C', cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
         </div>
+        {onLive && <>
+          <div style={lbl}>Live monitoring (demo)</div>
+          <button onClick={() => { setOpen(false); onLive(); }}
+            style={{ width: '100%', font: 'inherit', fontSize: 13, fontWeight: 700, padding: '9px 12px', border: 'none', borderRadius: 10, background: '#C0531F', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff', boxShadow: '0 0 0 3px rgba(255,255,255,.35)' }} />
+            {liveOn ? 'Restart live stream' : 'Start live stream'}
+          </button>
+          <div style={{ fontSize: 11.5, color: '#A2917C', marginTop: 5 }}>Streams the beats in one at a time — watch the scene + timeline fill in real time.</div>
+        </>}
         {scenarios && scenarios.length > 1 && <>
           <div style={lbl}>Scenario</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>

@@ -11,9 +11,9 @@
    four components into their own layout (they're each independent).
    (window.AgentFootprint remains as a deprecated alias.)
    ============================================================ */
-function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, style, mobile }) {
+function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, live = false, style, mobile }) {
   const { useState, useRef, useMemo } = React;
-  const { index, seek, playing, setPlaying, speed, setSpeed } = usePlayback(trace, { loop });
+  const { index, seek, playing, setPlaying, speed, setSpeed } = usePlayback(trace, { loop, live });
 
   // Resolve theme/labels/icons and scope them to THIS player's element:
   // CSS variables ride on the .app container (not :root), so multiple players
@@ -46,7 +46,7 @@ function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, 
     window.addEventListener("pointerup", up);
   };
 
-  const step = trace.steps[index];
+  const step = trace.steps[Math.min(index, trace.steps.length - 1)] || trace.steps[0];
 
   if (mobile) {
     return (

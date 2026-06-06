@@ -48,7 +48,7 @@
     // the same library shell in mobile mode (stacked + minimal timeline),
     // plus the live-props gear anchored inside the phone screen.
     function MobileApp() {
-      const { useState, useMemo } = React;
+      const { useState, useMemo, useRef, useEffect } = React;
       const TRACES = window.AGENT_TRACES || { offsite: window.AGENT_TRACE };
       const SCENARIOS = Object.keys(TRACES).map(k => ({ key: k, label: TRACES[k].title || k }));
       const [brand, setBrand] = useState(null);
@@ -56,13 +56,30 @@
       const [icons, setIcons] = useState({});
       const [font, setFont] = useState(null);
       const [sceneKey, setSceneKey] = useState(SCENARIOS[0].key);
+      const [live, setLive] = useState(false);
+      const [liveSteps, setLiveSteps] = useState(null);
+      const liveTimer = useRef(null);
+      const base = TRACES[sceneKey];
+      const trace = live && liveSteps ? { ...base, steps: liveSteps } : base;
+      const startLive = () => {
+        if (liveTimer.current) clearInterval(liveTimer.current);
+        setLive(true); setLiveSteps([base.steps[0]]);
+        let i = 1;
+        liveTimer.current = setInterval(() => setLiveSteps((cur) => {
+          if (!cur || i >= base.steps.length) { clearInterval(liveTimer.current); liveTimer.current = null; return cur; }
+          return [...cur, base.steps[i++]];
+        }), 1200);
+      };
+      const selectScenario = (k) => { if (liveTimer.current) clearInterval(liveTimer.current); setLive(false); setLiveSteps(null); setSceneKey(k); };
+      useEffect(() => () => liveTimer.current && clearInterval(liveTimer.current), []);
       const theme = useMemo(() => ({ ...(brand ? { colors: { brand } } : {}), ...(font ? { fonts: font } : {}) }), [brand, font]);
       return (
         <>
-          <AgentThinkingUI key={sceneKey} trace={TRACES[sceneKey]} mobile theme={theme} labels={labels} icons={icons} brand={<>Agent<b>ThinkingUI</b></>} />
+          <AgentThinkingUI key={sceneKey} trace={trace} mobile live={live} theme={theme} labels={labels} icons={icons} brand={<>Agent<b>ThinkingUI</b></>} />
           <DemoSettings brand={brand} setBrand={setBrand} labels={labels} setLabels={setLabels}
             icons={icons} setIcons={setIcons}
-            scenarios={SCENARIOS} sceneKey={sceneKey} setSceneKey={setSceneKey} setFont={setFont}
+            scenarios={SCENARIOS} sceneKey={sceneKey} setSceneKey={selectScenario} setFont={setFont}
+            onLive={startLive} liveOn={live}
             containerStyle={{ position: 'absolute', top: 14, right: 14, zIndex: 60 }} />
         </>
       );
