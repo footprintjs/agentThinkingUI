@@ -66,6 +66,9 @@
       { id: "w2", kind: "agent", name: "Hotels", role: "worker", trace: mini("Hotels") },
       { id: "s", kind: "merge", label: "synthesis" } ],
       edges: [{ from: "p", to: "w1", kind: "seq" }, { from: "p", to: "w2", kind: "seq" }, { from: "w1", to: "s", kind: "seq" }, { from: "w2", to: "s", kind: "seq" }] };
+    // demo source ids (the adapters set these from real spans) so the deep-link + onSelect read out
+    TRACE.steps.forEach((s, i) => { s.spanId = "span-" + i; });
+    GRAPH.nodes.forEach((n) => { if (n.kind === "agent") n.spanId = "agent-" + n.id; });
 
     // prop reference (mirrors docs/API.md) rendered as a live table
     const PROPS = {
@@ -81,11 +84,16 @@
         ["mobile", "boolean", "false", "stacked mobile layout"],
         ["storageKey", "string | null", "derived", "persist scrub position (null disables)"],
         ["onRender", "(m) => void", "—", "opt-in UI render metrics (React Profiler)"],
+        ["onSelect", "(step, i) => void", "—", "fires per beat; step carries spanId/traceId"],
+        ["linkResolver", "(step) => url", "—", "renders an 'open ↗' deep-link for the step"],
       ],
       multi: [
         ["trace", "FlowGraph", "—", "the team as a control-flow graph (required)"],
         ["theme / labels / icons / brand", "—", "—", "as AgentThinkingUI; carried into drill-down"],
         ["live", "boolean", "false", "tail the team timeline as the graph grows"],
+        ["onSelect", "(beat) => void", "—", "fires per team beat (carries _agent, spanId)"],
+        ["onNodeOpen", "(node) => void", "—", "fires when an agent is drilled into"],
+        ["linkResolver", "(node) => url", "—", "renders an '↗' deep-link on the agent card"],
         ["onRender", "(m) => void", "—", "UI render metrics (adds agents)"],
       ],
     };
@@ -107,6 +115,8 @@
       const [live, setLive] = useState(false);
       const [scale, setScale] = useState(1);
       const [brain, setBrain] = useState("default");
+      const [deeplink, setDeeplink] = useState(true);
+      const [lastEvent, setLastEvent] = useState("");
 
       const theme = { mode, ...(color ? { colors: { brand: color } } : {}), ...(scale !== 1 ? { fonts: { scale } } : {}) };
       const icons = brain === "default" ? {} : { brain: { kind: "emoji", value: brain } };
@@ -154,13 +164,22 @@
                 <Toggle label="live" v={live} set={setLive} />
                 <Toggle label="mobile" v={mobile} set={setMobile} />
               </>}
+              <div className="ex-lbl">Host hooks</div>
+              <Toggle label="linkResolver → open ↗" v={deeplink} set={setDeeplink} />
+              <div style={{ fontSize: 11.5, color: "#A2917C", marginTop: 4 }}>onSelect / onNodeOpen fire on interaction (see below).</div>
             </div>
             <div className="ex-main">
               <div className="ex-preview">
                 {comp === "single"
-                  ? <AgentThinkingUI key={mode + scale + brain + mobile} trace={TRACE} theme={theme} icons={icons} brand={brandNode} metaphor={metaphor} loop={loop} live={live} mobile={mobile} />
-                  : <MultiAgentFlow key={mode} trace={GRAPH} theme={theme} brand={brandNode} />}
+                  ? <AgentThinkingUI key={mode + scale + brain + mobile} trace={TRACE} theme={theme} icons={icons} brand={brandNode} metaphor={metaphor} loop={loop} live={live} mobile={mobile}
+                      onSelect={(s, i) => setLastEvent("onSelect → #" + (i + 1) + " " + s.kind + (s.spanId ? " (" + s.spanId + ")" : ""))}
+                      linkResolver={deeplink ? (s) => "https://your-obs-tool.example/span/" + s.spanId : undefined} />
+                  : <MultiAgentFlow key={mode} trace={GRAPH} theme={theme} brand={brandNode}
+                      onSelect={(s) => setLastEvent("onSelect → " + s._name + " · " + s.kind)}
+                      onNodeOpen={(n) => setLastEvent("onNodeOpen → " + n.name + " (" + (n.spanId || n.id) + ")")}
+                      linkResolver={deeplink ? (n) => "https://your-obs-tool.example/agent/" + (n.spanId || n.id) : undefined} />}
               </div>
+              <div style={{ fontSize: 12.5, color: "#6E5C49" }}><b style={{ color: "#95380F" }}>event</b> &nbsp;{lastEvent || "— scrub or click an agent to fire onSelect / onNodeOpen —"}</div>
               <pre className="ex-code">{code}</pre>
               <table className="ex-props">
                 <thead><tr><th>prop</th><th>type</th><th>default</th><th>description</th></tr></thead>
