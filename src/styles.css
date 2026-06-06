@@ -604,3 +604,17 @@ button { font-family: inherit; cursor: pointer; }
 .swarm-edge.dim { stroke: var(--line); opacity: .7; animation: none; }
 .swarm-edge-head.taken { fill: var(--instr-deep); }
 .swarm-edge-head.dim { fill: var(--line); }
+
+/* team time-travel + notepad + commentary */
+.swarm-spacer { flex: 1; }
+.swarm-np-toggle { border: 1px solid var(--line); background: var(--paper-2); color: var(--ink); border-radius: 9px; padding: 5px 11px; font-weight: 700; font-size: calc(12.5px * var(--af-text-scale)); cursor: pointer; }
+.swarm-body { flex: 1; min-height: 0; display: flex; gap: 16px; padding-bottom: 16px; }
+.swarm-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.app-swarm .timeline { margin-top: 12px; flex: none; }
+.swarm-commentary { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex: none; font-size: calc(13px * var(--af-text-scale)); color: var(--ink-soft); }
+.swarm-commentary b { color: var(--ink); }
+.swarm-commentary .sc-sep { color: var(--ink-faint); }
+.swarm-notepad { width: 320px; flex: none; display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow-sm); overflow: hidden; }
+.swarm-np-head { font-family: var(--font-display); font-weight: 700; font-size: calc(14px * var(--af-text-scale)); padding: 14px 16px 8px; }
+.agent-card.future { opacity: .48; }
+.agent-card.current { border-color: var(--accent); box-shadow: var(--shadow-md); }

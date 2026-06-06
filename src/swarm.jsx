@@ -1,10 +1,28 @@
 import React from "react";
 import { AgentThinkingUI } from "./footprint.jsx";
 import { BrainGlyph } from "./stage.jsx";
+import { Timeline } from "./timeline.jsx";
+import { usePlayback } from "./playback.js";
 import { AgentThemeContext } from "./context.js";
 import * as AgentTheme from "./theme.js";
 
 const { useState, useMemo } = React;
+
+// one team-journal line per beat (agent-prefixed), reusing the notepad styles
+function SwarmNote({ s, n, active }) {
+  const k = s.kind === "return" ? s.replyType : s.kind;
+  const accent = k === "data" ? "k-data" : k === "instruction" ? "k-instr" : k === "both" ? "k-both" : k === "ask" ? "k-call" : k === "answer" ? "k-answer" : "k-prompt";
+  const note = s.kind === "answer" ? (s.answer && s.answer.headline) : s.brain;
+  return (
+    <div className={"note " + accent + (active ? " active" : "")}>
+      <span className="note-dot" />
+      <div className="note-nb">
+        <div className="note-head"><span className="note-n">{String(n + 1).padStart(2, "0")}</span><span className="note-title">{s._name} · {s.kind}</span></div>
+        <div className="note-text">{note}</div>
+      </div>
+    </div>
+  );
+}
 
 /* ============================================================
    AgentThinkingUI — <AgentSwarm> (multi-agent control-flow map)
@@ -63,6 +81,22 @@ export function AgentSwarm({ trace, theme, labels, icons, brand }) {
     const g = {}; edges.forEach((e) => { if (e.kind === "conditional" && e.taken) g[e.from] = true; }); return g;
   }, [edges]);
 
+  const [npOpen, setNpOpen] = useState(false);
+  // a TEAM trace: every agent's beats interleaved in flow order (column, then row),
+  // so the swarm map is itself scrubbable — time-travel + commentary across the team.
+  const { teamSteps, ranges } = useMemo(() => {
+    const ags = nodes.filter((n) => (!n.kind || n.kind === "agent") && n.trace && pos[n.id])
+      .sort((a, b) => (pos[a.id].cx - pos[b.id].cx) || (pos[a.id].cy - pos[b.id].cy));
+    const steps = []; const r = {};
+    ags.forEach((a) => { r[a.id] = { start: steps.length }; (a.trace.steps || []).forEach((s) => steps.push({ ...s, _agent: a.id, _name: a.name })); r[a.id].end = steps.length - 1; });
+    return { teamSteps: steps, ranges: r };
+  }, [nodes, pos]);
+  const teamTrace = useMemo(() => ({ task, agent: "team", model: "", asker: "", steps: teamSteps.length ? teamSteps : [{ kind: "prompt", brain: "", cost: { ms: 0, tokens: 0 } }] }), [teamSteps, task]);
+  const play = usePlayback(teamTrace, { storageKey: "agentthinkingui.swarm" });
+  const idx = Math.min(play.index, teamTrace.steps.length - 1);
+  const cur = teamSteps[idx];
+  const phaseOf = (id) => { const rr = ranges[id]; if (!rr) return "done"; if (idx < rr.start) return "future"; if (idx > rr.end) return "done"; return "current"; };
+
   if (sel && byId[sel] && byId[sel].trace) {
     const a = byId[sel];
     return (
@@ -90,7 +124,11 @@ export function AgentSwarm({ trace, theme, labels, icons, brand }) {
         <div className="swarm-bar">
           {brand && <div className="brand-name swarm-brand">{brand}</div>}
           <span className="swarm-task"><span className="rec" /><span className="lbl">flow</span> {task}</span>
+          <span className="swarm-spacer" />
+          <button className="swarm-np-toggle" onClick={() => setNpOpen((o) => !o)}>{npOpen ? "Hide notepad" : "Notepad"}</button>
         </div>
+        <div className="swarm-body">
+        <div className="swarm-main">
         <div className="swarm-wrap">
           <div className="swarm-canvas" style={{ width: W, height: H }}>
             <svg className="swarm-edges" width={W} height={H} aria-hidden="true">
@@ -132,7 +170,8 @@ export function AgentSwarm({ trace, theme, labels, icons, brand }) {
               if (n.kind === "start" || n.kind === "end") return (<div key={n.id} className={"flow-cap " + n.kind} style={st}>{n.label || n.kind}</div>);
               const steps = (n.trace && n.trace.steps || []).length;
               const tok = (n.trace && n.trace.steps || []).reduce((s, x) => s + ((x.cost && x.cost.tokens) || 0), 0);
-              const k = n.status === "error" ? "k-prompt" : n.status === "running" ? "k-call" : "k-answer";
+              const ph = phaseOf(n.id);
+              const k = ph === "current" ? "k-call current" : ph === "future" ? "k-answer future" : "k-answer";
               return (
                 <button key={n.id} className={"agent-card " + k} style={st} onClick={() => n.trace && setSel(n.id)} title={n.trace ? "Open " + n.name : n.name}>
                   <span className="ac-status" />
@@ -149,6 +188,18 @@ export function AgentSwarm({ trace, theme, labels, icons, brand }) {
               );
             })}
           </div>
+        </div>
+        {cur && (
+          <div className="swarm-commentary"><b>{cur._name || "—"}</b><span className="sc-sep">·</span><span>{cur.kind === "answer" ? (cur.answer && cur.answer.headline) : cur.brain}</span></div>
+        )}
+        <Timeline trace={teamTrace} index={idx} setIndex={play.seek} playing={play.playing} setPlaying={play.setPlaying} speed={play.speed} setSpeed={play.setSpeed} />
+        </div>
+        {npOpen && (
+          <div className="swarm-notepad">
+            <div className="swarm-np-head">Team notepad</div>
+            <div className="insp-body note-list">{teamSteps.slice(0, idx + 1).map((s, i) => <SwarmNote key={i} s={s} n={i} active={i === idx} />)}</div>
+          </div>
+        )}
         </div>
       </div>
     </AgentThemeContext.Provider>

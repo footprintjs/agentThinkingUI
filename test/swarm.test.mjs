@@ -44,9 +44,18 @@ describe("<AgentSwarm> control-flow graph", () => {
 
   it("drills into an agent node and back; control nodes aren't clickable", () => {
     const { container, getByText } = render(React.createElement(AgentSwarm, { trace: G }));
-    fireEvent.click(getByText("Drafter"));
+    fireEvent.click(container.querySelector(".agent-card")); // first agent card
     expect(container.querySelector(".flowscene")).toBeTruthy();
     fireEvent.click(getByText("‹ Team"));
     expect(container.querySelectorAll(".agent-card").length).toBe(2);
+  });
+
+  it("exposes a team timeline + notepad (multi-agent time-travel)", () => {
+    const { container, getByText } = render(React.createElement(AgentSwarm, { trace: G }));
+    expect(container.querySelector(".timeline")).toBeTruthy(); // team scrubber
+    expect(container.querySelector(".swarm-commentary")).toBeTruthy(); // current-beat narration
+    fireEvent.click(getByText("Notepad"));
+    expect(container.querySelector(".swarm-notepad")).toBeTruthy();
+    expect(container.querySelectorAll(".swarm-notepad .note").length).toBeGreaterThan(0);
   });
 });
