@@ -82,15 +82,19 @@ export interface ReturnStep {
   actChecklist?: ChecklistItem[];
   /** the "acts on the instruction" note (mixed `both` case) */
   actNote?: string;
+  /** set when the tool span errored (status ERROR / exception event) */
+  error?: string;
 }
 
-/** The loop ends in the answer. */
+/** The loop ends in the answer (or a failure). */
 export interface AnswerStep {
   kind: "answer";
   to: string;
   brain: string;
   answer: Answer;
   cost: Cost;
+  /** set when the agent run errored */
+  error?: string;
 }
 
 export type Step = PromptStep | AskStep | ReturnStep | AnswerStep;

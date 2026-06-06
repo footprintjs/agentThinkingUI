@@ -261,7 +261,7 @@ export function Stage({ trace, step, index, metaphor, straight }) {
     return () => ro.disconnect();
   }, []);
 
-  const accentClass =
+  const accentClass = step.error ? "k-error" :
     step.kind === "answer" ? "k-answer" :
     step.kind === "prompt" ? "k-prompt" :
     step.kind === "ask" ? "k-call" :

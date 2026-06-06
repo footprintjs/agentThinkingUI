@@ -65,7 +65,7 @@ function fmtLatency(ms) {
 
 function NoteEntry({ step, n, active }) {
   const k = step.kind === "return" ? step.replyType : step.kind;
-  const accent = k === "data" ? "k-data" : k === "instruction" ? "k-instr" : k === "both" ? "k-both"
+  const accent = step.error ? "k-error" : k === "data" ? "k-data" : k === "instruction" ? "k-instr" : k === "both" ? "k-both"
     : k === "ask" ? "k-call" : k === "answer" ? "k-answer" : "k-prompt";
   const j = journal(step);
   return (
@@ -104,7 +104,7 @@ export function Notepad({ trace, index, onCollapse, view, setView }) {
 }
 
 export function Inspector({ step, index, total, onCollapse, view, setView }) {
-  const accentClass =
+  const accentClass = step.error ? "k-error" :
     step.kind === "answer" ? "k-answer" :
     step.kind === "prompt" ? "k-prompt" :
     step.kind === "ask" ? "k-call" :
@@ -130,6 +130,7 @@ export function Inspector({ step, index, total, onCollapse, view, setView }) {
       </div>
 
       <div className="insp-body">
+        {step.error && <div className="err-banner"><span className="eb-tag">⚠ error</span><span className="eb-text">{step.error}</span></div>}
         {/* PROMPT */}
         {step.kind === "prompt" && (
           <Section label="Task received">

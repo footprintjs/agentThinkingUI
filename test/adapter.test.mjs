@@ -110,6 +110,31 @@ describe("fromOTLPMulti (multi-agent span tree → FlowGraph)", () => {
   });
 });
 
+describe("error handling (universal across both adapters)", () => {
+  it("OTel: a tool span with status ERROR → the return step carries the error", () => {
+    const t = { ...span({ "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "db_query", "gen_ai.tool.call.arguments": "{}" }), status: { code: 2, message: "connection timeout" } };
+    expect(fromOTLP(otlp([t])).steps.find((s) => s.kind === "return").error).toBe("connection timeout");
+  });
+  it("OpenInference: the same span status maps the error", () => {
+    const t = { ...span({ "openinference.span.kind": "TOOL", "tool.name": "db_query", "input.value": "{}", "output.value": "{}" }), status: { code: "STATUS_CODE_ERROR" } };
+    expect(fromOpenInference(otlp([t])).steps.find((s) => s.kind === "return").error).toBeTruthy();
+  });
+  it("detects recorded `exception` events", () => {
+    const t = span({ "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "x" }, [{ name: "exception", attrs: { "exception.message": "boom" } }]);
+    expect(fromOTLP(otlp([t])).steps.find((s) => s.kind === "return").error).toBe("boom");
+  });
+  it("multi-agent: an agent whose own span errored is marked status error", () => {
+    const ms = (spanId, parentSpanId, attrs, events, status) => ({ spanId, parentSpanId, ...span(attrs, events), ...(status ? { status } : {}) });
+    const g = fromOTLPMulti(otlp([
+      ms("o", undefined, { "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "Root" }),
+      ms("w", "o", { "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "Worker" }),
+      ms("wt", "w", { "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "db" }, [], { code: 2, message: "fail" }),
+    ]));
+    expect(g.nodes.find((n) => n.name === "Worker").status).toBe("error");
+    expect(g.nodes.find((n) => n.name === "Root").status).toBe("done");
+  });
+});
+
 describe("fromOpenInference", () => {
   it("reads the openinference.* / llm.* / tool.* keys", () => {
     const trace = fromOpenInference(

@@ -48,6 +48,16 @@ const asObject = (v) => (v && typeof v === "object" && !Array.isArray(v)) ? v : 
 const eventAttrs = (sp, name) => { const e = (sp.events || []).find((ev) => ev.name === name); return e ? flatAttrs(e) : null; };
 const firstContent = (o) => o && (o.content || o["gen_ai.message.content"] || o.message || o.body || o["gen_ai.event.content"]);
 
+// universal error detection (works for OTel + OpenInference — both are OTLP spans):
+// span status ERROR, or a recorded `exception` event.
+function spanError(sp) {
+  const st = sp.status;
+  if (st && (st.code === 2 || st.code === "STATUS_CODE_ERROR" || st.code === "ERROR")) return st.message || "error";
+  const ex = (sp.events || []).find((e) => e.name === "exception");
+  if (ex) { const a = flatAttrs(ex); return a["exception.message"] || a["exception.type"] || "exception"; }
+  return null;
+}
+
 // ---- attribute readers (the only thing that differs per convention) ------
 const OTEL = {
   op: (a) => a["gen_ai.operation.name"],
@@ -128,17 +138,21 @@ function buildTrace(otlp, R, opts = {}) {
     };
     if (cls.replyType !== "data") { ret.skill = cls.skill || name; ret.actChecklist = cls.actChecklist || []; }
     if (cls.replyType === "both") ret.actNote = toText(cls.actNote);
+    const err = spanError(t.sp); if (err) ret.error = err;
     steps.push(ret);
   }
 
   const lastChat = chats[chats.length - 1];
   const answerText = toText((agentSpan && R.assistantMsg(agentSpan.a, agentSpan.sp)) || (lastChat && R.assistantMsg(lastChat.a, lastChat.sp)));
-  steps.push({
+  const agentErr = agentSpan && spanError(agentSpan.sp);
+  const answerStep = {
     kind: "answer", to: opts.asker || "user",
-    brain: answerText || "Done.",
-    answer: { headline: (answerText || "Done.").slice(0, 120), plan: [], budget: [], cta: opts.cta || "" },
+    brain: answerText || (agentErr ? "Run failed." : "Done."),
+    answer: { headline: (answerText || (agentErr || "Done.")).slice(0, 120), plan: [], budget: [], cta: opts.cta || "" },
     cost: (lastChat && cost(lastChat)) || (agentSpan && cost(agentSpan)) || { ms: 0, tokens: 0 },
-  });
+  };
+  if (agentErr) answerStep.error = agentErr;
+  steps.push(answerStep);
 
   return {
     task: userText || opts.task || agentName + " run",
@@ -183,9 +197,9 @@ export function fromOTLPMulti(otlp, opts = {}) {
 
   const nodes = agentSpans.map((s) => {
     const a = flatAttrs(s);
-    const tr = buildTrace(ownSpans(s), R, { asker: opts.asker, title: R.agent(a) });
-    const code = s.status && s.status.code;
-    return { id: s.spanId, kind: "agent", name: R.agent(a) || tr.agent || "agent", role: a["gen_ai.agent.description"], status: (code === 2 || code === "STATUS_CODE_ERROR") ? "error" : "done", trace: tr };
+    const own = ownSpans(s);
+    const tr = buildTrace(own, R, { asker: opts.asker, title: R.agent(a) });
+    return { id: s.spanId, kind: "agent", name: R.agent(a) || tr.agent || "agent", role: a["gen_ai.agent.description"], status: own.some(spanError) ? "error" : "done", trace: tr };
   });
 
   const childCount = {}; agentSpans.forEach((s) => { const p = nearestAgent(s); if (p) childCount[p] = (childCount[p] || 0) + 1; });

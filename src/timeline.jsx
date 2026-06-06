@@ -64,7 +64,7 @@ export function Timeline({ trace, index, setIndex, playing, setPlaying, speed, s
           {steps.map((s, i) => (
             <div
               key={i}
-              className={"tl-seg s-" + segKind(s) + (i > cur ? " future" : "")}
+              className={"tl-seg s-" + segKind(s) + (s.error ? " err" : "") + (i > cur ? " future" : "")}
               style={{ width: segs[i].w + "%" }}
               title={`Step ${i + 1}`}
               onPointerDown={(e) => { e.stopPropagation(); setPlaying(false); setIndex(i); }}

@@ -32,7 +32,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 // a tiny real OpenTelemetry GenAI (OTLP/JSON) trace — prefilled in the gear's
 // "Import an OTel trace" box so anyone can see the adapter convert + play it.
 const A = (o) => Object.entries(o).map(([key, v]) => ({ key, value: typeof v === "number" ? { intValue: String(v) } : { stringValue: String(v) } }));
-const sp = (attrs, events, s, ms) => ({ startTimeUnixNano: String(1700000000000000000n + BigInt(s) * 1000000n), endTimeUnixNano: String(1700000000000000000n + BigInt(s + ms) * 1000000n), attributes: A(attrs), events: (events || []).map((e) => ({ name: e.name, attributes: A(e.attrs) })) });
+const sp = (attrs, events, s, ms, status) => ({ startTimeUnixNano: String(1700000000000000000n + BigInt(s) * 1000000n), endTimeUnixNano: String(1700000000000000000n + BigInt(s + ms) * 1000000n), attributes: A(attrs), events: (events || []).map((e) => ({ name: e.name, attributes: A(e.attrs) })), ...(status ? { status } : {}) });
 const SAMPLE_OTLP = { resourceSpans: [{ scopeSpans: [{ spans: [
   sp({ "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "support-agent", "gen_ai.request.model": "claude-sonnet", "gen_ai.usage.input_tokens": 120, "gen_ai.usage.output_tokens": 180 },
      [{ name: "gen_ai.user.message", attrs: { content: "Is order #8842 refundable?" } }, { name: "gen_ai.assistant.message", attrs: { content: "Yes — issued a full refund; it's within the 14-day window." } }], 0, 1200),
@@ -40,6 +40,8 @@ const SAMPLE_OTLP = { resourceSpans: [{ scopeSpans: [{ spans: [
      [{ name: "gen_ai.tool.message", attrs: { content: '{"item":"headphones","days_since":12}' } }], 200, 400),
   sp({ "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "refund_policy", "gen_ai.tool.call.arguments": "{}" },
      [{ name: "gen_ai.tool.message", attrs: { content: '{"full_refund_within_days":14}' } }], 700, 250),
+  sp({ "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "issue_refund", "gen_ai.tool.call.arguments": '{"amount":79}' },
+     [], 1000, 220, { code: 2, message: "payment gateway timeout" }),
 ] }] }] };
 // the OpenInference flavour (Arize/Phoenix/LlamaIndex) — same shape, different keys
 const SAMPLE_OI = { resourceSpans: [{ scopeSpans: [{ spans: [
