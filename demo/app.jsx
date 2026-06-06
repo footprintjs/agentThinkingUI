@@ -34,7 +34,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 const A = (o) => Object.entries(o).map(([key, v]) => ({ key, value: typeof v === "number" ? { intValue: String(v) } : { stringValue: String(v) } }));
 const sp = (attrs, events, s, ms, status) => ({ startTimeUnixNano: String(1700000000000000000n + BigInt(s) * 1000000n), endTimeUnixNano: String(1700000000000000000n + BigInt(s + ms) * 1000000n), attributes: A(attrs), events: (events || []).map((e) => ({ name: e.name, attributes: A(e.attrs) })), ...(status ? { status } : {}) });
 const SAMPLE_OTLP = { resourceSpans: [{ scopeSpans: [{ spans: [
-  sp({ "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "support-agent", "gen_ai.request.model": "claude-sonnet", "gen_ai.usage.input_tokens": 120, "gen_ai.usage.output_tokens": 180 },
+  sp({ "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "support-agent", "gen_ai.request.model": "claude-sonnet", "gen_ai.usage.input_tokens": 120, "gen_ai.usage.output_tokens": 180, "gen_ai.usage.cache_read_input_tokens": 96 },
      [{ name: "gen_ai.user.message", attrs: { content: "Is order #8842 refundable?" } }, { name: "gen_ai.assistant.message", attrs: { content: "Yes — issued a full refund; it's within the 14-day window." } }], 0, 1200),
   sp({ "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "lookup_order", "gen_ai.tool.call.arguments": '{"order":"#8842"}' },
      [{ name: "gen_ai.tool.message", attrs: { content: '{"item":"headphones","days_since":12}' } }], 200, 400),

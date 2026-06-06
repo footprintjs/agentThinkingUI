@@ -50,6 +50,18 @@ describe("fromOTLP (OpenTelemetry GenAI)", () => {
     expect(trace.steps[0].brain).toContain("Lisbon");
   });
 
+  it("captures the input/output token breakdown for cost attribution", () => {
+    // the agent span's usage (40 in / 60 out) flows onto the answer step
+    expect(trace.steps.find((s) => s.kind === "answer").cost).toMatchObject({ tokens: 100, tokensIn: 40, tokensOut: 60 });
+  });
+
+  it("reads cache-read tokens (OTel + OpenInference keys)", () => {
+    const ot = fromOTLP(otlp([span({ "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "a", "gen_ai.usage.input_tokens": 100, "gen_ai.usage.output_tokens": 20, "gen_ai.usage.cache_read_input_tokens": 80 })]));
+    expect(ot.steps.find((s) => s.kind === "answer").cost.tokensCached).toBe(80);
+    const oi = fromOpenInference(otlp([span({ "openinference.span.kind": "AGENT", "agent.name": "a", "llm.token_count.prompt": 100, "llm.token_count.completion": 20, "llm.token_count.prompt_details.cache_read": 64 })]));
+    expect(oi.steps.find((s) => s.kind === "answer").cost.tokensCached).toBe(64);
+  });
+
   it("turns each tool execution into ask + return with parsed I/O", () => {
     const ask = trace.steps.find((s) => s.kind === "ask" && s.tool === "search_flights");
     expect(ask.input).toEqual({ to: "LIS" });

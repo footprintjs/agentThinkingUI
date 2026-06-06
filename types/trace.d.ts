@@ -23,8 +23,16 @@ export interface Trace {
 }
 
 export interface Cost {
+  /** wall-clock latency for the step, in milliseconds */
   ms: number;
+  /** total tokens (input + output); kept as the headline number */
   tokens: number;
+  /** prompt / input tokens (for cost attribution) */
+  tokensIn?: number;
+  /** completion / output tokens */
+  tokensOut?: number;
+  /** cache-read (cached prompt) tokens — for cache-hit visibility */
+  tokensCached?: number;
 }
 
 /** What a tool reply carries — the heart of the model. */

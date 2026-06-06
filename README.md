@@ -122,7 +122,11 @@ type Step =
       error?: string }                      // set when the tool/step failed → rendered red
   | { kind: "answer";  to: string; brain: string; answer: Answer; cost: Cost; error?: string };
 
-type Cost = { ms: number; tokens: number };
+type Cost = {
+  ms: number; tokens: number;              // latency + total tokens
+  tokensIn?: number; tokensOut?: number;   // input / output split (cost attribution)
+  tokensCached?: number;                   // cache-read tokens (cache-hit visibility)
+};
 ```
 
 The three `replyType`s are the model from the hero: **data** (reason),
@@ -252,7 +256,8 @@ const flow2 = fromOpenInferenceMulti(spans);              // OpenInference span 
 ```
 
 Mapping: agent span → trace/agent-node, tool execution → ask+return, first user
-message → prompt, final assistant message → answer, span duration + tokens → cost;
+message → prompt, final assistant message → answer, span duration + tokens → cost
+(input/output and cache-read tokens are split out for cost attribution);
 nested `invoke_agent` spans become the agent graph. The **reply type**
 (`data`/`instruction`/`both`) isn't in those standards, so it's decided by an
 `opts.classify(toolName, attrs)` hook → opt-in `agentthinkingui.reply_type` /
