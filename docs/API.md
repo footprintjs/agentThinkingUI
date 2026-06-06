@@ -7,7 +7,7 @@ autocomplete. React 18+ is a peer dependency.
 
 ```js
 import {
-  AgentThinkingUI, AgentSwarm,                 // components
+  AgentThinkingUI, MultiAgentFlow,                 // components
   usePlayback,                                 // hook
   fromOTLP, fromOpenInference,                 // single-agent adapters
   fromOTLPMulti, fromOpenInferenceMulti,       // multi-agent adapters
@@ -46,7 +46,7 @@ playback in a resizable split.
 
 `AgentFootprint` is a **deprecated alias** of `AgentThinkingUI`.
 
-## `<AgentSwarm>`
+## `<MultiAgentFlow>`
 
 The multi-agent control-flow map; click an agent node to drill into its own
 `<AgentThinkingUI>`.
@@ -98,7 +98,7 @@ All take an optional [`AdapterOptions`](#adapteroptions).
 createMonitor(opts?: AdapterOptions & {
   format?: "otel" | "openinference";   // default "otel"
   reader?: ReaderMap;                   // plug a custom vendor convention
-  multi?: boolean;                      // true → FlowGraph for <AgentSwarm>
+  multi?: boolean;                      // true → FlowGraph for <MultiAgentFlow>
 }): {
   push(input): Trace | FlowGraph;       // append spans (OTLP or array), return updated result
   readonly result: Trace | FlowGraph;

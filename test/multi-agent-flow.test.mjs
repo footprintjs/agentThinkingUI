@@ -1,7 +1,7 @@
 import React from "react";
 import { describe, it, expect, afterEach } from "vitest";
 import { render, cleanup, fireEvent } from "@testing-library/react";
-import { AgentSwarm, layoutFlow, countCrossings } from "../src/swarm.jsx";
+import { MultiAgentFlow, layoutFlow, countCrossings } from "../src/multi-agent-flow.jsx";
 
 const mini = (task) => ({
   task, agent: "a", model: "m", asker: "x",
@@ -62,9 +62,9 @@ describe("layoutFlow — layered layout + barycenter crossing reduction", () => 
   });
 });
 
-describe("<AgentSwarm> control-flow graph", () => {
+describe("<MultiAgentFlow> control-flow graph", () => {
   it("renders agent cards, a decision diamond, a merge, and the edges", () => {
-    const { container, getByText } = render(React.createElement(AgentSwarm, { trace: G }));
+    const { container, getByText } = render(React.createElement(MultiAgentFlow, { trace: G }));
     expect(container.querySelectorAll(".agent-card").length).toBe(2);
     expect(container.querySelector(".flow-decision")).toBeTruthy();
     expect(container.querySelector(".flow-merge")).toBeTruthy();
@@ -75,7 +75,7 @@ describe("<AgentSwarm> control-flow graph", () => {
   });
 
   it("drills into an agent node and back; control nodes aren't clickable", () => {
-    const { container, getByText } = render(React.createElement(AgentSwarm, { trace: G }));
+    const { container, getByText } = render(React.createElement(MultiAgentFlow, { trace: G }));
     fireEvent.click(container.querySelector(".agent-card")); // first agent card
     expect(container.querySelector(".flowscene")).toBeTruthy();
     fireEvent.click(getByText("‹ Back to team"));
@@ -83,7 +83,7 @@ describe("<AgentSwarm> control-flow graph", () => {
   });
 
   it("exposes a team timeline + notepad (open by default), toggle-able", () => {
-    const { container, getByText } = render(React.createElement(AgentSwarm, { trace: G }));
+    const { container, getByText } = render(React.createElement(MultiAgentFlow, { trace: G }));
     expect(container.querySelector(".timeline")).toBeTruthy(); // team scrubber
     expect(container.querySelector(".swarm-commentary")).toBeTruthy(); // current-beat narration
     expect(container.querySelector(".swarm-notepad")).toBeTruthy(); // open by default

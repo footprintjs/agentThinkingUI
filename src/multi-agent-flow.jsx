@@ -28,7 +28,7 @@ function SwarmNote({ s, n, active }) {
 }
 
 /* ============================================================
-   AgentThinkingUI — <AgentSwarm> (multi-agent control-flow map)
+   AgentThinkingUI — <MultiAgentFlow> (multi-agent control-flow map)
    Renders a team as a control-flow graph and drills into each agent's
    single-agent <AgentThinkingUI>. Takes a FlowGraph:
      nodes: { id, kind:"agent"|"decision"|"merge"|"start"|"end", name?, role?,
@@ -38,7 +38,7 @@ function SwarmNote({ s, n, active }) {
    See docs/multi-agent-flow.md.
    ============================================================ */
 
-export function AgentSwarm({ trace, theme, labels, icons, brand, live, onRender }) {
+export function MultiAgentFlow({ trace, theme, labels, icons, brand, live, onRender }) {
   const [sel, setSel] = useState(null);
   const resolved = useMemo(() => AgentTheme.normalize({ theme, labels, icons }), [theme, labels, icons]);
   const vars = useMemo(() => AgentTheme.toVars(resolved), [resolved]);

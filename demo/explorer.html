@@ -42,7 +42,7 @@
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-  <!-- the library, prebuilt (sets window.AgentThinkingUI / AgentSwarm). Run `npm run build`. -->
+  <!-- the library, prebuilt (sets window.AgentThinkingUI / MultiAgentFlow). Run `npm run build`. -->
   <script src="../dist/agentthinkingui.umd.js"></script>
 
   <script type="text/babel">
@@ -114,7 +114,7 @@
 
       const code = comp === "single"
         ? `<AgentThinkingUI\n  trace={trace}\n  theme={{ mode: "${mode}"${color ? `, colors: { brand: "${color}" }` : ""}${scale !== 1 ? `, fonts: { scale: ${scale} }` : ""} }}\n  ${brain !== "default" ? `icons={{ brain: { kind: "emoji", value: "${brain}" } }}\n  ` : ""}metaphor={${metaphor}} loop={${loop}} live={${live}} mobile={${mobile}}\n/>`
-        : `<AgentSwarm\n  trace={graph}\n  theme={{ mode: "${mode}"${color ? `, colors: { brand: "${color}" }` : ""} }}\n/>`;
+        : `<MultiAgentFlow\n  trace={graph}\n  theme={{ mode: "${mode}"${color ? `, colors: { brand: "${color}" }` : ""} }}\n/>`;
 
       const chip = (on) => "ex-chip" + (on ? " on" : "");
       return (
@@ -123,7 +123,7 @@
             <h1>Agent<b>ThinkingUI</b> · explorer</h1>
             <div className="ex-tabs">
               <button className={comp === "single" ? "on" : ""} onClick={() => setComp("single")}>&lt;AgentThinkingUI&gt;</button>
-              <button className={comp === "multi" ? "on" : ""} onClick={() => setComp("multi")}>&lt;AgentSwarm&gt;</button>
+              <button className={comp === "multi" ? "on" : ""} onClick={() => setComp("multi")}>&lt;MultiAgentFlow&gt;</button>
             </div>
             <span style={{ flex: 1 }} />
             <a href="./index.html" style={{ fontSize: 13, color: "#6E5C49", textDecoration: "none" }}>full demo ↗</a>
@@ -159,7 +159,7 @@
               <div className="ex-preview">
                 {comp === "single"
                   ? <AgentThinkingUI key={mode + scale + brain + mobile} trace={TRACE} theme={theme} icons={icons} brand={brandNode} metaphor={metaphor} loop={loop} live={live} mobile={mobile} />
-                  : <AgentSwarm key={mode} trace={GRAPH} theme={theme} brand={brandNode} />}
+                  : <MultiAgentFlow key={mode} trace={GRAPH} theme={theme} brand={brandNode} />}
               </div>
               <pre className="ex-code">{code}</pre>
               <table className="ex-props">

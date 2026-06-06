@@ -1,4 +1,4 @@
-/* global React, ReactDOM, AgentThinkingUI, AgentSwarm, DemoSettings, useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakToggle */
+/* global React, ReactDOM, AgentThinkingUI, MultiAgentFlow, DemoSettings, useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakToggle */
 const { useState, useMemo, useEffect } = React;
 const TRACES = window.AGENT_TRACES || { offsite: window.AGENT_TRACE };
 const SCENARIOS = Object.keys(TRACES).map(k => ({ key: k, label: TRACES[k].title || k }));
@@ -183,7 +183,7 @@ function App() {
   return (
     <>
       {view === "multi" && graph
-        ? <AgentSwarm key={graphImport ? "import" : flowKey} trace={graph} live={mLive}
+        ? <MultiAgentFlow key={graphImport ? "import" : flowKey} trace={graph} live={mLive}
             theme={theme} labels={labels} icons={icons} brand={brandMark} />
         : <AgentThinkingUI key={imported ? "otel" : sceneKey} trace={trace} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
             live={live} theme={theme} labels={labels} icons={icons} brand={brandMark} />}

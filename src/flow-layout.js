@@ -1,6 +1,6 @@
 /* ============================================================
    AgentThinkingUI — FLOW LAYOUT (pure)
-   Layered ("Sugiyama-style") graph layout for <AgentSwarm>. No React, no DOM —
+   Layered ("Sugiyama-style") graph layout for <MultiAgentFlow>. No React, no DOM —
    given nodes + edges it returns positions, so the algorithm can be tested and
    benchmarked in isolation (see scripts/perf.mjs). Kept separate from the React
    component exactly like layout.js is for the single-agent scene.

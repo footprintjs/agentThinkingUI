@@ -5,7 +5,7 @@
    working unchanged. React/ReactDOM are read from the page globals.
    ============================================================ */
 import { AgentThinkingUI } from "./footprint.jsx";
-import { AgentSwarm } from "./swarm.jsx";
+import { MultiAgentFlow } from "./multi-agent-flow.jsx";
 import { Stage, ToolIcon } from "./stage.jsx";
 import { Inspector, Notepad } from "./inspector.jsx";
 import { Timeline } from "./timeline.jsx";
@@ -19,7 +19,7 @@ const w = typeof window !== "undefined" ? window : {};
 Object.assign(w, {
   AgentThinkingUI,
   AgentFootprint: AgentThinkingUI, // deprecated alias
-  AgentSwarm,
+  MultiAgentFlow,
   Stage, ToolIcon, Inspector, Notepad, Timeline,
   usePlayback, AF_DWELL, arcLayout, AF_LAYOUT,
   AgentTheme, AgentThemeContext,

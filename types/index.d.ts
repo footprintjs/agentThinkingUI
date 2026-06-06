@@ -64,7 +64,7 @@ export interface RenderMetric {
   step: number;
   /** total steps in the (team) trace */
   steps: number;
-  /** agent count (AgentSwarm only) */
+  /** agent count (MultiAgentFlow only) */
   agents?: number;
 }
 
@@ -92,7 +92,7 @@ export interface FlowGraph {
   nodes: FlowNode[];
   edges: FlowEdge[];
 }
-export interface AgentSwarmProps {
+export interface MultiAgentFlowProps {
   trace: FlowGraph;
   theme?: ThemeConfig;
   labels?: { agent?: string; toolbox?: string };
@@ -104,7 +104,7 @@ export interface AgentSwarmProps {
   onRender?: (metric: RenderMetric) => void;
 }
 /** Multi-agent control-flow map; agent nodes drill into their AgentThinkingUI. */
-export const AgentSwarm: FC<AgentSwarmProps>;
+export const MultiAgentFlow: FC<MultiAgentFlowProps>;
 
 export const Stage: FC<any>;
 export const Inspector: FC<any>;
@@ -141,9 +141,9 @@ export interface AdapterOptions {
 export function fromOTLP(otlp: unknown, opts?: AdapterOptions): Trace;
 /** OpenInference (Arize/Phoenix/LlamaIndex) spans → Trace. */
 export function fromOpenInference(otlp: unknown, opts?: AdapterOptions): Trace;
-/** OpenTelemetry span tree → a multi-agent FlowGraph (for <AgentSwarm>). */
+/** OpenTelemetry span tree → a multi-agent FlowGraph (for <MultiAgentFlow>). */
 export function fromOTLPMulti(otlp: unknown, opts?: AdapterOptions): FlowGraph;
-/** OpenInference span tree → a multi-agent FlowGraph (for <AgentSwarm>). */
+/** OpenInference span tree → a multi-agent FlowGraph (for <MultiAgentFlow>). */
 export function fromOpenInferenceMulti(otlp: unknown, opts?: AdapterOptions): FlowGraph;
 
 /** Push-based monitor for live sources: feed spans, read the updated Trace/FlowGraph. */

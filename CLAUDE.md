@@ -58,9 +58,15 @@ docs/assets gen-hero.mjs → hero-light.svg / hero-dark.svg    (animated README 
 
 ## Naming
 
-`<AgentThinkingUI>` is the primary component. `AgentFootprint` is a **deprecated
+`<AgentThinkingUI>` is the single-agent player; `AgentFootprint` is a **deprecated
 alias**. "footprint" is the domain concept ("an agent's runtime footprint"), not a
 second product name.
+
+The multi-agent component is `<MultiAgentFlow>` (in `multi-agent-flow.jsx`) — it
+renders a control-flow graph, so "flow" matches the `FlowGraph` type. It was named
+`AgentSwarm` through 0.4.0; renamed in 0.5.0 with **no alias** ("swarm" is only one
+of the patterns it draws and clashed with OpenAI Swarm). Don't reintroduce the old
+name. CSS classes stay `.atui-swarm` / `swarm-*` (internal styling, not the API).
 
 ## Running / verifying a change
 

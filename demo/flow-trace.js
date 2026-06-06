@@ -1,5 +1,5 @@
 /* The four control-flow primitives compose into every named multi-agent pattern.
-   Each is a FlowGraph for <AgentSwarm>; agent nodes carry a tiny Trace so the
+   Each is a FlowGraph for <MultiAgentFlow>; agent nodes carry a tiny Trace so the
    drill-down works. (See docs/multi-agent-flow.md.) */
 (function () {
   const cost = (ms, t) => ({ ms, tokens: t });

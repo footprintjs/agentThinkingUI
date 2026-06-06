@@ -246,7 +246,7 @@ function buildMulti(otlp, R, opts = {}) {
   return { task: opts.task || (rootNode && rootNode.trace.task) || "multi-agent run", asker: opts.asker || "user", nodes, edges };
 }
 
-/** OpenTelemetry GenAI span TREE → a multi-agent FlowGraph for <AgentSwarm>.
+/** OpenTelemetry GenAI span TREE → a multi-agent FlowGraph for <MultiAgentFlow>.
     Each invoke_agent span becomes an agent node (its Trace built from its own
     subtree, excluding nested agents); parent→child agent links become edges
     (parallel when a parent has several child agents, else seq). The drill-down
@@ -266,11 +266,11 @@ export function fromOpenInferenceMulti(otlp, opts = {}) { return buildMulti(otlp
 /**
  * Push-based monitor for live sources. Feed it spans as they arrive (an OTLP
  * payload or a flat array, in either convention) and read the up-to-date
- * Trace/FlowGraph to hand to <AgentThinkingUI live> / <AgentSwarm live>.
+ * Trace/FlowGraph to hand to <AgentThinkingUI live> / <MultiAgentFlow live>.
  *
  *   const mon = createMonitor({ format: "otel", asker: "you" });
  *   exporter.onBatch(otlp => setTrace(mon.push(otlp)));   // single agent
- *   // or { multi: true } → returns a FlowGraph for <AgentSwarm>
+ *   // or { multi: true } → returns a FlowGraph for <MultiAgentFlow>
  *
  * Re-derives from the accumulated spans on each push (O(n)); for typical live
  * runs that's negligible. `format` selects the reader (otel | openinference);

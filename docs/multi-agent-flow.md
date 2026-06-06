@@ -1,13 +1,13 @@
 # Multi-agent & control-flow — design (DRAFT, for review)
 
-Status: **proposal — not yet built.** Phase 1 (`<AgentSwarm>`: agents + handoffs +
+Status: **proposal — not yet built.** Phase 1 (`<MultiAgentFlow>`: agents + handoffs +
 drill-down) already shipped. This doc specifies the evolution into a general
 **control-flow graph** so the map can render *any* multi-agent topology.
 
 ## Why
 Real agent systems aren't a flat list of agents — they have control flow. The
 [footprintjs/agentfootprint] framework reduces all of it to **four composable
-primitives**, and every famous pattern is a composition of them. If `<AgentSwarm>`
+primitives**, and every famous pattern is a composition of them. If `<MultiAgentFlow>`
 can draw the four primitives, it can draw **any** flow — it becomes a flowchart of
 the run where each agent node drills into its single-agent `<AgentThinkingUI>`.
 

@@ -146,7 +146,7 @@ src/                 # the library — ES modules (import/export, scoped)
   inspector.jsx      <Inspector> per-step detail + <Notepad> chronological journal
   timeline.jsx       <Timeline>  — time-travel scrubber + transport + legend
   footprint.jsx      <AgentThinkingUI> — ready-made shell wiring all four together
-  swarm.jsx          <AgentSwarm> — multi-agent control-flow map + drill-down
+  multi-agent-flow.jsx  <MultiAgentFlow> — multi-agent control-flow map + drill-down
   adapters/otlp.js   fromOTLP · fromOpenInference · fromOTLPMulti · fromOpenInferenceMulti (telemetry → trace/graph)
   context.js         the shared React context the views read the theme from
   index.jsx          ESM entry (re-exports)   ·   global.jsx  UMD entry (window.*)
@@ -158,7 +158,7 @@ demo/                # runnable example (loads the prebuilt ../dist bundle)
                      in-app via the gear (swarm.html just redirects here for old links)
   mobile.html        phone frame (single-agent)
   trace.js           Sample single-agent runs   ·   flow-trace.js  multi-agent FlowGraphs
-  app.jsx            Composition — <AgentThinkingUI> / <AgentSwarm> + gear (theme /
+  app.jsx            Composition — <AgentThinkingUI> / <MultiAgentFlow> + gear (theme /
                      scenario / pattern / OTel · OpenInference import)
   demo-settings.jsx  Demo-only gear   ·   tweaks-panel.jsx  palette / labels / loop
 ```
@@ -174,7 +174,7 @@ Four independent view components, plus a default container that composes them:
 | `<Inspector>` | per-step detail (tool I/O, reasoning, cost) |
 | `<Notepad>` | chronological journal that builds up beat-by-beat |
 | `<AgentThinkingUI trace>` | **default container** — wires the four + playback + a resizable split |
-| `<AgentSwarm trace>` | **multi-agent** control-flow map; drills into each agent's `<AgentThinkingUI>` |
+| `<MultiAgentFlow trace>` | **multi-agent** control-flow map; drills into each agent's `<AgentThinkingUI>` |
 
 Use `<AgentThinkingUI trace={trace} />` for the whole thing, or import the four
 pieces into your own layout (each takes `trace` + the playback state from
@@ -189,9 +189,9 @@ Animation **ordering** lives as one block of staged `animation-delay`s in
 `src/styles.css` (search "choreography"): per beat the cloud → arc → packet →
 tool/bubble fire in sequence.
 
-## Multi-agent — `<AgentSwarm>`
+## Multi-agent — `<MultiAgentFlow>`
 
-Real systems have more than one agent. `<AgentSwarm>` renders a team as a
+Real systems have more than one agent. `<MultiAgentFlow>` renders a team as a
 **control-flow graph** and drills into each agent's single-agent `<AgentThinkingUI>`.
 It takes a **`FlowGraph`** — typed nodes + edges that compose the four primitives
 (Sequence · Parallel · Conditional · Loop), which in turn express every named
@@ -199,7 +199,7 @@ pattern (Hierarchical, Debate, Router, Reflexion, Swarm, Tree-of-Thoughts). See
 [`docs/multi-agent-flow.md`](docs/multi-agent-flow.md).
 
 ```jsx
-import { AgentSwarm } from "agentthinkingui";
+import { MultiAgentFlow } from "agentthinkingui";
 
 const flow = {
   task: "plan the offsite",
@@ -217,7 +217,7 @@ const flow = {
   ],
 };
 
-<AgentSwarm trace={flow} live={false} />
+<MultiAgentFlow trace={flow} live={false} />
 ```
 
 - **Nodes:** `agent` (shows the animated brain mascot, or `icon` emoji/image; click
@@ -276,7 +276,7 @@ import { createMonitor } from "agentthinkingui";
 const mon = createMonitor({ format: "otel", asker: "you" }); // { multi:true } → FlowGraph
 exporter.onBatch((otlpBatch) => setTrace(mon.push(otlpBatch)));
 
-<AgentThinkingUI live trace={trace} />   // or <AgentSwarm live trace={graph} />
+<AgentThinkingUI live trace={trace} />   // or <MultiAgentFlow live trace={graph} />
 ```
 
 **Bring your own source.** Anything that maps to OTLP-shaped spans works; to

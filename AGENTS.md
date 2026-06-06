@@ -99,10 +99,10 @@ import { fromOTLP, fromOpenInference, fromOTLPMulti, fromOpenInferenceMulti } fr
 const trace = fromOTLP(otlpJson, { asker: "Sam" });    // or fromOpenInference(spans)
 <AgentThinkingUI trace={trace} />
 
-// multi-agent: a span tree → a FlowGraph for <AgentSwarm> (each agent's drill-down
+// multi-agent: a span tree → a FlowGraph for <MultiAgentFlow> (each agent's drill-down
 // trace is built from that agent span's children). OTel or OpenInference:
 const flow = fromOTLPMulti(otlpJson, { asker: "Sam" }); // or fromOpenInferenceMulti(spans)
-<AgentSwarm trace={flow} />
+<MultiAgentFlow trace={flow} />
 
 // live monitoring: push spans as they arrive, feed the result to a `live` player
 import { createMonitor } from "agentthinkingui";
@@ -126,7 +126,7 @@ const acc = [];
 onSpanEnd((span) => { acc.push(span); setTrace(fromOTLP(acc, opts)); });
 ```
 
-## Multi-agent — `<AgentSwarm>`
+## Multi-agent — `<MultiAgentFlow>`
 
 For teams of agents, render a **control-flow graph** that drills into each agent's
 single-agent player. It takes a `FlowGraph`:
@@ -142,7 +142,7 @@ type FlowGraph = {
 ```
 
 ```jsx
-<AgentSwarm trace={flow} live={false} />
+<MultiAgentFlow trace={flow} live={false} />
 ```
 
 The four edge kinds compose every named pattern (Hierarchical, Debate, Router,

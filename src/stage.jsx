@@ -31,7 +31,7 @@ function TypeGlyph({ data }) {
 }
 
 // the agent avatar — animated brain mascot, or an emoji/image. Reused by the
-// single-agent scene AND by <AgentSwarm> agent cards.
+// single-agent scene AND by <MultiAgentFlow> agent cards.
 export function BrainGlyph({ icon, mode }) {
   const cfg = icon || { kind: "default" };
   if (cfg.kind === "image" && cfg.value) {
