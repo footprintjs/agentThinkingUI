@@ -68,14 +68,15 @@ the same plain `src/` files (no bundle):
 
 ```html
 <!-- after React, ReactDOM, and Babel standalone (see demo/index.html for the full order) -->
-<script src="https://unpkg.com/agentthinkingui/src/theme.js"></script>
-<script src="https://unpkg.com/agentthinkingui/src/layout.js"></script>
-<script type="text/babel" src="https://unpkg.com/agentthinkingui/src/playback.js"></script>
-<script type="text/babel" src="https://unpkg.com/agentthinkingui/src/stage.jsx"></script>
-<script type="text/babel" src="https://unpkg.com/agentthinkingui/src/inspector.jsx"></script>
-<script type="text/babel" src="https://unpkg.com/agentthinkingui/src/timeline.jsx"></script>
-<script type="text/babel" src="https://unpkg.com/agentthinkingui/src/footprint.jsx"></script>
-<link rel="stylesheet" href="https://unpkg.com/agentthinkingui/src/styles.css">
+<!-- pinned to @0.1.0 so a future release can't shift behavior; drop the version to track latest -->
+<script src="https://unpkg.com/agentthinkingui@0.1.0/src/theme.js"></script>
+<script src="https://unpkg.com/agentthinkingui@0.1.0/src/layout.js"></script>
+<script type="text/babel" src="https://unpkg.com/agentthinkingui@0.1.0/src/playback.js"></script>
+<script type="text/babel" src="https://unpkg.com/agentthinkingui@0.1.0/src/stage.jsx"></script>
+<script type="text/babel" src="https://unpkg.com/agentthinkingui@0.1.0/src/inspector.jsx"></script>
+<script type="text/babel" src="https://unpkg.com/agentthinkingui@0.1.0/src/timeline.jsx"></script>
+<script type="text/babel" src="https://unpkg.com/agentthinkingui@0.1.0/src/footprint.jsx"></script>
+<link rel="stylesheet" href="https://unpkg.com/agentthinkingui@0.1.0/src/styles.css">
 ```
 
 That gives you the full experience — scene, inspector, notepad, timeline, and
