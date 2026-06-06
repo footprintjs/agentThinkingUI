@@ -548,3 +548,36 @@ button { font-family: inherit; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .brain .eyes, .cloud .ctag .dots i, .task-pill .rec { animation: none !important; }
 }
+
+/* ---------- <AgentSwarm> — multi-agent map + drill-down ---------- */
+.app-swarm { height: 100%; display: flex; flex-direction: column; max-width: 1480px; margin: 0 auto; padding: 18px 26px 0; }
+.swarm-bar { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; flex: none; }
+.swarm-brand { font-family: var(--font-display); font-weight: 700; font-size: calc(19px * var(--af-text-scale)); }
+.swarm-task { display: flex; align-items: center; gap: 8px; font-size: calc(13.5px * var(--af-text-scale)); color: var(--ink); }
+.swarm-task .lbl { font-size: calc(11px * var(--af-text-scale)); text-transform: uppercase; letter-spacing: .12em; color: var(--ink-faint); font-weight: 700; }
+.swarm-wrap { flex: 1; min-height: 0; overflow: auto; display: grid; place-items: center; padding-bottom: 16px; }
+.swarm-canvas { position: relative; }
+.swarm-edges { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.swarm-edge { stroke: var(--line); stroke-width: 2.2; }
+.swarm-edge.flow { stroke: var(--call); stroke-dasharray: 6 7; animation: swarmflow 1.3s linear infinite; }
+@keyframes swarmflow { to { stroke-dashoffset: -26; } }
+.swarm-edge-head { fill: var(--call); }
+.swarm-edge-label { fill: var(--ink-faint); font-size: 11px; font-family: var(--font-hand); }
+
+.agent-card { position: absolute; text-align: left; cursor: pointer; background: var(--card); border: 1px solid var(--line);
+  border-radius: 16px; padding: 13px 15px; box-shadow: var(--shadow-sm); transition: transform .15s, box-shadow .15s, border-color .15s; }
+.agent-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--accent); }
+.agent-card .ac-status { position: absolute; top: 14px; right: 14px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
+.agent-card.k-call .ac-status { animation: pulse 2s infinite; }
+.agent-card .ac-name { font-family: var(--font-display); font-weight: 700; font-size: calc(15px * var(--af-text-scale)); color: var(--ink); }
+.agent-card .ac-role { font-size: calc(11.5px * var(--af-text-scale)); color: var(--ink-soft); margin-top: 1px; }
+.agent-card .ac-meta { font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-faint); margin-top: 9px; }
+.agent-card .ac-drill { position: absolute; bottom: 12px; right: 14px; font-size: calc(11px * var(--af-text-scale)); font-weight: 700; color: var(--accent-deep); }
+
+.swarm-bar .swarm-back { border: 1px solid var(--line); background: var(--paper-2); color: var(--ink); border-radius: 9px; padding: 5px 11px; font-weight: 700; font-size: calc(12.5px * var(--af-text-scale)); cursor: pointer; }
+.swarm-crumb { color: var(--ink-soft); font-size: calc(13px * var(--af-text-scale)); max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.swarm-sep { color: var(--ink-faint); }
+.swarm-here { font-family: var(--font-display); }
+.swarm-role { font-size: calc(11.5px * var(--af-text-scale)); color: var(--ink-soft); background: var(--paper-2); border: 1px solid var(--line); border-radius: 7px; padding: 2px 8px; }
+.swarm-detail { flex: 1; min-height: 0; }
+.swarm-detail .app { padding: 0; height: 100%; }

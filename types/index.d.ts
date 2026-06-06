@@ -38,6 +38,30 @@ export const AgentThinkingUI: FC<AgentThinkingUIProps>;
 /** @deprecated alias of AgentThinkingUI */
 export const AgentFootprint: FC<AgentThinkingUIProps>;
 
+export interface SwarmAgent {
+  id: string;
+  name: string;
+  role?: string;
+  parent?: string;
+  status?: "running" | "done" | "error";
+  trace: Trace;
+}
+export interface MultiTrace {
+  task: string;
+  asker?: string;
+  agents: SwarmAgent[];
+  handoffs?: { from: string; to: string; label?: string }[];
+}
+export interface AgentSwarmProps {
+  trace: MultiTrace;
+  theme?: ThemeConfig;
+  labels?: { agent?: string; toolbox?: string };
+  icons?: { brain?: IconConfig; toolbox?: IconConfig };
+  brand?: ReactNode;
+}
+/** Multi-agent overview: agent graph that drills into each agent's AgentThinkingUI. */
+export const AgentSwarm: FC<AgentSwarmProps>;
+
 export const Stage: FC<any>;
 export const Inspector: FC<any>;
 export const Notepad: FC<any>;

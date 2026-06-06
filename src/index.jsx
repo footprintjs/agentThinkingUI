@@ -4,6 +4,7 @@
    React is a peer dependency (not bundled).
    ============================================================ */
 export { AgentThinkingUI, AgentThinkingUI as AgentFootprint } from "./footprint.jsx";
+export { AgentSwarm } from "./swarm.jsx";
 export { Stage, ToolIcon } from "./stage.jsx";
 export { Inspector, Notepad } from "./inspector.jsx";
 export { Timeline } from "./timeline.jsx";
