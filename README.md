@@ -263,7 +263,7 @@ nested `invoke_agent` spans become the agent graph. The **reply type**
 `opts.classify(toolName, attrs)` hook → opt-in `agentthinkingui.reply_type` /
 `.skill` span attributes → a heuristic (skill/steering/policy/guardrail → instruction).
 **Errors are universal:** a span with status `ERROR` (or an `exception` event) becomes
-a red error beat (and a red agent node in the swarm) — same for both adapters.
+a red error beat (and a red agent node in the flow) — same for both adapters.
 ### Live monitoring
 
 For live runs, use **`createMonitor`** — a push-based ingestion handle. Feed it

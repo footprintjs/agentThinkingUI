@@ -12,7 +12,7 @@ export { layoutFlow, countCrossings }; // re-exported for tests/consumers
 const { useState, useMemo } = React;
 
 // one team-journal line per beat (agent-prefixed), reusing the notepad styles
-function SwarmNote({ s, n, active }) {
+function TeamNote({ s, n, active }) {
   const k = s.kind === "return" ? s.replyType : s.kind;
   const accent = k === "data" ? "k-data" : k === "instruction" ? "k-instr" : k === "both" ? "k-both" : k === "ask" ? "k-call" : k === "answer" ? "k-answer" : "k-prompt";
   const note = s.kind === "answer" ? (s.answer && s.answer.headline) : s.brain;
@@ -55,7 +55,7 @@ export function MultiAgentFlow({ trace, theme, labels, icons, brand, live, onRen
 
   const [npOpen, setNpOpen] = useState(true);
   // a TEAM trace: every agent's beats interleaved in flow order (column, then row),
-  // so the swarm map is itself scrubbable — time-travel + commentary across the team.
+  // so the team map is itself scrubbable — time-travel + commentary across the team.
   const { teamSteps, ranges } = useMemo(() => {
     const ags = nodes.filter((n) => (!n.kind || n.kind === "agent") && n.trace && pos[n.id])
       .sort((a, b) => (pos[a.id].cx - pos[b.id].cx) || (pos[a.id].cy - pos[b.id].cy));
@@ -64,14 +64,14 @@ export function MultiAgentFlow({ trace, theme, labels, icons, brand, live, onRen
     return { teamSteps: steps, ranges: r };
   }, [nodes, pos]);
   const teamTrace = useMemo(() => ({ task, agent: "team", model: "", asker: "", steps: teamSteps.length ? teamSteps : [{ kind: "prompt", brain: "", cost: { ms: 0, tokens: 0 } }] }), [teamSteps, task]);
-  const play = usePlayback(teamTrace, { storageKey: "agentthinkingui.swarm:" + (task || "default"), live });
+  const play = usePlayback(teamTrace, { storageKey: "agentthinkingui.flow:" + (task || "default"), live });
   const idx = Math.min(play.index, teamTrace.steps.length - 1);
   const cur = teamSteps[idx];
   const phaseOf = (id) => { const rr = ranges[id]; if (!rr) return "done"; if (idx < rr.start) return "future"; if (idx > rr.end) return "done"; return "current"; };
 
   // opt-in UI render metrics (React Profiler), enriched with team context
   const wrap = (tree) => onRender
-    ? <React.Profiler id="agentswarm" onRender={(id, phase, actualDuration, baseDuration, startTime, commitTime) =>
+    ? <React.Profiler id="multiagentflow" onRender={(id, phase, actualDuration, baseDuration, startTime, commitTime) =>
         onRender({ id, phase, actualMs: actualDuration, baseMs: baseDuration, startTime, commitTime, step: idx, steps: teamTrace.steps.length, agents: nodes.length })}>{tree}</React.Profiler>
     : tree;
 
@@ -181,7 +181,7 @@ export function MultiAgentFlow({ trace, theme, labels, icons, brand, live, onRen
         {npOpen && (
           <div className="swarm-notepad">
             <div className="swarm-np-head">Team notepad</div>
-            <div className="insp-body note-list">{teamSteps.slice(0, idx + 1).map((s, i) => <SwarmNote key={i} s={s} n={i} active={i === idx} />)}</div>
+            <div className="insp-body note-list">{teamSteps.slice(0, idx + 1).map((s, i) => <TeamNote key={i} s={s} n={i} active={i === idx} />)}</div>
           </div>
         )}
         </div>

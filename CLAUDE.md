@@ -36,9 +36,9 @@ library; `demo/` is a runnable example.
 ## Layout
 
 ```
-src/        theme.js · layout.js · flow-layout.js (pure swarm graph layout) ·
+src/        theme.js · layout.js · flow-layout.js (pure multi-agent graph layout) ·
             playback.js · context.js · stage.jsx · inspector.jsx · timeline.jsx ·
-            footprint.jsx · swarm.jsx · adapters/otlp.js ·
+            footprint.jsx · multi-agent-flow.jsx · adapters/otlp.js ·
             index.jsx (ESM entry) · global.jsx (UMD entry) · styles.css
 build.mjs   esbuild → dist/ (ESM + UMD + css)
 scripts/    coverage-badge.mjs · perf.mjs (load benchmark → `npm run perf`)

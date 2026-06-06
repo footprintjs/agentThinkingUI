@@ -553,7 +553,7 @@
   :where(.atui, .atui-swarm) .brain .eyes, :where(.atui, .atui-swarm) .cloud .ctag .dots i, :where(.atui, .atui-swarm) .task-pill .rec { animation: none !important; }
 }
 
-/* ---------- <AgentSwarm> — multi-agent map + drill-down ---------- */
+/* ---------- <MultiAgentFlow> — multi-agent map + drill-down ---------- */
 .atui-swarm { height: 100%; display: flex; flex-direction: column; max-width: 1480px; margin: 0 auto; padding: 18px 26px 0; }
 :where(.atui, .atui-swarm) .swarm-bar { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; flex: none; }
 :where(.atui, .atui-swarm) .swarm-brand { font-family: var(--font-display); font-weight: 700; font-size: calc(19px * var(--af-text-scale)); }
