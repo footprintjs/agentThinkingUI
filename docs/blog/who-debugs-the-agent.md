@@ -1,72 +1,73 @@
 # Who debugs the agent?
 
-*A note on why agent UIs matter now — and the narrow, honest claim AgentThinkingUI makes.*
+*The developer ships it — but some failures only a domain expert can see, and they
+shouldn't have to read JSON to find them. That's the gap this library is for.*
 
-## The builder changed
+## Three kinds of failure
 
-Until recently, the person who built an agent and the person who could debug it
-were the same person: an engineer. That's no longer true. No-/low-code builders —
-Lindy, Airtable, Make, Stack AI, MindStudio — now let people in support, ops,
-sales, finance and product assemble real agents with branching logic and tool
-calls, **without writing code** ([Lindy](https://www.lindy.ai/blog/no-code-ai-agent-builder),
-[Airtable](https://www.airtable.com/articles/best-ai-agent-builders)). The domain
-expert builds the agent. Good — they're the one who actually knows what "correct"
-means for a refund, a triage, a quote.
+In enterprise app development, **developers build the agents.** And for two of the
+three ways an agent goes wrong, the developer is exactly the right person, with the
+right tools:
 
-## The failure changed too
+- **Infra** — a timeout, an auth error, a rate limit, a `500`. Logs and traces.
+  Developer territory.
+- **Business logic** — the wrong tool wired up, a bad branch, a malformed
+  argument, a broken handoff. Code and JSON spans. Developer territory.
+- **Semantic / content** — the run is *clean*. Every span is green, no error, no
+  stack trace — and the answer is still **wrong for the domain**: it cited the
+  wrong clause, misread the policy, reasoned plausibly but incorrectly about *your*
+  content. Nothing in the trace looks broken. **Only the person who knows the
+  domain can tell it's wrong.**
 
-When a hand-written program breaks, you get a stack trace and an engineer reads
-it. When an *agent* misbehaves, there usually is no crash — it did something,
-just the *wrong* something. The real question is **"which step, which decision,
-which tool reply sent it off course?"** That's a judgment failure, not an
-exception. A classic example: a tool returns `500`, you blame the database, but
-the real culprit was the agent passing a nonsensical argument — *its reasoning*
-([Latitude](https://latitude.so/blog/complete-guide-debugging-ai-agents-production)).
-There's now even a research taxonomy of agent fault types and root causes
-([arXiv 2603.06847](https://arxiv.org/pdf/2603.06847)).
-
-And here's the bind: **the person who can tell whether a decision was right is the
-domain expert — but the tools that show the decisions are built for engineers.**
-"Domain experts who define correct often aren't doing engineering evaluations," and
-without tracing, understanding *why* an agent decided something is hard
+This isn't hand-waving — there's now a research taxonomy of agentic fault types and
+root causes ([arXiv 2603.06847](https://arxiv.org/pdf/2603.06847)), and a recurring
+finding in the debugging literature: *"domain experts who define correct often
+aren't doing engineering evaluations"*
 ([Latitude](https://latitude.so/blog/complete-guide-debugging-ai-agents-production)).
 
-## Why today's tooling doesn't close it
+## The mismatch
 
-Observability platforms (LangSmith, Langfuse, Arize Phoenix) are excellent — and
-unapologetically **developer-facing**: span waterfalls, token meters, eval
-dashboards. That's the right altitude for an engineer optimizing latency or cost.
-It's the wrong altitude for the support lead asking *"why did it issue the
-refund?"* They don't need bytes and spans; they need to **watch the agent think**.
+The semantic failure is the one your developer **can't** catch — they don't know
+whether clause 7(b) was the right one to cite, or whether "approve" was the correct
+call for this customer. And the domain expert who *does* know is handed… a JSON
+trace, a span waterfall, a debugger. Tooling built for the two failure classes that
+*weren't* the problem. So the one person who can find the real bug is locked out by
+the interface.
+
+Observability platforms (LangSmith, Langfuse, Arize Phoenix) are excellent at the
+developer's two classes — and unapologetically developer-facing. They're not the
+place a compliance officer or a clinician or a claims lead reviews *meaning*.
 
 ## The claim
 
-AgentThinkingUI makes the agent loop **legible at the altitude of decisions**: a
-scrubbable replay where the brain thinks, reaches for a tool, gets back **data**
-(reason) or an **instruction / skill** (act), branches, and lands an answer —
-errors lit red, the multi-agent hand-offs drawn as a flow. The domain expert can
-scrub to the exact beat where the judgment went wrong and *see* it, without
-reading a debugger. That's the whole point: **put the "what happened" at a level
-the person with the domain understanding can act on.**
+AgentThinkingUI gives the domain expert a way to **engage with the run at the
+semantic level** — watch the agent think, see which **data** it reasoned over,
+which **instruction / skill** it followed, where it branched, what it concluded —
+and point at the beat and say *"there: that's the wrong reading."* It's the same run
+the developer has, rendered legible to the person who owns the definition of
+*correct*. The domain expert triages the **content**; the developer keeps the JSON
+for infra and logic.
 
-When an engineer *is* needed, the same artifact carries them there: a
-`linkResolver` deep-links a beat to its span in your observability tool, and
-`renderDetail` surfaces the raw log inline. One replay, two audiences — the domain
-expert finds *where*, the engineer opens *why*.
+And the two roles share one artifact. When a semantic miss turns out to be a logic
+or infra bug after all, `linkResolver` jumps from a beat straight to its span in
+your observability tool, and `renderDetail` shows the raw payload inline — handing
+it back to the developer. The domain expert finds *what's wrong in meaning*; the
+developer fixes *what's wrong in the plumbing*.
 
-## The honest boundaries
+## Honest boundaries
 
-This is a **complement** to observability, not a replacement — keep your
-dashboards for evals and production monitoring. It needs a **recorded trace**, and
-the reasoning it can show is only as rich as what you captured (OTel often drops
-the "thinking" — so you [compose the trace](../integrations.md#backfill-what-otel-drops-compose-your-trace)
-from your own store, joined by `spanId`). And a visual replay helps a human *spot*
-a bad decision; it doesn't *evaluate* correctness at scale — that's still
-graded evals and the emerging explainability tooling
+A complement, not a replacement — keep your traces and evals; this doesn't monitor
+production or grade outputs at scale. It needs a recorded run, and the reasoning it
+can show is only as rich as what you captured (OTel frequently omits the thinking,
+so you [compose the trace](../integrations.md#backfill-what-otel-drops-compose-your-trace)
+from your own store, joined by `spanId`). A visual replay helps a human *spot* a
+wrong reading; turning that judgment into regression tests is still evals' job, and
+explainability tooling is an active research direction
 ([XAgen](https://arxiv.org/pdf/2512.17896)).
 
 ## The bet
 
-The people building agents are no longer the people who can read a debugger. The
-shortest path from *"the agent did something weird"* to *"there — that step's
-reasoning was wrong"* is to **see it think**. That's the gap this library aims at.
+Developers can already triage what they can see. The failures that hurt are the
+ones that look perfectly fine in JSON and are only wrong in *meaning* — and the
+person who can see the meaning shouldn't have to read JSON to find it. That's the
+seam AgentThinkingUI is built for.

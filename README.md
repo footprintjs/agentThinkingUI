@@ -453,8 +453,9 @@ Point a `trace` at your own recorded run (live or replay) and render — that's 
   the gear edits theme, names, icons, type scale, light/dark, scenarios, OTel/
   OpenInference import and the multi-agent patterns, live.
 - **[Changelog](./CHANGELOG.md)** — what changed per release.
-- **Essay — [Who debugs the agent?](./docs/blog/who-debugs-the-agent.md)** — why
-  visual replay matters when domain experts (not engineers) build the agents.
+- **Essay — [Who debugs the agent?](./docs/blog/who-debugs-the-agent.md)** —
+  developers triage infra/logic; the *semantic* failures only a domain expert can
+  catch — without reading JSON.
 
 ## FAQ
 

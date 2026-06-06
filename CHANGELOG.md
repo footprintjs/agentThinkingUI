@@ -7,8 +7,9 @@ to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Docs
-- Essay — **[Who debugs the agent?](docs/blog/who-debugs-the-agent.md)**: the case
-  for visual agent replay now that domain experts (not engineers) build the agents.
+- Essay — **[Who debugs the agent?](docs/blog/who-debugs-the-agent.md)**: developers
+  triage infra/logic, but the semantic/content failures only a domain expert can
+  catch — and they shouldn't have to read JSON.
 
 ## [0.8.0] - 2026-06-06
 
