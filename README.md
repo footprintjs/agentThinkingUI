@@ -63,10 +63,25 @@ a trace, and render the ready-made container:
 <AgentThinkingUI trace={trace} />
 ```
 
+**Get it** — `npm install agentthinkingui`, or load straight from a CDN; both ship
+the same plain `src/` files (no bundle):
+
+```html
+<!-- after React, ReactDOM, and Babel standalone (see demo/index.html for the full order) -->
+<script src="https://unpkg.com/agentthinkingui/src/theme.js"></script>
+<script src="https://unpkg.com/agentthinkingui/src/layout.js"></script>
+<script type="text/babel" src="https://unpkg.com/agentthinkingui/src/playback.js"></script>
+<script type="text/babel" src="https://unpkg.com/agentthinkingui/src/stage.jsx"></script>
+<script type="text/babel" src="https://unpkg.com/agentthinkingui/src/inspector.jsx"></script>
+<script type="text/babel" src="https://unpkg.com/agentthinkingui/src/timeline.jsx"></script>
+<script type="text/babel" src="https://unpkg.com/agentthinkingui/src/footprint.jsx"></script>
+<link rel="stylesheet" href="https://unpkg.com/agentthinkingui/src/styles.css">
+```
+
 That gives you the full experience — scene, inspector, notepad, timeline, and
 playback, in a resizable split. Prefer your own layout? Drop the four view
-components in yourself (below). To embed: copy `src/`, point a `trace.js` at your
-own recorded run, and load it the way `demo/index.html` does.
+components in yourself (below). The trace contract is **typed** — point your
+recorder at [`types/trace.d.ts`](types/trace.d.ts).
 
 ## Trace schema (the contract)
 
