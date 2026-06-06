@@ -38,23 +38,36 @@ function SwarmNote({ s, n, active }) {
 const DIM = { agent: { w: 204, h: 112 }, decision: { w: 108, h: 108 }, merge: { w: 132, h: 46 }, start: { w: 96, h: 40 }, end: { w: 96, h: 40 } };
 const dimOf = (n) => DIM[n.kind] || DIM.agent;
 
-// longest-path columns over forward (non-loop) edges; loops are drawn as back-arcs
+// Layered ("Sugiyama-style") layout: assign each node a column = its longest
+// path from a source, then stack columns into rows. Columns come from a Kahn
+// topological sweep over the forward DAG (loop edges are excluded — they're
+// drawn as back-arcs). Complexity O(V + E): one adjacency list, each edge
+// relaxed once, an index-pointer queue (no O(n) Array.shift). Longest-path (max
+// over predecessors) is exact because Kahn yields a topological order, so when a
+// node is dequeued every predecessor's column is already final.
 function layoutFlow(nodes, edges) {
   const COLW = 248, ROWH = 132, PADX = 44, PADY = 40;
   const id2 = Object.fromEntries(nodes.map((n) => [n.id, n]));
   const fwd = edges.filter((e) => e.kind !== "loop" && id2[e.from] && id2[e.to]);
-  const indeg = {}; nodes.forEach((n) => (indeg[n.id] = 0));
-  fwd.forEach((e) => (indeg[e.to] = (indeg[e.to] || 0) + 1));
+
+  // adjacency list + in-degrees, built once
+  const out = {}, indeg = {};
+  nodes.forEach((n) => { out[n.id] = []; indeg[n.id] = 0; });
+  fwd.forEach((e) => { out[e.from].push(e.to); indeg[e.to] += 1; });
+
   const col = {}; nodes.forEach((n) => (col[n.id] = 0));
-  const q = nodes.filter((n) => !indeg[n.id]).map((n) => n.id);
-  const deg = { ...indeg }; const seen = new Set();
-  while (q.length) {
-    const u = q.shift(); if (seen.has(u)) continue; seen.add(u);
-    fwd.filter((e) => e.from === u).forEach((e) => {
-      col[e.to] = Math.max(col[e.to], col[u] + 1);
-      if (--deg[e.to] <= 0) q.push(e.to);
-    });
+  const deg = { ...indeg };
+  const q = nodes.filter((n) => !indeg[n.id]).map((n) => n.id); // sources
+  for (let h = 0; h < q.length; h++) {        // pointer, not shift() → O(V)
+    const u = q[h];
+    for (const v of out[u]) {
+      if (col[u] + 1 > col[v]) col[v] = col[u] + 1; // longest path
+      if (--deg[v] === 0) q.push(v);                // all preds placed → ready
+    }
   }
+  // Any node trapped in a forward cycle is never dequeued and keeps column 0
+  // (it won't crash — just stacks at the left). Well-formed graphs tag cycles
+  // as `loop` edges, which are excluded above, so `fwd` stays acyclic.
   const cols = {}; nodes.forEach((n) => (cols[col[n.id]] = cols[col[n.id]] || []).push(n));
   const nCols = Math.max(1, ...Object.keys(cols).map((c) => Number(c) + 1));
   const maxRows = Math.max(1, ...Object.values(cols).map((c) => c.length));

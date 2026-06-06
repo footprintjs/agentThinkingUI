@@ -109,9 +109,10 @@ function buildTrace(otlp, R, opts = {}) {
     .sort((x, y) => (x.start < y.start ? -1 : x.start > y.start ? 1 : 0));
 
   const agentSpan = spans.find((s) => R.op(s.a) === "invoke_agent" || R.op(s.a) === "create_agent" || R.op(s.a) === "AGENT") || spans[0];
+  // `spans` is sorted by start, so `chats` and `tools` are too — we exploit that
+  // ordering below to pair each tool with its surrounding chats in O(T + C).
   const chats = spans.filter((s) => R.isChat(s.a));
   const tools = spans.filter((s) => R.isTool(s.a));
-  const find = (arr, pred) => arr.find(pred);
   const cost = (s) => {
     const tin = Number(R.inTok(s.a)) || 0, tout = Number(R.outTok(s.a)) || 0;
     const cached = Number(R.cacheTok && R.cacheTok(s.a)) || 0;
@@ -137,10 +138,16 @@ function buildTrace(otlp, R, opts = {}) {
   const steps = [];
   if (userText) steps.push({ kind: "prompt", brain: userText, cost: (chats[0] && cost(chats[0])) || { ms: 0, tokens: 0 } });
 
+  // two-pointer over the time-sorted chats: `ci` only moves forward as tools
+  // advance, so the whole loop is O(T + C) (was O(T·C) with a per-tool reversed
+  // copy). For each tool: `before` = last chat that started before it (the
+  // reasoning that led to the call), `after` = first chat once it returned.
+  let ci = 0;
   for (const t of tools) {
     const a = t.a, name = R.toolName(a) || "tool";
-    const before = find([...chats].reverse(), (c) => c.start < t.start);
-    const after = find(chats, (c) => c.start > t.start);
+    while (ci < chats.length && chats[ci].start < t.start) ci += 1;
+    const before = ci > 0 ? chats[ci - 1] : undefined;
+    const after = chats[ci]; // first chat at/after the call (starts are monotonic & distinct)
     const c = cost(t), half = halveCost(c);
     steps.push({
       kind: "ask", tool: name, toolName: name, input: asObject(R.toolInput(a, t.sp)),
