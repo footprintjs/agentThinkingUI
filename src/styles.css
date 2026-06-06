@@ -586,11 +586,16 @@ button { font-family: inherit; cursor: pointer; }
 .agent-card .ac-meta { font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-faint); margin-top: 9px; }
 .agent-card .ac-drill { position: absolute; bottom: 12px; right: 14px; font-size: calc(11px * var(--af-text-scale)); font-weight: 700; color: var(--accent-deep); }
 
-.swarm-bar .swarm-back { border: 1px solid var(--line); background: var(--paper-2); color: var(--ink); border-radius: 9px; padding: 5px 11px; font-weight: 700; font-size: calc(12.5px * var(--af-text-scale)); cursor: pointer; }
-.swarm-crumb { color: var(--ink-soft); font-size: calc(13px * var(--af-text-scale)); max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.swarm-detailbar { gap: 12px; padding: 10px 14px; margin-bottom: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-sm); }
+.swarm-bar .swarm-back { border: 0; background: var(--rust); color: #fff; border-radius: 9px; padding: 7px 13px; font-weight: 700; font-size: calc(12.5px * var(--af-text-scale)); cursor: pointer; box-shadow: var(--shadow-sm); white-space: nowrap; }
+.swarm-bar .swarm-back:hover { background: var(--rust-deep); }
+.swarm-bc { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.swarm-bc-team { border: 0; background: transparent; color: var(--ink-soft); font: inherit; font-size: calc(13px * var(--af-text-scale)); font-weight: 700; cursor: pointer; padding: 0; }
+.swarm-bc-team:hover { color: var(--rust); text-decoration: underline; }
 .swarm-sep { color: var(--ink-faint); }
-.swarm-here { font-family: var(--font-display); }
+.swarm-here { font-family: var(--font-display); font-size: calc(14px * var(--af-text-scale)); }
 .swarm-role { font-size: calc(11.5px * var(--af-text-scale)); color: var(--ink-soft); background: var(--paper-2); border: 1px solid var(--line); border-radius: 7px; padding: 2px 8px; }
+.swarm-bc-task { margin-left: auto; color: var(--ink-faint); font-size: calc(12px * var(--af-text-scale)); max-width: 40%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .swarm-detail { flex: 1; min-height: 0; }
 .swarm-detail .app { padding: 0; height: 100%; }
 

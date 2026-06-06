@@ -46,7 +46,7 @@ describe("<AgentSwarm> control-flow graph", () => {
     const { container, getByText } = render(React.createElement(AgentSwarm, { trace: G }));
     fireEvent.click(container.querySelector(".agent-card")); // first agent card
     expect(container.querySelector(".flowscene")).toBeTruthy();
-    fireEvent.click(getByText("‹ Team"));
+    fireEvent.click(getByText("‹ Back to team"));
     expect(container.querySelectorAll(".agent-card").length).toBe(2);
   });
 

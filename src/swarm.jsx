@@ -101,10 +101,15 @@ export function AgentSwarm({ trace, theme, labels, icons, brand, live }) {
     const a = byId[sel];
     return (
       <div className="app-swarm" style={vars}>
-        <div className="swarm-bar">
-          <button className="swarm-back" onClick={() => setSel(null)}>‹ Team</button>
-          <span className="swarm-crumb">{task}</span><span className="swarm-sep">/</span>
-          <b className="swarm-here">{a.name}</b>{a.role && <span className="swarm-role">{a.role}</span>}
+        <div className="swarm-bar swarm-detailbar">
+          <button className="swarm-back" onClick={() => setSel(null)}>‹ Back to team</button>
+          <span className="swarm-bc">
+            <button className="swarm-bc-team" onClick={() => setSel(null)}>Team</button>
+            <span className="swarm-sep">›</span>
+            <b className="swarm-here">{a.name}</b>
+            {a.role && <span className="swarm-role">{a.role}</span>}
+          </span>
+          <span className="swarm-bc-task">{task}</span>
         </div>
         <div className="swarm-detail"><AgentThinkingUI trace={a.trace} theme={theme} labels={labels} icons={icons} /></div>
       </div>
