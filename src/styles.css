@@ -649,3 +649,11 @@ button { font-family: inherit; cursor: pointer; }
     scroll-behavior: auto !important;
   }
 }
+
+/* per-step token attribution (input / output / cache-read) under the cost row */
+.cost-breakdown { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: calc(12px * var(--af-text-scale)); color: var(--ink-soft, #6E5C49); }
+.cost-breakdown .cb-item { display: inline-flex; align-items: center; gap: 5px; }
+.cost-breakdown .cb-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--call); }
+.cost-breakdown .cb-dot.in { background: var(--data); }
+.cost-breakdown .cb-dot.out { background: var(--instr); }
+.cost-breakdown .cb-item.cached { color: var(--answer-deep, var(--answer)); font-weight: 600; }

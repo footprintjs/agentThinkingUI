@@ -70,6 +70,7 @@ const OTEL = {
   toolOutput: (a, sp) => tryJSON(a["gen_ai.tool.result"] ?? firstContent(eventAttrs(sp, "gen_ai.tool.message")) ?? a["gen_ai.tool.output"]),
   inTok: (a) => a["gen_ai.usage.input_tokens"],
   outTok: (a) => a["gen_ai.usage.output_tokens"],
+  cacheTok: (a) => a["gen_ai.usage.cache_read_input_tokens"] ?? a["gen_ai.usage.cached_tokens"] ?? a["gen_ai.usage.cache_read_tokens"],
   userMsg: (a, sp) => firstContent(eventAttrs(sp, "gen_ai.user.message")) ?? a["gen_ai.prompt.0.content"] ?? a["gen_ai.input.messages"],
   assistantMsg: (a, sp) => firstContent(eventAttrs(sp, "gen_ai.assistant.message")) ?? firstContent(eventAttrs(sp, "gen_ai.choice")) ?? a["gen_ai.completion.0.content"] ?? a["gen_ai.output.messages"],
 };
@@ -84,6 +85,7 @@ const OPENINFERENCE = {
   toolOutput: (a) => tryJSON(a["output.value"]),
   inTok: (a) => a["llm.token_count.prompt"],
   outTok: (a) => a["llm.token_count.completion"],
+  cacheTok: (a) => a["llm.token_count.prompt_details.cache_read"] ?? a["llm.token_count.cache_read"],
   userMsg: (a) => a["llm.input_messages.0.message.content"] ?? tryJSON(a["input.value"]),
   assistantMsg: (a) => a["llm.output_messages.0.message.content"] ?? tryJSON(a["output.value"]),
 };
@@ -110,7 +112,23 @@ function buildTrace(otlp, R, opts = {}) {
   const chats = spans.filter((s) => R.isChat(s.a));
   const tools = spans.filter((s) => R.isTool(s.a));
   const find = (arr, pred) => arr.find(pred);
-  const cost = (s) => ({ ms: Math.round(durMs(s.sp)), tokens: (Number(R.inTok(s.a)) || 0) + (Number(R.outTok(s.a)) || 0) });
+  const cost = (s) => {
+    const tin = Number(R.inTok(s.a)) || 0, tout = Number(R.outTok(s.a)) || 0;
+    const cached = Number(R.cacheTok && R.cacheTok(s.a)) || 0;
+    const c = { ms: Math.round(durMs(s.sp)), tokens: tin + tout };
+    if (tin) c.tokensIn = tin;
+    if (tout) c.tokensOut = tout;
+    if (cached) c.tokensCached = cached;
+    return c;
+  };
+  // split a cost across the synthetic ask+return halves, keeping the breakdown
+  const halveCost = (c) => {
+    const h = { ms: Math.round(c.ms / 2), tokens: Math.round(c.tokens / 2) };
+    if (c.tokensIn != null) h.tokensIn = Math.round(c.tokensIn / 2);
+    if (c.tokensOut != null) h.tokensOut = Math.round(c.tokensOut / 2);
+    if (c.tokensCached != null) h.tokensCached = Math.round(c.tokensCached / 2);
+    return h;
+  };
 
   const agentName = (agentSpan && R.agent(agentSpan.a)) || spans.map((s) => R.agent(s.a)).find(Boolean) || "agent";
   const model = spans.map((s) => R.model(s.a)).find(Boolean) || "unknown";
@@ -123,7 +141,7 @@ function buildTrace(otlp, R, opts = {}) {
     const a = t.a, name = R.toolName(a) || "tool";
     const before = find([...chats].reverse(), (c) => c.start < t.start);
     const after = find(chats, (c) => c.start > t.start);
-    const c = cost(t), half = { ms: Math.round(c.ms / 2), tokens: Math.round(c.tokens / 2) };
+    const c = cost(t), half = halveCost(c);
     steps.push({
       kind: "ask", tool: name, toolName: name, input: asObject(R.toolInput(a, t.sp)),
       brain: toText(before && R.assistantMsg(before.a, before.sp)) || ("Calling " + name), cost: half,

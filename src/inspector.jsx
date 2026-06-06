@@ -227,6 +227,13 @@ export function Inspector({ step, index, total, onCollapse, view, setView }) {
               <span className="c-unit">tokens</span>
             </div>
           </div>
+          {step.cost && (step.cost.tokensIn != null || step.cost.tokensOut != null || step.cost.tokensCached != null) && (
+            <div className="cost-breakdown">
+              {step.cost.tokensIn != null && <span className="cb-item"><span className="cb-dot in" />{step.cost.tokensIn} in</span>}
+              {step.cost.tokensOut != null && <span className="cb-item"><span className="cb-dot out" />{step.cost.tokensOut} out</span>}
+              {step.cost.tokensCached ? <span className="cb-item cached" title="cache-read (cached prompt) tokens">⚡ {step.cost.tokensCached} cached</span> : null}
+            </div>
+          )}
         </Section>
       </div>
     </div>
