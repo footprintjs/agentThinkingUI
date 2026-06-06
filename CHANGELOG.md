@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-06
+
 ### Added
 - **`renderDetail(step)` slot** on `<AgentThinkingUI>` (forwarded to the drilled-in
   agent by `<MultiAgentFlow>`) — render arbitrary per-step content in the inspector
@@ -111,7 +113,8 @@ to [Semantic Versioning](https://semver.org/).
   prop-first scoped theming, and the `fromOTLP` / `fromOpenInference` /
   `fromOTLPMulti` adapters. Scoped ES modules with an ESM + UMD dual build.
 
-[Unreleased]: https://github.com/footprintjs/agentThinkingUI/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/footprintjs/agentThinkingUI/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.8.0
 [0.7.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.7.0
 [0.6.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.6.0
 [0.5.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.5.0
