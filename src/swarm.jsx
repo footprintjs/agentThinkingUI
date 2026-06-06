@@ -66,7 +66,7 @@ function layoutFlow(nodes, edges) {
   return { pos, W: PADX * 2 + (nCols - 1) * COLW + DIM.agent.w, H: PADY * 2 + maxRows * ROWH, bottomY: PADY * 2 + maxRows * ROWH - 18 };
 }
 
-export function AgentSwarm({ trace, theme, labels, icons, brand }) {
+export function AgentSwarm({ trace, theme, labels, icons, brand, live }) {
   const [sel, setSel] = useState(null);
   const resolved = useMemo(() => AgentTheme.normalize({ theme, labels, icons }), [theme, labels, icons]);
   const vars = useMemo(() => AgentTheme.toVars(resolved), [resolved]);
@@ -92,7 +92,7 @@ export function AgentSwarm({ trace, theme, labels, icons, brand }) {
     return { teamSteps: steps, ranges: r };
   }, [nodes, pos]);
   const teamTrace = useMemo(() => ({ task, agent: "team", model: "", asker: "", steps: teamSteps.length ? teamSteps : [{ kind: "prompt", brain: "", cost: { ms: 0, tokens: 0 } }] }), [teamSteps, task]);
-  const play = usePlayback(teamTrace, { storageKey: "agentthinkingui.swarm" });
+  const play = usePlayback(teamTrace, { storageKey: "agentthinkingui.swarm", live });
   const idx = Math.min(play.index, teamTrace.steps.length - 1);
   const cur = teamSteps[idx];
   const phaseOf = (id) => { const rr = ranges[id]; if (!rr) return "done"; if (idx < rr.start) return "future"; if (idx > rr.end) return "done"; return "current"; };

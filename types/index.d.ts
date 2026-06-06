@@ -63,6 +63,8 @@ export interface AgentSwarmProps {
   labels?: { agent?: string; toolbox?: string };
   icons?: { brain?: IconConfig; toolbox?: IconConfig };
   brand?: ReactNode;
+  /** tail the team timeline to the newest beat as the graph grows */
+  live?: boolean;
 }
 /** Multi-agent control-flow map; agent nodes drill into their AgentThinkingUI. */
 export const AgentSwarm: FC<AgentSwarmProps>;

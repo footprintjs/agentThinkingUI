@@ -24,10 +24,24 @@
     // The six named multi-agent patterns, each a control-flow graph.
     // Pick one; click an agent node to drill into its single-agent flow.
     function FlowDemo() {
-      const { useState } = React;
+      const { useState, useEffect, useRef } = React;
       const flows = window.AGENT_FLOWS;
       const keys = Object.keys(flows);
       const [k, setK] = useState(keys[0]);
+      const [reveal, setReveal] = useState(0); // 0 = show whole graph; >0 = live stream up to N nodes
+      const timer = useRef(null);
+      const full = flows[k].graph;
+      const live = reveal > 0;
+      const graph = live ? { ...full, nodes: full.nodes.slice(0, reveal) } : full;
+
+      const stopLive = () => { if (timer.current) clearInterval(timer.current); timer.current = null; };
+      const startLive = () => {
+        stopLive(); setReveal(1); let n = 1;
+        timer.current = setInterval(() => { n += 1; setReveal(n); if (n >= full.nodes.length) stopLive(); }, 1100);
+      };
+      const pick = (key) => { stopLive(); setReveal(0); setK(key); };
+      useEffect(() => stopLive, []);
+
       const tab = (on) => ({ border: "1px solid " + (on ? "#C0531F" : "#E6D8C2"), background: on ? "#F6E4D6" : "#fff",
         borderRadius: 999, padding: "5px 12px", font: "inherit", fontSize: 12.5, fontWeight: 700, color: "#2C1F15", cursor: "pointer" });
       return (
@@ -35,9 +49,13 @@
           <div style={{ position: "fixed", top: 14, left: "50%", transform: "translateX(-50%)", zIndex: 60,
             display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", maxWidth: "92%",
             background: "rgba(255,253,248,.92)", border: "1px solid #E6D8C2", borderRadius: 16, padding: 7, boxShadow: "0 2px 12px rgba(70,45,25,.12)" }}>
-            {keys.map((key) => <button key={key} style={tab(k === key)} onClick={() => setK(key)}>{flows[key].label}</button>)}
+            {keys.map((key) => <button key={key} style={tab(k === key)} onClick={() => pick(key)}>{flows[key].label}</button>)}
+            <button style={{ ...tab(live), display: "flex", alignItems: "center", gap: 6 }} onClick={startLive}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: live ? "#C0531F" : "#A2917C" }} />{live ? "Streaming…" : "● Live"}
+            </button>
           </div>
-          <AgentSwarm key={k} trace={flows[k].graph} brand={<>Agent<b>ThinkingUI</b></>} />
+          <a href="./index.html" style={{ position: "fixed", top: 16, left: 18, zIndex: 60, fontSize: 12.5, fontWeight: 700, color: "#6E5C49", textDecoration: "none" }}>‹ Single-agent</a>
+          <AgentSwarm key={k} trace={graph} live={live} brand={<>Agent<b>ThinkingUI</b></>} />
         </>
       );
     }

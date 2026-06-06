@@ -73,6 +73,7 @@ function DemoCredit() {
       <a href="https://github.com/sanjay1909" target="_blank" rel="noopener noreferrer" title="Author on GitHub" style={{ ...btn, fontWeight: 500, color: "#6E5C49" }}>
         <GhIcon /> Sanjay Krishna Anbalagan
       </a>
+      <a href="./swarm.html" title="Multi-agent demo" style={btn}>Multi-agent ↗</a>
     </div>
   );
 }
