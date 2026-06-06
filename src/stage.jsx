@@ -30,8 +30,10 @@ function TypeGlyph({ data }) {
   );
 }
 
-function Brain({ mode }) {
-  const cfg = afIcons(React.useContext(AgentThemeContext)).brain || { kind: "default" };
+// the agent avatar — animated brain mascot, or an emoji/image. Reused by the
+// single-agent scene AND by <AgentSwarm> agent cards.
+export function BrainGlyph({ icon, mode }) {
+  const cfg = icon || { kind: "default" };
   if (cfg.kind === "image" && cfg.value) {
     return <div className="brain brain-custom"><img src={cfg.value} alt="" /></div>;
   }
@@ -59,6 +61,10 @@ function Brain({ mode }) {
       <div className="mouth" />
     </div>
   );
+}
+
+function Brain({ mode }) {
+  return <BrainGlyph icon={afIcons(React.useContext(AgentThemeContext)).brain} mode={mode} />;
 }
 
 // Prefer the resolved theme handed down by <AgentThinkingUI> via context; fall

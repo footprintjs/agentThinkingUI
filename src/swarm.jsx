@@ -1,5 +1,6 @@
 import React from "react";
 import { AgentThinkingUI } from "./footprint.jsx";
+import { BrainGlyph } from "./stage.jsx";
 import { AgentThemeContext } from "./context.js";
 import * as AgentTheme from "./theme.js";
 
@@ -16,7 +17,7 @@ const { useState, useMemo } = React;
    See docs/multi-agent-flow.md.
    ============================================================ */
 
-const DIM = { agent: { w: 196, h: 98 }, decision: { w: 108, h: 108 }, merge: { w: 132, h: 46 }, start: { w: 96, h: 40 }, end: { w: 96, h: 40 } };
+const DIM = { agent: { w: 204, h: 112 }, decision: { w: 108, h: 108 }, merge: { w: 132, h: 46 }, start: { w: 96, h: 40 }, end: { w: 96, h: 40 } };
 const dimOf = (n) => DIM[n.kind] || DIM.agent;
 
 // longest-path columns over forward (non-loop) edges; loops are drawn as back-arcs
@@ -135,8 +136,13 @@ export function AgentSwarm({ trace, theme, labels, icons, brand }) {
               return (
                 <button key={n.id} className={"agent-card " + k} style={st} onClick={() => n.trace && setSel(n.id)} title={n.trace ? "Open " + n.name : n.name}>
                   <span className="ac-status" />
-                  <div className="ac-name">{n.name}</div>
-                  {n.role && <div className="ac-role">{n.role}</div>}
+                  <div className="ac-head2">
+                    <div className="ac-avatar"><BrainGlyph icon={n.icon} mode={n.status === "running" ? "act" : "reason"} /></div>
+                    <div className="ac-id">
+                      <div className="ac-name">{n.name}</div>
+                      {n.role && <div className="ac-role">{n.role}</div>}
+                    </div>
+                  </div>
                   <div className="ac-meta">{steps} steps · {tok.toLocaleString()} tok</div>
                   {n.trace && <span className="ac-drill">open ›</span>}
                 </button>

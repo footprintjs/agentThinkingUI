@@ -40,7 +40,7 @@ export const AgentFootprint: FC<AgentThinkingUIProps>;
 
 export type FlowStatus = "idle" | "running" | "done" | "error";
 export type FlowNode =
-  | { id: string; kind?: "agent"; name: string; role?: string; status?: FlowStatus; trace: Trace }
+  | { id: string; kind?: "agent"; name: string; role?: string; status?: FlowStatus; icon?: IconConfig; trace: Trace }
   | { id: string; kind: "decision"; label: string; predicate?: string; status?: FlowStatus }
   | { id: string; kind: "merge"; label?: string }
   | { id: string; kind: "start" | "end"; label?: string };

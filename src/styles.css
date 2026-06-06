@@ -569,6 +569,11 @@ button { font-family: inherit; cursor: pointer; }
 .agent-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--accent); }
 .agent-card .ac-status { position: absolute; top: 14px; right: 14px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
 .agent-card.k-call .ac-status { animation: pulse 2s infinite; }
+.agent-card .ac-head2 { display: flex; align-items: center; gap: 11px; }
+.agent-card .ac-avatar { width: 46px; height: 44px; flex: none; position: relative; }
+.agent-card .ac-avatar .brain { transform: scale(.4); transform-origin: top left; }
+.agent-card .ac-avatar .brain-custom { width: 108px; height: 108px; }
+.agent-card .ac-id { min-width: 0; }
 .agent-card .ac-name { font-family: var(--font-display); font-weight: 700; font-size: calc(15px * var(--af-text-scale)); color: var(--ink); }
 .agent-card .ac-role { font-size: calc(11.5px * var(--af-text-scale)); color: var(--ink-soft); margin-top: 1px; }
 .agent-card .ac-meta { font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-faint); margin-top: 9px; }

@@ -5,8 +5,9 @@
   const cost = (ms, t) => ({ ms, tokens: t });
   const ans = (h) => ({ headline: h, plan: [], budget: [], cta: "" });
   // an agent node with a minimal single-agent trace to drill into
-  const agent = (id, name, role, status, brain) => ({
-    id, kind: "agent", name, role, status: status || "done",
+  const emoji = (v) => ({ kind: "emoji", value: v });
+  const agent = (id, name, role, status, brain, icon) => ({
+    id, kind: "agent", name, role, status: status || "done", icon,
     trace: { task: name, agent: id, model: "loop", asker: "orchestrator", steps: [
       { kind: "prompt", brain: brain || (name + " — got the task."), cost: cost(220, 130) },
       { kind: "ask", tool: "work", toolName: name, input: {}, brain: "Working…", cost: cost(260, 120) },
@@ -30,14 +31,14 @@
   // Debate: Parallel(pro, con) → judge
   flows.debate = { label: "Debate", graph: {
     task: "pro & con argue → judge decides",
-    nodes: [agent("pro", "Advocate", "pro"), agent("con", "Skeptic", "con"), agent("j", "Judge", "arbiter")],
+    nodes: [agent("pro", "Advocate", "pro", "done", null, emoji("🙂")), agent("con", "Skeptic", "con", "done", null, emoji("🤨")), agent("j", "Judge", "arbiter", "done", null, emoji("⚖️"))],
     edges: [E("pro", "j", "parallel"), E("con", "j", "parallel")],
   } };
 
   // Router: Conditional → A | B | C  (one branch taken, rest dimmed)
   flows.router = { label: "Router", graph: {
     task: "route the request by intent",
-    nodes: [decision("r", "intent?"), agent("a", "Billing", "handler"), agent("b", "Tech", "handler"), agent("c", "General", "handler")],
+    nodes: [decision("r", "intent?"), agent("a", "Billing", "handler", "done", null, emoji("💳")), agent("b", "Tech", "handler", "done", null, emoji("🛠️")), agent("c", "General", "handler", "done", null, emoji("💬"))],
     edges: [E("r", "a", "conditional", "billing", true), E("r", "b", "conditional", "tech"), E("r", "c", "conditional", "other")],
   } };
 
