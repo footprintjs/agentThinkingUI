@@ -50,12 +50,13 @@ describe("<AgentSwarm> control-flow graph", () => {
     expect(container.querySelectorAll(".agent-card").length).toBe(2);
   });
 
-  it("exposes a team timeline + notepad (multi-agent time-travel)", () => {
+  it("exposes a team timeline + notepad (open by default), toggle-able", () => {
     const { container, getByText } = render(React.createElement(AgentSwarm, { trace: G }));
     expect(container.querySelector(".timeline")).toBeTruthy(); // team scrubber
     expect(container.querySelector(".swarm-commentary")).toBeTruthy(); // current-beat narration
-    fireEvent.click(getByText("Notepad"));
-    expect(container.querySelector(".swarm-notepad")).toBeTruthy();
+    expect(container.querySelector(".swarm-notepad")).toBeTruthy(); // open by default
     expect(container.querySelectorAll(".swarm-notepad .note").length).toBeGreaterThan(0);
+    fireEvent.click(getByText("Hide notepad")); // toggle closes it
+    expect(container.querySelector(".swarm-notepad")).toBeNull();
   });
 });

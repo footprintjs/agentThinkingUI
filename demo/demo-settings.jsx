@@ -47,7 +47,7 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
     <div onClick={() => setOpen(false)}
       style={{ position: 'absolute', inset: 0, background: 'rgba(48,44,40,.46)', backdropFilter: 'blur(1px)', display: 'grid', placeItems: 'center', zIndex: 80, padding: 'min(4vw, 20px)' }}>
       <div onClick={e => e.stopPropagation()}
-        style={{ width: 'min(440px, 96vw)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', background: '#FFFDF8', border: '1px solid #E6D8C2', borderRadius: 18, boxShadow: '0 24px 70px rgba(70,45,25,.32)', fontFamily: 'var(--font-body)' }}>
+        style={{ width: 'min(440px, 96vw)', height: 'min(560px, 86vh)', display: 'flex', flexDirection: 'column', background: '#FFFDF8', border: '1px solid #E6D8C2', borderRadius: 18, boxShadow: '0 24px 70px rgba(70,45,25,.32)', fontFamily: 'var(--font-body)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px 0' }}>
           <div style={{ ...lbl, margin: 0, color: '#C0531F' }}>Live props · demo</div>
           <button onClick={() => setOpen(false)} title="Close" style={{ border: 'none', background: 'transparent', fontSize: 22, color: '#A2917C', cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
@@ -99,9 +99,9 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
             </>}
             {onImport && <>
               <div style={lbl}>Import an agent trace</div>
-              <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-                <button style={chip(fmt === 'otel')} onClick={() => setFmt('otel')}>OpenTelemetry</button>
-                <button style={chip(fmt === 'openinference')} onClick={() => setFmt('openinference')}>OpenInference</button>
+              <div style={{ display: 'flex', gap: 3, marginBottom: 8, background: '#F4EBDB', border: '1px solid #E6D8C2', borderRadius: 999, padding: 3 }}>
+                {[['otel', 'OpenTelemetry'], ['openinference', 'OpenInference']].map(([id, label]) =>
+                  <button key={id} onClick={() => setFmt(id)} style={{ flex: 1, font: 'inherit', fontSize: 12, fontWeight: 700, padding: '6px 8px', border: 'none', borderRadius: 999, cursor: 'pointer', background: fmt === id ? '#fff' : 'transparent', color: fmt === id ? '#C0531F' : '#6E5C49', boxShadow: fmt === id ? '0 1px 3px rgba(70,45,25,.12)' : 'none' }}>{label}</button>)}
               </div>
               <textarea key={fmt} ref={taRef} defaultValue={fmt === 'otel' ? otlpSample : oiSample} spellCheck={false}
                 style={{ width: '100%', height: 110, fontFamily: 'ui-monospace, monospace', fontSize: 11, lineHeight: 1.4, padding: '7px 9px', border: '1px solid #E6D8C2', borderRadius: 8, background: '#fff', color: '#2C1F15', boxSizing: 'border-box', resize: 'vertical' }} />

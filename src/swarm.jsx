@@ -81,7 +81,7 @@ export function AgentSwarm({ trace, theme, labels, icons, brand, live }) {
     const g = {}; edges.forEach((e) => { if (e.kind === "conditional" && e.taken) g[e.from] = true; }); return g;
   }, [edges]);
 
-  const [npOpen, setNpOpen] = useState(false);
+  const [npOpen, setNpOpen] = useState(true);
   // a TEAM trace: every agent's beats interleaved in flow order (column, then row),
   // so the swarm map is itself scrubbable — time-travel + commentary across the team.
   const { teamSteps, ranges } = useMemo(() => {
