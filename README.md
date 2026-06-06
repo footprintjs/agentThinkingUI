@@ -118,8 +118,9 @@ type Step =
       output: object; brain: string; cost: Cost;
       brainMode?: "reason" | "act";        // data → reason, instruction → act
       skill?: string; actChecklist?: { text: string }[];   // for instruction / both (skill / steering)
-      actNote?: string }                    // the "acts on the instruction" note (both)
-  | { kind: "answer";  to: string; brain: string; answer: Answer; cost: Cost };
+      actNote?: string;                     // the "acts on the instruction" note (both)
+      error?: string }                      // set when the tool/step failed → rendered red
+  | { kind: "answer";  to: string; brain: string; answer: Answer; cost: Cost; error?: string };
 
 type Cost = { ms: number; tokens: number };
 ```
@@ -127,7 +128,8 @@ type Cost = { ms: number; tokens: number };
 The three `replyType`s are the model from the hero: **data** (reason),
 **instruction** (act on a **skill / steering** doc), and **both** — the mixed
 case, where the reply carried data **and** an instruction, so the brain reasons on
-one half and acts on the other (two bubbles).
+one half and acts on the other (two bubbles). A step that **failed** carries
+`error` and renders red across the scene, timeline, inspector and notepad.
 
 ## Layout
 
@@ -140,17 +142,19 @@ src/                 # the library — ES modules (import/export, scoped)
   inspector.jsx      <Inspector> per-step detail + <Notepad> chronological journal
   timeline.jsx       <Timeline>  — time-travel scrubber + transport + legend
   footprint.jsx      <AgentThinkingUI> — ready-made shell wiring all four together
+  swarm.jsx          <AgentSwarm> — multi-agent control-flow map + drill-down
+  adapters/otlp.js   fromOTLP · fromOpenInference · fromOTLPMulti (OpenTelemetry → trace/graph)
   context.js         the shared React context the views read the theme from
   index.jsx          ESM entry (re-exports)   ·   global.jsx  UMD entry (window.*)
   styles.css         Design tokens + component styles (all keyed off theme variables)
 
 build.mjs            esbuild → dist/ (ESM + UMD + css)
-demo/                # a runnable example (loads the prebuilt ../dist bundle)
-  index.html         Responsive demo   ·   mobile.html  phone frame
-  trace.js           Sample recorded runs (swap for your own)
-  app.jsx            Composition — <AgentThinkingUI> + Tweaks + the live-props gear
-  demo-settings.jsx  Demo-only live-props gear (rebrand / scenarios / live stream)
-  tweaks-panel.jsx   Demo-only live controls (palette / labels / loop)
+demo/                # runnable examples (load the prebuilt ../dist bundle)
+  index.html         Responsive single-agent demo   ·   mobile.html  phone frame
+  swarm.html         Multi-agent demo — the six patterns + a live stream
+  trace.js           Sample single-agent runs   ·   flow-trace.js  multi-agent FlowGraphs
+  app.jsx            Composition — <AgentThinkingUI> + tabbed gear (theme / scenario / OTel import)
+  demo-settings.jsx  Demo-only gear   ·   tweaks-panel.jsx  palette / labels / loop
 ```
 
 ## Components
@@ -240,6 +244,8 @@ nested `invoke_agent` spans become the agent graph. The **reply type**
 (`data`/`instruction`/`both`) isn't in those standards, so it's decided by an
 `opts.classify(toolName, attrs)` hook → opt-in `agentthinkingui.reply_type` /
 `.skill` span attributes → a heuristic (skill/steering/policy/guardrail → instruction).
+**Errors are universal:** a span with status `ERROR` (or an `exception` event) becomes
+a red error beat (and a red agent node in the swarm) — same for both adapters.
 For **live monitoring**, accumulate spans and re-run the adapter on the growing set,
 feeding `<AgentThinkingUI live>` / `<AgentSwarm live>`.
 
