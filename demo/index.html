@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AgentFootprint — runtime player</title>
+  <title>AgentThinkingUI — runtime player</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesque:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet" />
   <!-- library styles -->
   <link rel="stylesheet" href="../src/styles.css" />
   <!--
-    Branding is driven by props: <AgentFootprint theme labels icons /> \u2014 see the
+    Branding is driven by props: <AgentThinkingUI theme labels icons /> \u2014 see the
     live gear in app.jsx. The globals below are the OPTIONAL back-compat path:
-    define them before theme.js to set page-level defaults; props still win.
+    define them before the library bundle to set page-level defaults; props still win.
   -->
   <!--
   <script>
@@ -21,7 +21,6 @@
     window.AGENT_ICONS = { brain: { kind: "emoji", value: "\uD83E\uDD16" }, toolbox: { kind: "emoji", value: "\uD83E\uDDF0" } };
   </script>
   -->
-  <script src="../src/theme.js"></script>
 </head>
 <body>
   <div class="grain"></div>
@@ -31,17 +30,13 @@
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-  <!-- DEMO data (swap this for your own recorded run) -->
+  <!-- the library, prebuilt (sets window.AgentThinkingUI, window.AgentTheme, …).
+       Run `npm run build` to (re)generate ../dist. -->
+  <script src="../dist/agentthinkingui.umd.js"></script>
+
+  <!-- DEMO data (swap this for your own recorded run) + composition -->
   <script src="trace.js"></script>
-  <!-- library modules -->
-  <script src="../src/layout.js"></script>
-  <script type="text/babel" src="../src/playback.js"></script>
   <script type="text/babel" src="tweaks-panel.jsx"></script>
-  <script type="text/babel" src="../src/stage.jsx"></script>
-  <script type="text/babel" src="../src/inspector.jsx"></script>
-  <script type="text/babel" src="../src/timeline.jsx"></script>
-  <script type="text/babel" src="../src/footprint.jsx"></script>
-  <!-- DEMO composition (wires the library + tweaks) -->
   <script type="text/babel" src="demo-settings.jsx"></script>
   <script type="text/babel" src="app.jsx"></script>
 </body>

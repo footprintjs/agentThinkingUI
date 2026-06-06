@@ -1,7 +1,5 @@
 import { describe, it, expect } from "vitest";
-import "../src/layout.js"; // attaches window.arcLayout + window.AF_LAYOUT
-
-const { arcLayout, AF_LAYOUT } = window;
+import { arcLayout, AF_LAYOUT } from "../src/layout.js";
 
 describe("AF_LAYOUT anchors", () => {
   it("uses fixed fractional anchors so the brain/toolbox never jump", () => {

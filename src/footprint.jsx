@@ -1,4 +1,11 @@
-/* global React, Stage, Inspector, Timeline, Notepad, usePlayback */
+import React from "react";
+import { Stage } from "./stage.jsx";
+import { Inspector, Notepad } from "./inspector.jsx";
+import { Timeline } from "./timeline.jsx";
+import { usePlayback } from "./playback.js";
+import { AgentThemeContext } from "./context.js";
+import * as AgentTheme from "./theme.js";
+
 /* ============================================================
    AgentThinkingUI — default container.
    Wires the four view components into the ready-made shell:
@@ -11,7 +18,7 @@
    four components into their own layout (they're each independent).
    (window.AgentFootprint remains as a deprecated alias.)
    ============================================================ */
-function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, live = false, style, mobile }) {
+export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, live = false, style, mobile }) {
   const { useState, useRef, useMemo } = React;
   const { index, seek, playing, setPlaying, speed, setSpeed } = usePlayback(trace, { loop, live });
 
@@ -19,9 +26,9 @@ function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, 
   // CSS variables ride on the .app container (not :root), so multiple players
   // can wear different brands and nothing leaks into the host app. The four
   // sub-components read the resolved icons/labels from context below.
-  const TC = window.AgentThemeContext || (window.AgentThemeContext = React.createContext(null));
-  const resolved = useMemo(() => window.AgentTheme.normalize({ theme, labels, icons }), [theme, labels, icons]);
-  const themeVars = useMemo(() => window.AgentTheme.toVars(resolved), [resolved]);
+  const TC = AgentThemeContext;
+  const resolved = useMemo(() => AgentTheme.normalize({ theme, labels, icons }), [theme, labels, icons]);
+  const themeVars = useMemo(() => AgentTheme.toVars(resolved), [resolved]);
   const rootStyle = { ...themeVars, ...style }; // explicit style still wins (back-compat)
   const [runtimePct, setRuntimePct] = useState(58);
   const [inspOpen, setInspOpen] = useState(true);
@@ -114,6 +121,3 @@ function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, 
     </TC.Provider>
   );
 }
-
-window.AgentThinkingUI = AgentThinkingUI;
-window.AgentFootprint = AgentThinkingUI; // deprecated alias

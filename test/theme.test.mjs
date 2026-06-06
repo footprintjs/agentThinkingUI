@@ -1,7 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import "../src/theme.js"; // attaches window.AgentTheme
-
-const Theme = window.AgentTheme;
+import * as Theme from "../src/theme.js";
 const lum = (h) => {
   const n = parseInt(h.slice(1), 16);
   return ((n >> 16) & 255) + ((n >> 8) & 255) + (n & 255);

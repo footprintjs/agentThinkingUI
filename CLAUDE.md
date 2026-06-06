@@ -9,56 +9,58 @@ AgentThinkingUI — a framework-agnostic player that replays an agent's runtime
 footprint (a recorded trace) as an animated, scrubbable story. `src/` is the
 library; `demo/` is a runnable example.
 
-## Hard constraints (do not break)
+## Architecture (do not break)
 
-- **No build step.** The library runs as plain `<script>` tags: React + ReactDOM
-  + Babel standalone (UMD, from a CDN) compile the `.jsx` in the browser. There is
-  no bundler, no `package.json` build, no transpile step.
-- **Globals, not modules.** Each file exposes its symbols on `window`
-  (`window.Stage`, `window.AgentThinkingUI`, `window.AgentTheme`, …). Babel
-  standalone runs each `<script type="text/babel">` in its own scope, so cross-file
-  sharing goes through `window`, not top-level `const`/`import`.
+- **Scoped ES modules + a tiny dual build.** `src/` is real ES modules
+  (`import`/`export`, no `window` globals for sharing). `build.mjs` (esbuild) emits
+  `dist/`: an **ESM** bundle (`agentthinkingui.js`, React externalized) for
+  bundler/app users, and a **UMD/IIFE** bundle (`agentthinkingui.umd.js`) that
+  re-attaches the symbols to `window` for script-tag/CDN use. React/ReactDOM are
+  **peer deps** (the UMD reads them from `window.React`). `dist/` is gitignored —
+  Pages builds it in CI, `prepublishOnly` builds it for npm.
+- **Two entry points.** `src/index.jsx` (ESM re-exports) and `src/global.jsx` (UMD;
+  sets `window.*` + seeds `:root` from page globals). Don't add `window.X =` inside
+  the feature modules — export and let `global.jsx` attach.
 - **Theming flows through CSS variables.** `theme.js` resolves tokens →
   `--rust`/`--data`/`--instr`/… The container applies them **scoped to its own
-  element** (not `:root`) and passes resolved icons/labels to the views via a
-  React context. Font sizes are `calc(px * var(--af-text-scale))`.
+  element** (not `:root`) and passes resolved icons/labels to the views via the
+  shared `context.js` React context. Font sizes are `calc(px * var(--af-text-scale))`.
 
 ## Layout
 
 ```
-src/        theme.js · layout.js · playback.js · stage.jsx · inspector.jsx ·
-            timeline.jsx · footprint.jsx · styles.css        (the library)
+src/        theme.js · layout.js · playback.js · context.js · stage.jsx ·
+            inspector.jsx · timeline.jsx · footprint.jsx ·
+            index.jsx (ESM entry) · global.jsx (UMD entry) · styles.css
+build.mjs   esbuild → dist/ (ESM + UMD + css)
 demo/       index.html (responsive) · mobile.html · trace.js · app.jsx ·
-            demo-settings.jsx · tweaks-panel.jsx              (runnable example)
+            demo-settings.jsx · tweaks-panel.jsx   (loads the prebuilt ../dist)
 docs/assets gen-hero.mjs → hero-light.svg / hero-dark.svg    (animated README art)
 ```
 
 - Geometry (brain/tool anchors, arc paths) is pure and lives in `layout.js`
-  (`window.arcLayout`, `window.AF_LAYOUT`). The brain/toolbox use a **fixed**
-  anchor per layout so they never jump between steps.
+  (`arcLayout`, `AF_LAYOUT`). The brain/toolbox use a **fixed** anchor per layout
+  so they never jump between steps.
 - Animation **choreography** is one block of staged `animation-delay`s in
   `styles.css` (search "choreography").
 
 ## Naming
 
-`<AgentThinkingUI>` is the primary component (`window.AgentThinkingUI`).
-`window.AgentFootprint` is a **deprecated alias**. "footprint" is the domain
-concept ("an agent's runtime footprint"), not a second product name.
+`<AgentThinkingUI>` is the primary component. `AgentFootprint` is a **deprecated
+alias**. "footprint" is the domain concept ("an agent's runtime footprint"), not a
+second product name.
 
 ## Running / verifying a change
 
-- Serve the repo and open the demo: `python3 -m http.server` then
-  `/demo/index.html` (responsive) or `/demo/mobile.html` (phone frame).
-- **Tests / lint (dev-only — the shipped library still has no build):**
-  `npm test` (Vitest), `npm run coverage`, `npm run lint` (ESLint). Tests run in
-  jsdom and load the `window`-global scripts directly (`test/setup.mjs`); the pure
-  logic (`layout`/`theme`/`playback`) and the rendered views are both covered.
-  CI runs lint + coverage on push/PR (`.github/workflows/ci.yml`).
-- The CDN `<script>`s need network access; behind a strict allowlist, vendor
-  React/ReactDOM/Babel from npm and route the unpkg URLs to the local copies when
-  driving a headless browser.
-- Regenerate the README hero after editing it: `node docs/assets/gen-hero.mjs`
-  (writes both light + dark from one source).
+- **Build first**, then serve the demo: `npm run build` → `python3 -m http.server`
+  → `/demo/index.html` (responsive) or `/demo/mobile.html` (phone frame). The demo
+  loads `../dist/agentthinkingui.umd.js` (`npm run serve` builds then serves).
+- **Tests / lint:** `npm test` (Vitest, jsdom — imports the ES modules directly),
+  `npm run coverage` (~98% of `src/`), `npm run lint` (ESLint). CI runs lint +
+  coverage on push/PR (`.github/workflows/ci.yml`).
+- Headless browser behind a strict allowlist: vendor React/ReactDOM from npm and
+  route the unpkg URLs to local copies; the demo's own UMD bundle is local (`dist`).
+- Regenerate the README hero after editing it: `node docs/assets/gen-hero.mjs`.
 
 ## Conventions
 

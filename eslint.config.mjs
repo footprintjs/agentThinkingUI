@@ -1,56 +1,58 @@
 import js from "@eslint/js";
 import globals from "globals";
 
-// Cross-file symbols. This library is intentionally no-module: each browser
-// script shares globals (components on `window`, helpers as top-level decls),
-// so ESLint needs them declared to resolve references.
-const PROJECT_GLOBALS = {
-  React: "readonly",
-  ReactDOM: "readonly",
-  // library
+// The demo still consumes the library through the UMD bundle's window globals
+// (and Babel-standalone runs each <script> in global scope), so its cross-file
+// symbols must be declared. The library itself is now real ES modules.
+const DEMO_GLOBALS = {
+  React: "readonly", ReactDOM: "readonly",
+  AgentThinkingUI: "readonly", AgentFootprint: "readonly", AgentTheme: "readonly",
   Stage: "readonly", Inspector: "readonly", Notepad: "readonly", Timeline: "readonly",
-  ToolIcon: "readonly", usePlayback: "readonly",
-  AgentTheme: "readonly", AgentThemeContext: "readonly",
-  AgentThinkingUI: "readonly", AgentFootprint: "readonly",
-  arcLayout: "readonly", AF_LAYOUT: "readonly", AF_DWELL: "readonly",
-  AGENT_THEME: "writable", AGENT_LABELS: "writable", AGENT_DISPLAY_NAME: "writable",
-  AGENT_ICONS: "writable", AGENT_THEME_RESOLVED: "writable",
-  AGENT_TRACE: "writable", AGENT_TRACES: "writable",
-  // demo chrome
+  ToolIcon: "readonly", usePlayback: "readonly", arcLayout: "readonly", AF_LAYOUT: "readonly",
+  AF_DWELL: "readonly", AgentThemeContext: "readonly",
   DemoSettings: "readonly", Gear: "readonly", GhMark: "readonly",
-  useTweaks: "readonly", TweaksPanel: "readonly", TweakSection: "readonly",
-  TweakRow: "readonly", TweakSlider: "readonly", TweakToggle: "readonly",
-  TweakRadio: "readonly", TweakSelect: "readonly", TweakText: "readonly",
+  useTweaks: "readonly", TweaksPanel: "readonly", TweakSection: "readonly", TweakRow: "readonly",
+  TweakSlider: "readonly", TweakToggle: "readonly", TweakRadio: "readonly", TweakSelect: "readonly", TweakText: "readonly",
+  AGENT_TRACE: "writable", AGENT_TRACES: "writable",
+};
+
+const sharedRules = {
+  "no-unused-vars": ["warn", { varsIgnorePattern: "^[A-Z_]", argsIgnorePattern: "^_|^." }],
+  "no-empty": ["warn", { allowEmptyCatch: true }],
 };
 
 export default [
-  { ignores: ["node_modules/**", "coverage/**"] },
+  { ignores: ["node_modules/**", "coverage/**", "dist/**"] },
 
-  // the library + demo: browser scripts (no modules)
+  // the library — real ES modules (React + siblings are imported)
   {
-    files: ["src/**/*.{js,jsx}", "demo/**/*.{js,jsx}"],
+    files: ["src/**/*.{js,jsx}"],
+    ...js.configs.recommended,
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      parserOptions: { ecmaFeatures: { jsx: true } },
+      globals: { ...globals.browser },
+    },
+    rules: { ...js.configs.recommended.rules, ...sharedRules },
+  },
+
+  // the demo — script-tag globals (UMD bundle + Babel-standalone)
+  {
+    files: ["demo/**/*.{js,jsx}"],
     ...js.configs.recommended,
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
       parserOptions: { ecmaFeatures: { jsx: true } },
-      globals: { ...globals.browser, ...PROJECT_GLOBALS },
+      globals: { ...globals.browser, ...DEMO_GLOBALS },
     },
-    rules: {
-      ...js.configs.recommended.rules,
-      // components are used inside JSX, which base ESLint doesn't count as a
-      // "use" — so ignore unused for Capitalized names (and underscore-prefixed).
-      "no-unused-vars": ["warn", { varsIgnorePattern: "^[A-Z_]", argsIgnorePattern: "^_|^." }],
-      "no-empty": ["warn", { allowEmptyCatch: true }],
-      // each browser script defines globals other scripts consume — the
-      // cross-file pattern legitimately "redeclares" the shared name.
-      "no-redeclare": "off",
-    },
+    rules: { ...js.configs.recommended.rules, ...sharedRules, "no-redeclare": "off" },
   },
 
-  // tooling: real ES modules on Node
+  // tooling — Node ES modules
   {
-    files: ["test/**/*.mjs", "**/*.config.mjs", "docs/assets/*.mjs"],
+    files: ["test/**/*.mjs", "*.mjs", "docs/assets/*.mjs"],
     ...js.configs.recommended,
     languageOptions: {
       ecmaVersion: 2022,

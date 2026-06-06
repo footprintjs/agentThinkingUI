@@ -1,4 +1,5 @@
-/* global React */
+import React from "react";
+
 const { useRef: tlUseRef } = React;
 
 function Icon({ type }) {
@@ -13,7 +14,7 @@ function Icon({ type }) {
   }
 }
 
-function Timeline({ trace, index, setIndex, playing, setPlaying, speed, setSpeed, minimal }) {
+export function Timeline({ trace, index, setIndex, playing, setPlaying, speed, setSpeed, minimal }) {
   const trackRef = tlUseRef(null);
   const steps = trace.steps;
 
@@ -110,5 +111,3 @@ function Timeline({ trace, index, setIndex, playing, setPlaying, speed, setSpeed
     </div>
   );
 }
-
-window.Timeline = Timeline;

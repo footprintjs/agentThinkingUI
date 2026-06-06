@@ -19,26 +19,28 @@ The reply is one of three shapes, and the loop repeats until the **answer**:
 - **instruction** → a **skill / steering doc** tells it **how to act** (instruction/amber)
 - **both** → data + instruction at once (reason on one half, act on the other)
 
-## Integrate it (no build step)
+## Integrate it
 
-It's React UMD + in-browser Babel loaded with plain `<script>` tags — **no
-bundler, no npm build**. To embed:
+Scoped ES modules; React is a peer dependency. Two ways:
 
-1. Copy `src/` into your app (and a `trace.js` that sets `window.AGENT_TRACE`).
-2. Load in this order (see `demo/index.html`):
-   `theme.js` → React/ReactDOM/Babel (UMD) → your `trace.js` → `layout.js` →
-   `playback.js` → `stage.jsx` → `inspector.jsx` → `timeline.jsx` → `footprint.jsx`
-   → your composition.
-3. Render the ready-made container:
-
+**App / bundler (ESM):**
+```bash
+npm install agentthinkingui react react-dom
+```
 ```jsx
+import { AgentThinkingUI } from "agentthinkingui";
+import "agentthinkingui/styles.css";
+
 <AgentThinkingUI trace={trace} />
 ```
 
-`<AgentThinkingUI>` is the primary export (`window.AgentThinkingUI`).
-`window.AgentFootprint` is a **deprecated alias** of the same component. The four
-view pieces — `<Timeline>`, `<Stage>`, `<Inspector>`, `<Notepad>` — are also
-global and can be composed by hand with the state from `usePlayback(trace)`.
+**Script tag / no bundler (UMD bundle):** load React, then
+`dist/agentthinkingui.umd.js` (it sets `window.AgentThinkingUI`, `window.AgentTheme`,
+…) + `dist/agentthinkingui.css`. See `demo/index.html`.
+
+`AgentThinkingUI` is the primary export; `AgentFootprint` is a **deprecated alias**.
+The four view pieces — `Timeline`, `Stage`, `Inspector`, `Notepad` — are also
+exported and can be composed by hand with the state from `usePlayback(trace)`.
 
 ### Container props
 
@@ -91,16 +93,17 @@ variables **scoped to the player's own element** (not `:root`), so it's reactive
 and won't leak into the host. A colour is a hex (shades derived) or a full
 `{ base, deep, tint }` triad. `theme.fonts` carries the four families
 (`display`/`body`/`mono`/`hand`) plus `scale` (a single multiplier over the type
-ramp). The engine is also callable directly via `window.AgentTheme`
-(`normalize` / `toVars` / `apply`). Page-level `window.AGENT_THEME` globals still
-work as a back-compat default.
+ramp). The theme engine is importable on its own —
+`import { normalize, toVars, apply } from "agentthinkingui"` (or `AgentTheme.*`
+from the UMD bundle). Page-level `window.AGENT_THEME` globals still work as a
+back-compat default with the UMD bundle.
 
 ## Gotchas
 
-- **Load order matters** — `theme.jsx`/views are global scripts; load them in the
-  order above or symbols won't resolve.
-- **No JSX build** — `.jsx` files are transformed in-browser by Babel standalone;
-  keep `type="text/babel"` on those `<script>` tags.
-- Components are exposed as `window.*` globals, not ES modules.
+- **React is a peer dependency** — install/provide `react` + `react-dom` (>=18).
+- **Import the stylesheet** — `import "agentthinkingui/styles.css"` (ESM) or link
+  `dist/agentthinkingui.css` (script tag); styles aren't inlined into the JS.
+- **Script-tag path uses the UMD bundle** — load React first, then
+  `dist/agentthinkingui.umd.js`; it attaches `window.AgentThinkingUI` (+ the rest).
 
 See the [README](./README.md) and the [live demo](https://footprintjs.github.io/agentThinkingUI/).

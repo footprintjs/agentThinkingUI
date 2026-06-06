@@ -13,6 +13,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.{js,jsx}"], // the library only — demo/ is excluded
+      exclude: ["src/index.jsx", "src/global.jsx"], // bundler entry glue
       reporter: ["text", "text-summary", "lcov", "json-summary"],
     },
   },

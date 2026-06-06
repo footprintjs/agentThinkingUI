@@ -1,12 +1,12 @@
 /* ============================================================
-   AgentFootprint — LAYOUT
+   AgentThinkingUI — LAYOUT
    Pure geometry for the runtime scene. No React, no DOM — given the
    container size and the brain's vertical anchor, it returns the
    positions + arc paths. Keeping this separate means the visual
    composition can be tuned (or replaced) without touching rendering,
    playback, or theming.
    ============================================================ */
-window.AF_LAYOUT = {
+export const AF_LAYOUT = {
   brainX: 0.25,       // brain centre, fraction of width
   brainY: 0.60,       // brain centre, fraction of height (fixed → no per-step jump)
   brainYMobile: 0.72, // mobile pins the brain lower so the callout has room above
@@ -15,8 +15,8 @@ window.AF_LAYOUT = {
 
 // both sweeping arcs + anchors. ask dips LOW to the toolbox; the reply
 // rises HIGH, starting from the popped tool card.
-window.arcLayout = function arcLayout(w, h, by, straight) {
-  const L = window.AF_LAYOUT;
+export function arcLayout(w, h, by, straight) {
+  const L = AF_LAYOUT;
   const bx = w * L.brainX;
   const tx = w * L.toolX, ty = by;
   const bRight = bx + 58, tLeft = tx - 62;
@@ -42,4 +42,4 @@ window.arcLayout = function arcLayout(w, h, by, straight) {
     hx: bRight, hy: by - 10, ang: Math.atan2((by - 10) - (by - off), bRight - midX) * 180 / Math.PI,
   };
   return { down, up, bx, by, tx, ty, midX, off };
-};
+}

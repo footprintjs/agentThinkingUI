@@ -25,6 +25,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Build the library bundle (dist/)
+        run: |
+          npm ci
+          npm run build
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
@@ -32,9 +43,8 @@ jobs:
           enablement: true
 
       - name: Upload site artifact
-        # The demo is a no-build static site that loads the library from ../src,
-        # so we publish the whole repository and let the root index.html redirect
-        # to demo/index.html.
+        # The demo loads the prebuilt library from ../dist (built above); we publish
+        # the whole repository and let the root index.html redirect to demo/index.html.
         uses: actions/upload-pages-artifact@v3
         with:
           path: .

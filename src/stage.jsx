@@ -1,7 +1,10 @@
-/* global React */
+import React from "react";
+import { AgentThemeContext } from "./context.js";
+import { arcLayout, AF_LAYOUT } from "./layout.js";
+
 const { useRef: sUseRef, useState: sUseState, useLayoutEffect } = React;
 
-function ToolIcon({ name }) {
+export function ToolIcon({ name }) {
   const common = { width: 17, height: 17, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" };
   const paths = {
     search_flights: <path d="M3 12h12l4-4 2 1-3 3 3 3-2 1-4-4H3z" />,
@@ -28,7 +31,7 @@ function TypeGlyph({ data }) {
 }
 
 function Brain({ mode }) {
-  const cfg = afIcons(React.useContext(afCtx())).brain || { kind: "default" };
+  const cfg = afIcons(React.useContext(AgentThemeContext)).brain || { kind: "default" };
   if (cfg.kind === "image" && cfg.value) {
     return <div className="brain brain-custom"><img src={cfg.value} alt="" /></div>;
   }
@@ -58,17 +61,14 @@ function Brain({ mode }) {
   );
 }
 
-// Prefer the resolved theme handed down by <AgentFootprint> via context; fall
+// Prefer the resolved theme handed down by <AgentThinkingUI> via context; fall
 // back to the page-level global so the components still work standalone.
-function afCtx() {
-  return window.AgentThemeContext || (window.AgentThemeContext = React.createContext(null));
-}
 function afIcons(R) {
-  R = R || window.AGENT_THEME_RESOLVED;
+  R = R || (typeof window !== "undefined" && window.AGENT_THEME_RESOLVED);
   return (R && R.icons) || {};
 }
 function afLabels(R) {
-  R = R || window.AGENT_THEME_RESOLVED;
+  R = R || (typeof window !== "undefined" && window.AGENT_THEME_RESOLVED);
   return (R && R.displayName) || { agent: "LLM brain", toolbox: "toolbox" };
 }
 
@@ -104,7 +104,7 @@ function SkillDoc({ skill, checklist, metaphor, compact }) {
 }
 
 function Toolbox({ active }) {
-  const R = React.useContext(afCtx());
+  const R = React.useContext(AgentThemeContext);
   const ic = afIcons(R).toolbox || { kind: "default" };
   const label = afLabels(R).toolbox;
   if (ic.kind !== "default" && ic.value) {
@@ -128,22 +128,9 @@ function Toolbox({ active }) {
   );
 }
 
-function syntax(value) {
-  const json = JSON.stringify(value, null, 2);
-  const html = json
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/"([^"]+)":/g, '<span class="k">"$1"</span>:')
-    .replace(/: "([^"]*)"/g, ': <span class="s">"$1"</span>')
-    .replace(/: (\d+\.?\d*)/g, ': <span class="n">$1</span>');
-  return { __html: html };
-}
-window.syntax = syntax;
-
-// geometry lives in layout.js (window.arcLayout). The view just consumes it.
-
 function SceneInner({ step, dims, metaphor, straight }) {
   const { w, h } = dims;
-  const resolved = React.useContext(afCtx());
+  const resolved = React.useContext(AgentThemeContext);
 
   const isTool = step.kind === "ask" || step.kind === "return";
   const isReturn = step.kind === "return";
@@ -155,9 +142,9 @@ function SceneInner({ step, dims, metaphor, straight }) {
   // FIXED anchor so the brain + toolbox never jump between steps. Mobile pins
   // them low (the callout grows upward into the room above); desktop keeps its
   // line. No per-step measurement → no movement.
-  const L = window.AF_LAYOUT || {};
+  const L = AF_LAYOUT || {};
   const by = h * (straight ? (L.brainYMobile || 0.72) : (L.brainY || 0.6));
-  const G = window.arcLayout(w, h, by, straight);
+  const G = arcLayout(w, h, by, straight);
   const active = isTool ? (dir === "ask" ? G.down : G.up) : null;
 
   const cloudTag =
@@ -254,7 +241,7 @@ function SceneInner({ step, dims, metaphor, straight }) {
   );
 }
 
-function Stage({ trace, step, index, metaphor, straight }) {
+export function Stage({ trace, step, index, metaphor, straight }) {
   const sceneRef = sUseRef(null);
   const [dims, setDims] = sUseState({ w: 720, h: 460 });
 
@@ -283,6 +270,3 @@ function Stage({ trace, step, index, metaphor, straight }) {
     </div>
   );
 }
-
-window.Stage = Stage;
-window.ToolIcon = ToolIcon;

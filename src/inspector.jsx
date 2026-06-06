@@ -1,5 +1,17 @@
-/* global React, syntax */
+import React from "react";
+
 const { useState: inspUseState } = React;
+
+// JSON syntax highlighter for the tool I/O panes
+function syntax(value) {
+  const json = JSON.stringify(value, null, 2);
+  const html = json
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/"([^"]+)":/g, '<span class="k">"$1"</span>:')
+    .replace(/: "([^"]*)"/g, ': <span class="s">"$1"</span>')
+    .replace(/: (\d+\.?\d*)/g, ': <span class="n">$1</span>');
+  return { __html: html };
+}
 
 function Chevron({ open }) {
   return (
@@ -71,7 +83,7 @@ function NoteEntry({ step, n, active }) {
   );
 }
 
-function Notepad({ trace, index, onCollapse, view, setView }) {
+export function Notepad({ trace, index, onCollapse, view, setView }) {
   const listRef = React.useRef(null);
   React.useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
@@ -91,7 +103,7 @@ function Notepad({ trace, index, onCollapse, view, setView }) {
   );
 }
 
-function Inspector({ step, index, total, onCollapse, view, setView }) {
+export function Inspector({ step, index, total, onCollapse, view, setView }) {
   const accentClass =
     step.kind === "answer" ? "k-answer" :
     step.kind === "prompt" ? "k-prompt" :
@@ -207,6 +219,3 @@ function Inspector({ step, index, total, onCollapse, view, setView }) {
     </div>
   );
 }
-
-window.Inspector = Inspector;
-window.Notepad = Notepad;

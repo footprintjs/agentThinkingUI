@@ -1,7 +1,5 @@
 import { describe, it, expect } from "vitest";
-import "../src/playback.js"; // attaches window.usePlayback + window.AF_DWELL
-
-const { AF_DWELL, usePlayback } = window;
+import { AF_DWELL, usePlayback } from "../src/playback.js";
 
 describe("AF_DWELL schedule", () => {
   it("has a dwell time per step kind plus a default fallback", () => {

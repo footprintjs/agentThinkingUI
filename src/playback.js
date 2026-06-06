@@ -1,14 +1,14 @@
-/* global React */
 /* ============================================================
-   AgentFootprint — PLAYBACK (time-travel)
+   AgentThinkingUI — PLAYBACK (time-travel)
    All replay/scrubbing logic lives here, separate from rendering:
    current step, play/pause, speed, auto-advance dwell, keyboard
-   nav, and position persistence. The view layer just consumes the
-   returned state + setters.
+   nav, position persistence, and a live "tail the stream" mode.
    ============================================================ */
-const AF_DWELL = { prompt: 2600, ask: 1500, return: 3300, answer: 3600, _default: 2800 };
+import React from "react";
 
-function usePlayback(trace, opts) {
+export const AF_DWELL = { prompt: 2600, ask: 1500, return: 3300, answer: 3600, _default: 2800 };
+
+export function usePlayback(trace, opts) {
   const { useState, useEffect, useRef } = React;
   opts = opts || {};
   const storageKey = opts.storageKey || "agentfootprint.index";
@@ -58,6 +58,3 @@ function usePlayback(trace, opts) {
 
   return { index, setIndex, seek, playing, setPlaying, speed, setSpeed };
 }
-
-window.usePlayback = usePlayback;
-window.AF_DWELL = AF_DWELL; // exposed so the dwell schedule is inspectable/testable

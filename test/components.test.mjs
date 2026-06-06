@@ -1,9 +1,11 @@
+import React from "react";
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, cleanup, fireEvent, act } from "@testing-library/react";
+import { AgentThinkingUI } from "../src/footprint.jsx";
 import "../demo/trace.js"; // fixture: a full trace covering every step kind
 
 const TRACE = window.AGENT_TRACES.offsite;
-const ui = (props) => React.createElement(window.AgentThinkingUI, props);
+const ui = (props) => React.createElement(AgentThinkingUI, props);
 
 afterEach(cleanup);
 

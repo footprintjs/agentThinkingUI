@@ -26,9 +26,23 @@
   "author": "Sanjay Krishna Anbalagan (https://github.com/sanjay1909)",
   "license": "MIT",
   "type": "module",
-  "types": "types/trace.d.ts",
-  "unpkg": "src/footprint.jsx",
+  "types": "./types/index.d.ts",
+  "module": "./dist/agentthinkingui.js",
+  "main": "./dist/agentthinkingui.js",
+  "unpkg": "./dist/agentthinkingui.umd.js",
+  "jsdelivr": "./dist/agentthinkingui.umd.js",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./dist/agentthinkingui.js",
+      "default": "./dist/agentthinkingui.js"
+    },
+    "./umd": "./dist/agentthinkingui.umd.js",
+    "./styles.css": "./dist/agentthinkingui.css",
+    "./package.json": "./package.json"
+  },
   "files": [
+    "dist",
     "src",
     "types",
     "docs/assets/hero-light.svg",
@@ -37,19 +51,25 @@
     "LICENSE",
     "README.md"
   ],
+  "sideEffects": [
+    "**/global.jsx",
+    "dist/agentthinkingui.umd.js",
+    "**/*.css"
+  ],
   "scripts": {
+    "build": "node build.mjs",
+    "prepublishOnly": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "lint": "eslint .",
     "hero": "node docs/assets/gen-hero.mjs",
-    "serve": "python3 -m http.server"
+    "serve": "npm run build && python3 -m http.server"
   },
-  "sideEffects": [
-    "src/*.jsx",
-    "src/*.js",
-    "src/styles.css"
-  ],
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@testing-library/dom": "^10.4.1",

@@ -34,7 +34,7 @@ can time-travel through every step.
 It isn't tied to any vendor, framework, or model. If you can record a run as a
 small trace — a hand-rolled loop, a RAG pipeline, LangChain/LlamaIndex, Claude or
 OpenAI tool-calling — AgentThinkingUI can play it. Everything visual flows through
-a theme, the logic is split into independent modules, and there's no build step.
+a theme, the logic is split into small ES modules, and React is the only peer dep.
 
 ## The idea — an agent solves a problem the way a person does
 
@@ -60,34 +60,39 @@ The colour language carries it: data → *reason*, instruction → *act*.
 
 ## Quick start
 
-No build step — it's React UMD + in-browser Babel, loaded with plain `<script>`
-tags (see [`demo/index.html`](demo/index.html)). Drop in the library, point it at
-a trace, and render the ready-made container:
+The library is **scoped ES modules** with **React as a peer dependency**. Two ways
+to use it.
 
+**App / bundler (ESM):**
+
+```bash
+npm install agentthinkingui react react-dom
+```
 ```jsx
+import { AgentThinkingUI } from "agentthinkingui";
+import "agentthinkingui/styles.css";
+
 <AgentThinkingUI trace={trace} />
 ```
 
-**Get it** — `npm install agentthinkingui`, or load straight from a CDN; both ship
-the same plain `src/` files (no bundle):
+**Script tag / no bundler (UMD bundle):** load React, then the prebuilt bundle —
+it sets `window.AgentThinkingUI` (and the rest):
 
 ```html
-<!-- after React, ReactDOM, and Babel standalone (see demo/index.html for the full order) -->
-<!-- pinned to @0.1.0 so a future release can't shift behavior; drop the version to track latest -->
-<script src="https://unpkg.com/agentthinkingui@0.1.0/src/theme.js"></script>
-<script src="https://unpkg.com/agentthinkingui@0.1.0/src/layout.js"></script>
-<script type="text/babel" src="https://unpkg.com/agentthinkingui@0.1.0/src/playback.js"></script>
-<script type="text/babel" src="https://unpkg.com/agentthinkingui@0.1.0/src/stage.jsx"></script>
-<script type="text/babel" src="https://unpkg.com/agentthinkingui@0.1.0/src/inspector.jsx"></script>
-<script type="text/babel" src="https://unpkg.com/agentthinkingui@0.1.0/src/timeline.jsx"></script>
-<script type="text/babel" src="https://unpkg.com/agentthinkingui@0.1.0/src/footprint.jsx"></script>
-<link rel="stylesheet" href="https://unpkg.com/agentthinkingui@0.1.0/src/styles.css">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/agentthinkingui@0.1.0/dist/agentthinkingui.umd.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/agentthinkingui@0.1.0/dist/agentthinkingui.css">
 ```
 
-That gives you the full experience — scene, inspector, notepad, timeline, and
-playback, in a resizable split. Prefer your own layout? Drop the four view
-components in yourself (below). The trace contract is **typed** — point your
-recorder at [`types/trace.d.ts`](types/trace.d.ts).
+Either way you get the full experience — scene, inspector, notepad, timeline, and
+playback, in a resizable split. Prefer your own layout? Import the four view
+components yourself (below). The trace contract is **typed** — point your recorder
+at [`types/index.d.ts`](types/index.d.ts).
+
+> **No build step to *use* it** (just import or drop the bundle). The repo has a
+> tiny `esbuild` step that produces `dist/` from the modular `src/` — run
+> `npm run build` if you're hacking on the library itself.
 
 ## Trace schema (the contract)
 
@@ -127,22 +132,24 @@ one half and acts on the other (two bubbles).
 ## Layout
 
 ```
-src/                 # the library (drop into any app)
-  theme.js           Theming engine — colors, fonts, icons, labels (window.AgentTheme)
-  layout.js          Pure geometry (window.arcLayout): anchors + arc paths. No React.
-  playback.js        Time-travel — usePlayback(trace): step, play/pause, speed, persistence
+src/                 # the library — ES modules (import/export, scoped)
+  theme.js           Theming engine — normalize / toVars / apply (colors, fonts, icons, labels)
+  layout.js          Pure geometry (arcLayout): anchors + arc paths. No React.
+  playback.js        Time-travel — usePlayback(trace): step, play/pause, speed, live tail
   stage.jsx          <Stage>     — the runtime "thinking" scene (brain, toolbox, arcs, bubbles)
   inspector.jsx      <Inspector> per-step detail + <Notepad> chronological journal
   timeline.jsx       <Timeline>  — time-travel scrubber + transport + legend
   footprint.jsx      <AgentThinkingUI> — ready-made shell wiring all four together
+  context.js         the shared React context the views read the theme from
+  index.jsx          ESM entry (re-exports)   ·   global.jsx  UMD entry (window.*)
   styles.css         Design tokens + component styles (all keyed off theme variables)
 
-demo/                # a runnable example
-  index.html         Loads the library from ../src + this demo's data/theme (responsive)
-  mobile.html        The same shell in a phone frame
-  trace.js           Sample recorded run (swap for your own)
+build.mjs            esbuild → dist/ (ESM + UMD + css)
+demo/                # a runnable example (loads the prebuilt ../dist bundle)
+  index.html         Responsive demo   ·   mobile.html  phone frame
+  trace.js           Sample recorded runs (swap for your own)
   app.jsx            Composition — <AgentThinkingUI> + Tweaks + the live-props gear
-  demo-settings.jsx  Demo-only live-props gear (rebrand the player at runtime)
+  demo-settings.jsx  Demo-only live-props gear (rebrand / scenarios / live stream)
   tweaks-panel.jsx   Demo-only live controls (palette / labels / loop)
 ```
 
@@ -158,13 +165,14 @@ Four independent view components, plus a default container that composes them:
 | `<Notepad>` | chronological journal that builds up beat-by-beat |
 | `<AgentThinkingUI trace>` | **default container** — wires the four + playback + a resizable split |
 
-Use `<AgentThinkingUI trace={trace} />` for the whole thing, or drop the four
+Use `<AgentThinkingUI trace={trace} />` for the whole thing, or import the four
 pieces into your own layout (each takes `trace` + the playback state from
-`usePlayback`). `<AgentFootprint>` remains as a deprecated alias of the container.
+`usePlayback`). `AgentFootprint` remains as a deprecated alias of the container.
 
-The **library** is `src/` — framework-light (React UMD + global exports, no build
-step). The **demo** in `demo/` shows it working: it injects a sample trace, a
-theme, and live controls so you can see what's configurable.
+The **library** is modular `src/` (React is a peer dep). `npm run build` emits
+`dist/`: an **ESM** bundle for `import`, and a **UMD** bundle that re-exposes the
+same symbols on `window` for the script-tag/CDN path. The **demo** loads that UMD
+bundle and shows it working — sample traces, live theming, and a live stream.
 
 Animation **ordering** lives as one block of staged `animation-delay`s in
 `src/styles.css` (search "choreography"): per beat the cloud → arc → packet →
@@ -213,22 +221,26 @@ unknown families fall back to `system-ui` / `cursive`). `fonts.scale` is a singl
 multiplier over the whole type ramp (`--af-text-scale`) so the player can match
 a denser or larger host layout without restyling.
 
-**Back-compat — page-level globals.** For zero-build script-tag embeds you can
-still define `window.AGENT_THEME` (plus `window.AGENT_DISPLAY_NAME` /
-`window.AGENT_ICONS`) **before** `theme.js` loads; they seed the defaults on
-`:root` at load. Anything omitted falls back to the built-in look. Props always
-win over globals.
+**Back-compat — page-level globals.** With the UMD bundle you can still define
+`window.AGENT_THEME` (plus `window.AGENT_DISPLAY_NAME` / `window.AGENT_ICONS`)
+**before** the bundle loads; it seeds the defaults on `:root` at load. Anything
+omitted falls back to the built-in look. Props always win over globals.
 
-The engine is reusable on its own via `window.AgentTheme`:
-`normalize(opts)` → resolved tokens, `toVars(resolved)` → a CSS-variable map,
-`apply(el, opts)` → write the vars onto any element.
+The theme engine is importable on its own:
+`import { normalize, toVars, apply } from "agentthinkingui"` (or
+`AgentTheme.*` from the UMD bundle) — `normalize(opts)` → resolved tokens,
+`toVars(resolved)` → a CSS-variable map, `apply(el, opts)` → write the vars onto
+any element.
 
 ## Embedding
 
-Load order (see `demo/index.html`): your theme globals (optional) → `src/theme.js`
-→ React/Babel → your `trace.js` → `src/layout.js` → `src/playback.js` → views →
-your composition. Copy `src/`, point a `trace.js` at your own recorded run, and
-load it the way `demo/index.html` does.
+- **ESM:** `import { AgentThinkingUI } from "agentthinkingui"` + `import
+  "agentthinkingui/styles.css"`. React/ReactDOM are peer deps your app provides.
+- **Script tag:** load React, then `dist/agentthinkingui.umd.js` (it sets
+  `window.AgentThinkingUI`) + `dist/agentthinkingui.css`. See
+  [`demo/index.html`](demo/index.html).
+
+Point a `trace` at your own recorded run (live or replay) and render — that's it.
 
 ## For AI agents
 
@@ -236,7 +248,7 @@ Building on top of this with a coding agent? Two guides are kept for that:
 
 - [`AGENTS.md`](./AGENTS.md) — how to **use** the library (integration, props, the
   trace contract to emit) for an agent wiring it into another app.
-- [`CLAUDE.md`](./CLAUDE.md) — how to **work on this repo** (the no-build
+- [`CLAUDE.md`](./CLAUDE.md) — how to **work on this repo** (the module/build
   constraint, globals, theming, how to run/verify).
 
 ## License
