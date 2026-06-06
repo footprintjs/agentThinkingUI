@@ -82,7 +82,7 @@ function App() {
   return (
     <>
       <AgentThinkingUI key={sceneKey} trace={trace} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
-        theme={theme} labels={labels} icons={icons} />
+        theme={theme} labels={labels} icons={icons} brand={<>Agent<b>ThinkingUI</b></>} />
       <DemoSettings brand={brand} setBrand={setBrand}
         labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons}
         scenarios={SCENARIOS} sceneKey={sceneKey} setSceneKey={setSceneKey} setFont={setFont} />

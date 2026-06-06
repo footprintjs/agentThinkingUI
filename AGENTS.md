@@ -48,6 +48,7 @@ global and can be composed by hand with the state from `usePlayback(trace)`.
 | `theme` | `{ colors, fonts }` | scoped CSS-variable theming (reactive) |
 | `labels` | `{ agent, toolbox }` | display names |
 | `icons` | `{ brain, toolbox }` | `{kind:'default'\|'emoji'\|'image', value}` |
+| `brand` | `ReactNode` | optional wordmark/logo for the top bar — **the library ships none**; your app supplies its own |
 | `metaphor` | `boolean` | show the storytelling tags (default true) |
 | `loop` | `boolean` | auto-loop playback |
 | `mobile` | `boolean` | stacked mobile layout (tabs + footer transport) |

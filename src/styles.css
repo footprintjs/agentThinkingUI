@@ -460,7 +460,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ====== responsive / mobile (stacked layout + minimal timeline) ====== */
 .app.mobile { padding: 30px 12px 0; }
-.app.mobile .topbar { gap: 8px; padding-bottom: 10px; padding-right: 44px; }
+.app.mobile .topbar { gap: 8px; padding-bottom: 10px; justify-content: center; }
 .app.mobile .agent-tag { display: none; }
 .app.mobile .task-pill { max-width: 184px; padding: 6px 11px; }
 .app.mobile .brand-name { font-size: calc(16px * var(--af-text-scale)); }

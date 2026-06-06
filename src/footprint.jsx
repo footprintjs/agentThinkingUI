@@ -11,7 +11,7 @@
    four components into their own layout (they're each independent).
    (window.AgentFootprint remains as a deprecated alias.)
    ============================================================ */
-function AgentThinkingUI({ trace, theme, labels, icons, metaphor = true, loop = false, style, mobile }) {
+function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, style, mobile }) {
   const { useState, useRef, useMemo, useContext } = React;
   const { index, seek, playing, setPlaying, speed, setSpeed } = usePlayback(trace, { loop });
 
@@ -53,8 +53,7 @@ function AgentThinkingUI({ trace, theme, labels, icons, metaphor = true, loop = 
       <TC.Provider value={resolved}>
       <div className="app mobile" style={rootStyle}>
         <div className="topbar">
-          <div className="brandmark"><div className="brand-name">Agent<b>ThinkingUI</b></div></div>
-          <div className="task-pill"><span className="rec" /><span className="lbl">replay</span><span className="txt" title={trace.task}>{trace.title || trace.task}</span></div>
+          {brand && <div className="brandmark"><div className="brand-name">{brand}</div></div>}
         </div>
         <div className="m-tabs">
           <button className={mobileView === "thinking" ? "on" : ""} onClick={() => setMobileView("thinking")}>Thinking</button>
@@ -76,9 +75,7 @@ function AgentThinkingUI({ trace, theme, labels, icons, metaphor = true, loop = 
     <TC.Provider value={resolved}>
     <div className={"app" + (mobile ? " mobile" : "")} style={rootStyle}>
       <div className="topbar">
-        <div className="brandmark">
-          <div className="brand-name">Agent<b>ThinkingUI</b></div>
-        </div>
+        {brand && <div className="brandmark"><div className="brand-name">{brand}</div></div>}
         <div className="task-pill">
           <span className="rec" />
           <span className="lbl">replay</span>
