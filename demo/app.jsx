@@ -29,6 +29,19 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "loop": false
 }/*EDITMODE-END*/;
 
+// a tiny real OpenTelemetry GenAI (OTLP/JSON) trace — prefilled in the gear's
+// "Import an OTel trace" box so anyone can see the adapter convert + play it.
+const A = (o) => Object.entries(o).map(([key, v]) => ({ key, value: typeof v === "number" ? { intValue: String(v) } : { stringValue: String(v) } }));
+const sp = (attrs, events, s, ms) => ({ startTimeUnixNano: String(1700000000000000000n + BigInt(s) * 1000000n), endTimeUnixNano: String(1700000000000000000n + BigInt(s + ms) * 1000000n), attributes: A(attrs), events: (events || []).map((e) => ({ name: e.name, attributes: A(e.attrs) })) });
+const SAMPLE_OTLP = { resourceSpans: [{ scopeSpans: [{ spans: [
+  sp({ "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "support-agent", "gen_ai.request.model": "claude-sonnet", "gen_ai.usage.input_tokens": 120, "gen_ai.usage.output_tokens": 180 },
+     [{ name: "gen_ai.user.message", attrs: { content: "Is order #8842 refundable?" } }, { name: "gen_ai.assistant.message", attrs: { content: "Yes — issued a full refund; it's within the 14-day window." } }], 0, 1200),
+  sp({ "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "lookup_order", "gen_ai.tool.call.arguments": '{"order":"#8842"}' },
+     [{ name: "gen_ai.tool.message", attrs: { content: '{"item":"headphones","days_since":12}' } }], 200, 400),
+  sp({ "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "refund_policy", "gen_ai.tool.call.arguments": "{}" },
+     [{ name: "gen_ai.tool.message", attrs: { content: '{"full_refund_within_days":14}' } }], 700, 250),
+] }] }] };
+
 // the demo just composes the library's <AgentFootprint> + demo-only chrome
 // (tweaks + gear), passing all branding through its theme/labels/icons props.
 const GhIcon = () => (
@@ -69,12 +82,23 @@ function App() {
   const [sceneKey, setSceneKey] = useState(SCENARIOS[0].key);
   const [live, setLive] = useState(false);
   const [liveSteps, setLiveSteps] = useState(null);
+  const [imported, setImported] = useState(null); // a trace converted from OTel
   const liveTimer = useRef(null);
   const isMobile = useIsMobile(760);
 
   const base = TRACES[sceneKey] || TRACES[SCENARIOS[0].key];
-  // in live mode we feed a trace that GROWS one step at a time (a simulated stream)
-  const trace = live && liveSteps ? { ...base, steps: liveSteps } : base;
+  // imported (OTel) wins; else live grows a trace one step at a time; else the scenario
+  const trace = imported || (live && liveSteps ? { ...base, steps: liveSteps } : base);
+
+  // convert a pasted OpenTelemetry (OTLP/JSON) trace and play it
+  const onImport = (text) => {
+    try {
+      const tr = window.AgentAdapters.fromOTLP(JSON.parse(text), { asker: "you", title: "Imported · OTel" });
+      if (!tr.steps || !tr.steps.length) throw new Error("no steps found");
+      if (liveTimer.current) clearInterval(liveTimer.current);
+      setLive(false); setLiveSteps(null); setImported(tr);
+    } catch (e) { window.alert("Couldn't read that as OpenTelemetry OTLP/JSON:\n" + e.message); }
+  };
 
   // simulate a live agent: start from the first beat, append the rest on a timer
   const startLive = () => {
@@ -89,7 +113,8 @@ function App() {
       });
     }, 1200);
   };
-  const selectScenario = (k) => { if (liveTimer.current) clearInterval(liveTimer.current); setLive(false); setLiveSteps(null); setSceneKey(k); };
+  const selectScenario = (k) => { if (liveTimer.current) clearInterval(liveTimer.current); setLive(false); setLiveSteps(null); setImported(null); setSceneKey(k); };
+  const startLiveReset = () => { setImported(null); startLive(); };
   useEffect(() => () => liveTimer.current && clearInterval(liveTimer.current), []);
 
   const acc = ACCENTS[t.accent] || ACCENTS["teal-amber"];
@@ -104,12 +129,12 @@ function App() {
 
   return (
     <>
-      <AgentThinkingUI key={sceneKey} trace={trace} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
+      <AgentThinkingUI key={imported ? "otel" : sceneKey} trace={trace} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
         live={live} theme={theme} labels={labels} icons={icons} brand={<>Agent<b>ThinkingUI</b></>} />
       <DemoSettings brand={brand} setBrand={setBrand}
         labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons}
         scenarios={SCENARIOS} sceneKey={sceneKey} setSceneKey={selectScenario} setFont={setFont}
-        onLive={startLive} liveOn={live} />
+        onLive={startLiveReset} liveOn={live} onImport={onImport} otlpSample={JSON.stringify(SAMPLE_OTLP, null, 2)} />
       {!isMobile && <DemoCredit />}
       {/* the accent/storytelling side panel is desktop-only chrome; the gear
           modal covers branding on small screens */}
