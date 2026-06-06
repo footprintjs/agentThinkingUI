@@ -581,3 +581,21 @@ button { font-family: inherit; cursor: pointer; }
 .swarm-role { font-size: calc(11.5px * var(--af-text-scale)); color: var(--ink-soft); background: var(--paper-2); border: 1px solid var(--line); border-radius: 7px; padding: 2px 8px; }
 .swarm-detail { flex: 1; min-height: 0; }
 .swarm-detail .app { padding: 0; height: 100%; }
+
+/* control-flow node kinds */
+.flow-decision { position: absolute; display: grid; place-items: center; text-align: center;
+  background: var(--instr-tint); border: 1.5px solid var(--instr); color: var(--instr-deep);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); font-weight: 700; font-size: calc(11.5px * var(--af-text-scale)); padding: 0 18px; box-shadow: var(--shadow-sm); }
+.flow-decision span { max-width: 70px; line-height: 1.15; }
+.flow-merge { position: absolute; display: grid; place-items: center; background: var(--paper-2); border: 1.5px solid var(--line);
+  border-radius: 999px; color: var(--ink-soft); font-weight: 700; font-size: calc(11.5px * var(--af-text-scale)); }
+.flow-cap { position: absolute; display: grid; place-items: center; background: var(--ink); color: var(--paper);
+  border-radius: 999px; font-weight: 700; font-size: calc(11px * var(--af-text-scale)); letter-spacing: .04em; text-transform: uppercase; }
+.flow-cap.end { background: var(--answer-deep); }
+
+/* edge variants */
+.swarm-edge.loop { stroke: var(--accent, var(--rust)); stroke-dasharray: 5 6; }
+.swarm-edge.taken { stroke: var(--instr-deep); stroke-width: 2.8; stroke-dasharray: none; animation: none; }
+.swarm-edge.dim { stroke: var(--line); opacity: .7; animation: none; }
+.swarm-edge-head.taken { fill: var(--instr-deep); }
+.swarm-edge-head.dim { fill: var(--line); }

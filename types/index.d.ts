@@ -38,28 +38,33 @@ export const AgentThinkingUI: FC<AgentThinkingUIProps>;
 /** @deprecated alias of AgentThinkingUI */
 export const AgentFootprint: FC<AgentThinkingUIProps>;
 
-export interface SwarmAgent {
-  id: string;
-  name: string;
-  role?: string;
-  parent?: string;
-  status?: "running" | "done" | "error";
-  trace: Trace;
+export type FlowStatus = "idle" | "running" | "done" | "error";
+export type FlowNode =
+  | { id: string; kind?: "agent"; name: string; role?: string; status?: FlowStatus; trace: Trace }
+  | { id: string; kind: "decision"; label: string; predicate?: string; status?: FlowStatus }
+  | { id: string; kind: "merge"; label?: string }
+  | { id: string; kind: "start" | "end"; label?: string };
+export interface FlowEdge {
+  from: string; to: string;
+  kind: "seq" | "parallel" | "conditional" | "loop";
+  label?: string;
+  taken?: boolean;
 }
-export interface MultiTrace {
+/** A multi-agent control-flow graph (see docs/multi-agent-flow.md). */
+export interface FlowGraph {
   task: string;
   asker?: string;
-  agents: SwarmAgent[];
-  handoffs?: { from: string; to: string; label?: string }[];
+  nodes: FlowNode[];
+  edges: FlowEdge[];
 }
 export interface AgentSwarmProps {
-  trace: MultiTrace;
+  trace: FlowGraph;
   theme?: ThemeConfig;
   labels?: { agent?: string; toolbox?: string };
   icons?: { brain?: IconConfig; toolbox?: IconConfig };
   brand?: ReactNode;
 }
-/** Multi-agent overview: agent graph that drills into each agent's AgentThinkingUI. */
+/** Multi-agent control-flow map; agent nodes drill into their AgentThinkingUI. */
 export const AgentSwarm: FC<AgentSwarmProps>;
 
 export const Stage: FC<any>;

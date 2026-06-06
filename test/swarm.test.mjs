@@ -10,32 +10,43 @@ const mini = (task) => ({
     { kind: "answer", to: "x", brain: "done", answer: { headline: "H", plan: [], budget: [], cta: "" }, cost: { ms: 1, tokens: 1 } },
   ],
 });
-const MT = {
-  task: "team task", asker: "x",
-  agents: [
-    { id: "root", name: "Planner", role: "orchestrator", status: "done", trace: mini("plan") },
-    { id: "w1", name: "Worker One", role: "travel", parent: "root", status: "running", trace: mini("fly") },
+
+// a graph exercising all four edge kinds + decision/merge nodes
+const G = {
+  task: "flow",
+  nodes: [
+    { id: "d", kind: "agent", name: "Drafter", role: "writer", status: "done", trace: mini("draft") },
+    { id: "c", kind: "decision", label: "good?" },
+    { id: "f", kind: "agent", name: "Finalizer", role: "writer", trace: mini("final") },
+    { id: "m", kind: "merge", label: "merge" },
   ],
-  handoffs: [{ from: "root", to: "w1", label: "go" }],
+  edges: [
+    { from: "d", to: "c", kind: "seq" },
+    { from: "c", to: "f", kind: "conditional", label: "pass", taken: true },
+    { from: "c", to: "d", kind: "loop", label: "revise ×2" },
+    { from: "f", to: "m", kind: "parallel" },
+  ],
 };
 
 afterEach(cleanup);
 
-describe("<AgentSwarm>", () => {
-  it("renders a card per agent plus the handoff edge", () => {
-    const { container, getByText } = render(React.createElement(AgentSwarm, { trace: MT }));
+describe("<AgentSwarm> control-flow graph", () => {
+  it("renders agent cards, a decision diamond, a merge, and the edges", () => {
+    const { container, getByText } = render(React.createElement(AgentSwarm, { trace: G }));
     expect(container.querySelectorAll(".agent-card").length).toBe(2);
-    expect(getByText("Planner")).toBeTruthy();
-    expect(getByText("Worker One")).toBeTruthy();
-    expect(container.querySelector(".swarm-edge")).toBeTruthy();
+    expect(container.querySelector(".flow-decision")).toBeTruthy();
+    expect(container.querySelector(".flow-merge")).toBeTruthy();
+    expect(getByText("good?")).toBeTruthy();
+    // a loop edge + a taken conditional edge are present
+    expect(container.querySelector(".swarm-edge.loop")).toBeTruthy();
+    expect(container.querySelector(".swarm-edge.taken")).toBeTruthy();
   });
 
-  it("drills into an agent's flow and back to the team map", () => {
-    const { container, getByText } = render(React.createElement(AgentSwarm, { trace: MT }));
-    fireEvent.click(getByText("Worker One"));
-    expect(container.querySelector(".flowscene")).toBeTruthy(); // the reused single-agent player
-    expect(container.querySelector(".swarm-crumb")).toBeTruthy();
+  it("drills into an agent node and back; control nodes aren't clickable", () => {
+    const { container, getByText } = render(React.createElement(AgentSwarm, { trace: G }));
+    fireEvent.click(getByText("Drafter"));
+    expect(container.querySelector(".flowscene")).toBeTruthy();
     fireEvent.click(getByText("‹ Team"));
-    expect(container.querySelectorAll(".agent-card").length).toBe(2); // back on the map
+    expect(container.querySelectorAll(".agent-card").length).toBe(2);
   });
 });
