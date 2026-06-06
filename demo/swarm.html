@@ -3,73 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AgentThinkingUI — multi-agent (swarm)</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesque:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../src/styles.css" />
+  <title>AgentThinkingUI — multi-agent</title>
+  <!-- The multi-agent (swarm) view is no longer a separate page: it's the same
+       single-page app, switched in-app via the gear's Single ⟷ Multi-agent
+       toggle (or the credit-bar shortcut). Redirect any old links here. -->
+  <meta http-equiv="refresh" content="0; url=./index.html#multi" />
+  <link rel="canonical" href="./index.html" />
+  <script>location.replace("./index.html#multi");</script>
 </head>
 <body>
-  <div class="grain"></div>
-  <div id="root"></div>
-
-  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-
-  <!-- the library, prebuilt (sets window.AgentSwarm, …). Run `npm run build`. -->
-  <script src="../dist/agentthinkingui.umd.js"></script>
-  <script src="flow-trace.js"></script>
-  <script type="text/babel" src="demo-settings.jsx"></script>
-  <script type="text/babel">
-    // The six named multi-agent patterns, each a control-flow graph.
-    // Pick one; click an agent node to drill into its single-agent flow.
-    function FlowDemo() {
-      const { useState, useEffect, useRef } = React;
-      const flows = window.AGENT_FLOWS;
-      const flowList = Object.keys(flows).map((key) => ({ key, label: flows[key].label }));
-      const [k, setK] = useState(flowList[0].key);
-      const [reveal, setReveal] = useState(0); // 0 = whole graph; >0 = live-stream up to N nodes
-      const [imported, setImported] = useState(null); // a FlowGraph built from pasted telemetry
-      const [brand, setBrand] = useState(null);
-      const [labels, setLabels] = useState({});
-      const [icons, setIcons] = useState({});
-      const [font, setFont] = useState(null);
-      const timer = useRef(null);
-      const full = imported || flows[k].graph;
-      const live = reveal > 0;
-      const graph = live ? { ...full, nodes: full.nodes.slice(0, reveal) } : full;
-      const theme = (brand || font) ? { ...(brand ? { colors: { brand } } : {}), ...(font ? { fonts: font } : {}) } : undefined;
-
-      const stopLive = () => { if (timer.current) clearInterval(timer.current); timer.current = null; };
-      const startLive = () => { stopLive(); setReveal(1); let n = 1; timer.current = setInterval(() => { n += 1; setReveal(n); if (n >= full.nodes.length) stopLive(); }, 1100); };
-      const pick = (key) => { stopLive(); setReveal(0); setImported(null); setK(key); };
-      useEffect(() => stopLive, []);
-
-      // build a multi-agent FlowGraph from pasted telemetry, programmatically — the
-      // per-agent drill-down trace comes from each agent span's child spans.
-      const onImportMulti = (text, fmt) => {
-        try {
-          const otlp = JSON.parse(text);
-          const fn = fmt === "openinference" ? window.AgentAdapters.fromOpenInferenceMulti : window.AgentAdapters.fromOTLPMulti;
-          const g = fn(otlp, { asker: "you" });
-          if (!g.nodes || !g.nodes.length) throw new Error("no agents found");
-          stopLive(); setReveal(0); setImported(g);
-        } catch (e) { window.alert("Couldn't read that trace:\n" + e.message); }
-      };
-
-      // The control-flow patterns, live stream + import live in the gear's Flow tab.
-      return (
-        <>
-          <AgentSwarm key={imported ? "import" : k} trace={graph} live={live} theme={theme} labels={labels} icons={icons} brand={<>Agent<b>ThinkingUI</b></>} />
-          <DemoSettings brand={brand} setBrand={setBrand} labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons}
-            setFont={setFont} flows={flowList} flowKey={k} setFlowKey={pick} onLive={startLive} liveOn={live}
-            onImportMulti={onImportMulti}
-            otlpMultiSample={JSON.stringify(window.AGENT_OTLP_MULTI, null, 2)} oiMultiSample={JSON.stringify(window.AGENT_OI_MULTI, null, 2)} />
-        </>
-      );
-    }
-    ReactDOM.createRoot(document.getElementById("root")).render(<FlowDemo />);
-  </script>
+  <p>The multi-agent demo now lives in the main player — <a href="./index.html#multi">open it →</a></p>
 </body>
 </html>

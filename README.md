@@ -149,11 +149,13 @@ src/                 # the library — ES modules (import/export, scoped)
   styles.css         Design tokens + component styles (all keyed off theme variables)
 
 build.mjs            esbuild → dist/ (ESM + UMD + css)
-demo/                # runnable examples (load the prebuilt ../dist bundle)
-  index.html         Responsive single-agent demo   ·   mobile.html  phone frame
-  swarm.html         Multi-agent demo — the six patterns + a live stream
+demo/                # runnable example (loads the prebuilt ../dist bundle)
+  index.html         One responsive demo — single player ⟷ multi-agent team, switched
+                     in-app via the gear (swarm.html just redirects here for old links)
+  mobile.html        phone frame (single-agent)
   trace.js           Sample single-agent runs   ·   flow-trace.js  multi-agent FlowGraphs
-  app.jsx            Composition — <AgentThinkingUI> + tabbed gear (theme / scenario / OTel import)
+  app.jsx            Composition — <AgentThinkingUI> / <AgentSwarm> + gear (theme /
+                     scenario / pattern / OTel · OpenInference import)
   demo-settings.jsx  Demo-only gear   ·   tweaks-panel.jsx  palette / labels / loop
 ```
 

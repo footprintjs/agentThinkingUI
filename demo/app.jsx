@@ -1,4 +1,4 @@
-/* global React, ReactDOM, AgentThinkingUI, DemoSettings, useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakToggle */
+/* global React, ReactDOM, AgentThinkingUI, AgentSwarm, DemoSettings, useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakToggle */
 const { useState, useMemo, useEffect } = React;
 const TRACES = window.AGENT_TRACES || { offsite: window.AGENT_TRACE };
 const SCENARIOS = Object.keys(TRACES).map(k => ({ key: k, label: TRACES[k].title || k }));
@@ -58,11 +58,11 @@ const GhIcon = () => (
 );
 
 // demo-only credit — two link-buttons: the library repo + the author (kept out
-// of the library itself)
-function DemoCredit() {
+// of the library itself), plus an in-app single ⟷ multi view toggle
+function DemoCredit({ view, setView }) {
   const btn = { display: "flex", alignItems: "center", gap: 6, padding: "5px 11px", borderRadius: 999,
     border: "1px solid #E6D8C2", background: "#fff", textDecoration: "none", color: "#2C1F15",
-    fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap" };
+    fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap", cursor: "pointer", font: "inherit" };
   return (
     <div style={{ position: "fixed", bottom: 14, left: "50%", transform: "translateX(-50%)", zIndex: 55,
       display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 999,
@@ -72,17 +72,24 @@ function DemoCredit() {
       <a href="https://github.com/footprintjs/agentThinkingUI" target="_blank" rel="noopener noreferrer" title="Library on GitHub" style={btn}>
         <GhIcon /> GitHub
       </a>
-      <a href="https://github.com/sanjay1909" target="_blank" rel="noopener noreferrer" title="Author on GitHub" style={{ ...btn, fontWeight: 500, color: "#6E5C49" }}>
+      <a href="https://github.com/sanjay1909" target="_blank" rel="noopener noreferrer" title="Author on GitHub" style={{ ...btn, textDecoration: "none", fontWeight: 500, color: "#6E5C49" }}>
         <GhIcon /> Sanjay Krishna Anbalagan
       </a>
-      <a href="./swarm.html" title="Multi-agent demo" style={btn}>Multi-agent ↗</a>
+      <button onClick={() => setView(view === "multi" ? "single" : "multi")} title="Switch view" style={btn}>
+        {view === "multi" ? "Single agent ↗" : "Multi-agent ↗"}
+      </button>
     </div>
   );
 }
 
+// the multi-agent control-flow patterns (built in flow-trace.js, loaded before us)
+const FLOWS = window.AGENT_FLOWS || {};
+const FLOW_LIST = Object.keys(FLOWS).map((k) => ({ key: k, label: FLOWS[k].label }));
+
 function App() {
   const { useRef } = React;
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [view, setView] = useState(() => (typeof location !== "undefined" && location.hash === "#multi" ? "multi" : "single")); // 'single' player ⟷ 'multi' team
   const [brand, setBrand] = useState(null);
   const [labels, setLabels] = useState({});
   const [icons, setIcons] = useState({});
@@ -92,13 +99,22 @@ function App() {
   const [liveSteps, setLiveSteps] = useState(null);
   const [imported, setImported] = useState(null); // a trace converted from OTel
   const liveTimer = useRef(null);
+  // multi-agent state
+  const [flowKey, setFlowKey] = useState(FLOW_LIST[0] && FLOW_LIST[0].key);
+  const [reveal, setReveal] = useState(0); // 0 = whole graph; >0 = live-stream up to N nodes
+  const [graphImport, setGraphImport] = useState(null); // a FlowGraph built from telemetry
+  const mTimer = useRef(null);
   const isMobile = useIsMobile(760);
 
   const base = TRACES[sceneKey] || TRACES[SCENARIOS[0].key];
   // imported (OTel) wins; else live grows a trace one step at a time; else the scenario
   const trace = imported || (live && liveSteps ? { ...base, steps: liveSteps } : base);
+  // multi: imported graph wins; else the picked pattern, sliced when live-streaming
+  const fullGraph = graphImport || (FLOWS[flowKey] && FLOWS[flowKey].graph);
+  const mLive = reveal > 0;
+  const graph = fullGraph && mLive ? { ...fullGraph, nodes: fullGraph.nodes.slice(0, reveal) } : fullGraph;
 
-  // convert a pasted trace (OpenTelemetry or OpenInference) and play it
+  // convert a pasted single-agent trace (OpenTelemetry or OpenInference) and play it
   const onImport = (text, fmt) => {
     try {
       const otlp = JSON.parse(text);
@@ -107,6 +123,18 @@ function App() {
       if (!tr.steps || !tr.steps.length) throw new Error("no steps found");
       if (liveTimer.current) clearInterval(liveTimer.current);
       setLive(false); setLiveSteps(null); setImported(tr);
+    } catch (e) { window.alert("Couldn't read that trace:\n" + e.message); }
+  };
+
+  // build a multi-agent FlowGraph from pasted telemetry, programmatically — each
+  // agent's drill-down trace comes from that agent span's child spans.
+  const onImportMulti = (text, fmt) => {
+    try {
+      const otlp = JSON.parse(text);
+      const fn = fmt === "openinference" ? window.AgentAdapters.fromOpenInferenceMulti : window.AgentAdapters.fromOTLPMulti;
+      const g = fn(otlp, { asker: "you" });
+      if (!g.nodes || !g.nodes.length) throw new Error("no agents found");
+      stopMulti(); setReveal(0); setGraphImport(g);
     } catch (e) { window.alert("Couldn't read that trace:\n" + e.message); }
   };
 
@@ -123,9 +151,20 @@ function App() {
       });
     }, 1200);
   };
+  // multi: reveal the team one agent at a time
+  const stopMulti = () => { if (mTimer.current) clearInterval(mTimer.current); mTimer.current = null; };
+  const startLiveMulti = () => {
+    stopMulti(); setReveal(1);
+    let n = 1;
+    mTimer.current = setInterval(() => { n += 1; setReveal(n); if (!fullGraph || n >= fullGraph.nodes.length) stopMulti(); }, 1100);
+  };
   const selectScenario = (k) => { if (liveTimer.current) clearInterval(liveTimer.current); setLive(false); setLiveSteps(null); setImported(null); setSceneKey(k); };
+  const pickFlow = (k) => { stopMulti(); setReveal(0); setGraphImport(null); setFlowKey(k); };
   const startLiveReset = () => { setImported(null); startLive(); };
-  useEffect(() => () => liveTimer.current && clearInterval(liveTimer.current), []);
+  // the gear's one Live button routes to whichever view is on screen
+  const onLive = () => (view === "multi" ? startLiveMulti() : startLiveReset());
+  const liveOn = view === "multi" ? mLive : live;
+  useEffect(() => () => { liveTimer.current && clearInterval(liveTimer.current); mTimer.current && clearInterval(mTimer.current); }, []);
 
   const acc = ACCENTS[t.accent] || ACCENTS["teal-amber"];
   const theme = useMemo(() => ({
@@ -137,16 +176,25 @@ function App() {
     ...(font ? { fonts: font } : {}),
   }), [t.accent, brand, font]);
 
+  const brandMark = <>Agent<b>ThinkingUI</b></>;
   return (
     <>
-      <AgentThinkingUI key={imported ? "otel" : sceneKey} trace={trace} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
-        live={live} theme={theme} labels={labels} icons={icons} brand={<>Agent<b>ThinkingUI</b></>} />
+      {view === "multi" && graph
+        ? <AgentSwarm key={graphImport ? "import" : flowKey} trace={graph} live={mLive}
+            theme={theme} labels={labels} icons={icons} brand={brandMark} />
+        : <AgentThinkingUI key={imported ? "otel" : sceneKey} trace={trace} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
+            live={live} theme={theme} labels={labels} icons={icons} brand={brandMark} />}
       <DemoSettings brand={brand} setBrand={setBrand}
         labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons}
+        view={view} setView={setView}
         scenarios={SCENARIOS} sceneKey={sceneKey} setSceneKey={selectScenario} setFont={setFont}
-        onLive={startLiveReset} liveOn={live} onImport={onImport}
-        otlpSample={JSON.stringify(SAMPLE_OTLP, null, 2)} oiSample={JSON.stringify(SAMPLE_OI, null, 2)} />
-      {!isMobile && <DemoCredit />}
+        onLive={onLive} liveOn={liveOn} onImport={onImport}
+        otlpSample={JSON.stringify(SAMPLE_OTLP, null, 2)} oiSample={JSON.stringify(SAMPLE_OI, null, 2)}
+        flows={FLOW_LIST.length ? FLOW_LIST : undefined} flowKey={flowKey} setFlowKey={pickFlow}
+        onImportMulti={onImportMulti}
+        otlpMultiSample={window.AGENT_OTLP_MULTI ? JSON.stringify(window.AGENT_OTLP_MULTI, null, 2) : ""}
+        oiMultiSample={window.AGENT_OI_MULTI ? JSON.stringify(window.AGENT_OI_MULTI, null, 2) : ""} />
+      {!isMobile && <DemoCredit view={view} setView={setView} />}
       {/* the accent/storytelling side panel is desktop-only chrome; the gear
           modal covers branding on small screens */}
       {!isMobile && (

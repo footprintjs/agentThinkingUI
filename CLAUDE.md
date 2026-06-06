@@ -33,8 +33,9 @@ src/        theme.js · layout.js · playback.js · context.js · stage.jsx ·
             inspector.jsx · timeline.jsx · footprint.jsx ·
             index.jsx (ESM entry) · global.jsx (UMD entry) · styles.css
 build.mjs   esbuild → dist/ (ESM + UMD + css)
-demo/       index.html (responsive) · mobile.html · trace.js · app.jsx ·
-            demo-settings.jsx · tweaks-panel.jsx   (loads the prebuilt ../dist)
+demo/       index.html (responsive; single ⟷ multi switched in-app via the gear) ·
+            mobile.html · trace.js · flow-trace.js · app.jsx · demo-settings.jsx ·
+            tweaks-panel.jsx   (loads the prebuilt ../dist; swarm.html → redirects to index)
 docs/assets gen-hero.mjs → hero-light.svg / hero-dark.svg    (animated README art)
 ```
 
