@@ -81,8 +81,8 @@ it sets `window.AgentThinkingUI` (and the rest):
 ```html
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/agentthinkingui@0.1.0/dist/agentthinkingui.umd.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/agentthinkingui@0.1.0/dist/agentthinkingui.css">
+<script src="https://unpkg.com/agentthinkingui@latest/dist/agentthinkingui.umd.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/agentthinkingui@latest/dist/agentthinkingui.css">
 ```
 
 Either way you get the full experience — scene, inspector, notepad, timeline, and
