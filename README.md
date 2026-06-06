@@ -292,7 +292,8 @@ const trace = fromOpenInference(spans, { asker: "you" }); // e.g. Arize Phoenix
 ```
 
 The dev keeps their dashboard for debugging/evals; your end users get a branded,
-animated replay of the same run.
+animated replay of the same run. **Full recipe per platform:**
+[`docs/integrations.md`](docs/integrations.md).
 
 ### Live monitoring
 
@@ -443,6 +444,8 @@ Point a `trace` at your own recorded run (live or replay) and render — that's 
 - **[API reference](./docs/API.md)** — every component, prop, hook and adapter
   (name · type · default · description).
 - **[Trace schema](#trace-schema-the-contract)** — the contract you produce.
+- **[Integrations](./docs/integrations.md)** — render Langfuse / Arize Phoenix /
+  OpenTelemetry / LangSmith traces (the user-facing layer on your obs stack).
 - **[Component explorer](https://footprintjs.github.io/agentThinkingUI/explorer.html)** —
   a Storybook-style props playground: controls + live preview + the generated JSX
   + a prop table, for both components. (No toolchain — `demo/explorer.html`.)
