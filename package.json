@@ -61,7 +61,8 @@
     "prepublishOnly": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "coverage": "vitest run --coverage",
+    "coverage": "vitest run --coverage && node scripts/coverage-badge.mjs",
+    "coverage:badge": "node scripts/coverage-badge.mjs",
     "lint": "eslint .",
     "hero": "node docs/assets/gen-hero.mjs",
     "serve": "npm run build && python3 -m http.server"
