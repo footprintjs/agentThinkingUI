@@ -12,7 +12,7 @@
    (window.AgentFootprint remains as a deprecated alias.)
    ============================================================ */
 function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, style, mobile }) {
-  const { useState, useRef, useMemo, useContext } = React;
+  const { useState, useRef, useMemo } = React;
   const { index, seek, playing, setPlaying, speed, setSpeed } = usePlayback(trace, { loop });
 
   // Resolve theme/labels/icons and scope them to THIS player's element:

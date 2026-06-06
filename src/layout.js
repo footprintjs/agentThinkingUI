@@ -22,7 +22,6 @@ window.arcLayout = function arcLayout(w, h, by, straight) {
   const bRight = bx + 58, tLeft = tx - 62;
   const midX = (bRight + tLeft) / 2;
   const off = Math.min(106, h * 0.2);
-  const toolX = tx - 52, toolY = ty - 52;       // the popped tool card (above the box)
 
   if (straight) {
     // two parallel horizontal lanes, clearly separated on the y-axis

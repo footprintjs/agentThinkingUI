@@ -55,3 +55,4 @@ function usePlayback(trace, opts) {
 }
 
 window.usePlayback = usePlayback;
+window.AF_DWELL = AF_DWELL; // exposed so the dwell schedule is inspectable/testable

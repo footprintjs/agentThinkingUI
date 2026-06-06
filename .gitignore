@@ -1,0 +1,11 @@
+node_modules/
+coverage/
+*.log
+.DS_Store
+.vitest/
+
+# scratch / session artifacts (not part of the library)
+scraps/
+uploads/
+.thumbnail
+*.napkin

@@ -49,6 +49,11 @@ concept ("an agent's runtime footprint"), not a second product name.
 
 - Serve the repo and open the demo: `python3 -m http.server` then
   `/demo/index.html` (responsive) or `/demo/mobile.html` (phone frame).
+- **Tests / lint (dev-only — the shipped library still has no build):**
+  `npm test` (Vitest), `npm run coverage`, `npm run lint` (ESLint). Tests run in
+  jsdom and load the `window`-global scripts directly (`test/setup.mjs`); the pure
+  logic (`layout`/`theme`/`playback`) and the rendered views are both covered.
+  CI runs lint + coverage on push/PR (`.github/workflows/ci.yml`).
 - The CDN `<script>`s need network access; behind a strict allowlist, vendor
   React/ReactDOM/Babel from npm and route the unpkg URLs to the local copies when
   driving a headless browser.

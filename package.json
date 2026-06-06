@@ -3,8 +3,17 @@
   "version": "0.1.0",
   "description": "Framework-agnostic player that replays an agent's runtime footprint (a recorded trace) as an animated, scrubbable story — the LLM brain calling tools and getting back data (reason), an instruction (act), or both.",
   "keywords": [
-    "agent", "ai", "llm", "agentic", "trace", "replay", "observability",
-    "visualization", "react", "context-engineering", "tool-use"
+    "agent",
+    "ai",
+    "llm",
+    "agentic",
+    "trace",
+    "replay",
+    "observability",
+    "visualization",
+    "react",
+    "context-engineering",
+    "tool-use"
   ],
   "homepage": "https://footprintjs.github.io/agentThinkingUI/",
   "repository": {
@@ -29,6 +38,10 @@
     "README.md"
   ],
   "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "lint": "eslint .",
     "hero": "node docs/assets/gen-hero.mjs",
     "serve": "python3 -m http.server"
   },
@@ -36,5 +49,17 @@
     "src/*.jsx",
     "src/*.js",
     "src/styles.css"
-  ]
+  ],
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@vitest/coverage-v8": "^4.1.8",
+    "eslint": "^10.4.1",
+    "globals": "^17.6.0",
+    "jsdom": "^29.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vitest": "^4.1.8"
+  }
 }

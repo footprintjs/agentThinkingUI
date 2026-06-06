@@ -109,11 +109,6 @@ function Inspector({ step, index, total, onCollapse, view, setView }) {
     ? "Raw information. The brain has to reason about what it means and what to do next."
     : "A skill / steering doc. The brain doesn't deliberate — it just executes the steps.";
 
-  const chip =
-    step.kind === "ask" ? "ask · " + (step.toolName || step.tool) :
-    step.kind === "return" ? "return · " + (step.toolName || step.tool) :
-    step.kind === "prompt" ? "prompt" : "answer";
-
   return (
     <div className={"panel inspector " + accentClass}>
       <div className="panel-head">

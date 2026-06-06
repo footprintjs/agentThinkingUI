@@ -36,7 +36,6 @@ function Timeline({ trace, index, setIndex, playing, setPlaying, speed, setSpeed
   const scrubTo = (clientX) => {
     const r = trackRef.current.getBoundingClientRect();
     const frac = Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * 100;
-    let cum = 0;
     for (let i = 0; i < segs.length; i++) {
       if (frac <= segs[i].start + segs[i].w || i === segs.length - 1) { setIndex(i); return; }
     }
