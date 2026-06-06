@@ -19,6 +19,8 @@
 
 <p align="center">
   <a href="https://footprintjs.github.io/agentThinkingUI/"><img alt="Live demo — see it think" src="https://img.shields.io/badge/%E2%96%B6%20Live%20demo-see%20it%20think-C0531F?style=for-the-badge&labelColor=2C1F15"></a>
+  &nbsp;
+  <a href="https://footprintjs.github.io/agentThinkingUI/explorer.html"><img alt="Component explorer — props & controls" src="https://img.shields.io/badge/%E2%9A%99%20Explorer-props%20%26%20controls-6E5C49?style=for-the-badge&labelColor=2C1F15"></a>
 </p>
 
 > The brain thinks → asks a tool → the reply is **data** (reason over facts), an
