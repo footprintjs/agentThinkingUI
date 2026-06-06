@@ -120,7 +120,7 @@ export function Notepad({ trace, index, onCollapse, view, setView }) {
   );
 }
 
-export function Inspector({ step, index, total, onCollapse, view, setView }) {
+export function Inspector({ step, index, total, onCollapse, view, setView, link }) {
   const accentClass = step.error ? "k-error" :
     step.kind === "answer" ? "k-answer" :
     step.kind === "prompt" ? "k-prompt" :
@@ -142,6 +142,7 @@ export function Inspector({ step, index, total, onCollapse, view, setView }) {
     <div className={"panel inspector " + accentClass}>
       <div className="panel-head">
         <span className="h-title">Step inspector</span>
+        {link && <a className="insp-link" href={link} target="_blank" rel="noopener noreferrer" title="Open this step in your trace store">open ↗</a>}
         <PanelTabs view={view} setView={setView} />
         <button className="insp-collapse" onClick={onCollapse} title="Collapse inspector" aria-label="Collapse inspector">›</button>
       </div>

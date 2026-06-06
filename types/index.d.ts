@@ -48,6 +48,10 @@ export interface AgentThinkingUIProps {
   storageKey?: string | null;
   /** opt-in UI render metrics (wraps the tree in React's <Profiler>) */
   onRender?: (metric: RenderMetric) => void;
+  /** fires on every beat with the current step (carries `spanId`/`traceId`) — for analytics / deep-linking / sync */
+  onSelect?: (step: Step, index: number) => void;
+  /** return a URL for a step → renders an "open ↗" affordance (host builds the link, e.g. to Langfuse/Phoenix) */
+  linkResolver?: (step: Step) => string | null | undefined;
 }
 
 /** UI render metric — React Profiler timing, enriched with player context. */
@@ -75,7 +79,7 @@ export const AgentFootprint: FC<AgentThinkingUIProps>;
 
 export type FlowStatus = "idle" | "running" | "done" | "error";
 export type FlowNode =
-  | { id: string; kind?: "agent"; name: string; role?: string; status?: FlowStatus; icon?: IconConfig; trace: Trace }
+  | { id: string; kind?: "agent"; name: string; role?: string; status?: FlowStatus; icon?: IconConfig; trace: Trace; spanId?: string; traceId?: string }
   | { id: string; kind: "decision"; label: string; predicate?: string; status?: FlowStatus }
   | { id: string; kind: "merge"; label?: string }
   | { id: string; kind: "start" | "end"; label?: string };
@@ -102,6 +106,12 @@ export interface MultiAgentFlowProps {
   live?: boolean;
   /** opt-in UI render metrics (wraps the tree in React's <Profiler>) */
   onRender?: (metric: RenderMetric) => void;
+  /** fires on every team beat with the current step (carries `_agent`, `spanId`) */
+  onSelect?: (step: Step, index: number) => void;
+  /** fires when an agent node is drilled into */
+  onNodeOpen?: (node: FlowNode) => void;
+  /** return a URL for an agent node → renders an "↗" deep-link on its card */
+  linkResolver?: (node: FlowNode) => string | null | undefined;
 }
 /** Multi-agent control-flow map; agent nodes drill into their AgentThinkingUI. */
 export const MultiAgentFlow: FC<MultiAgentFlowProps>;

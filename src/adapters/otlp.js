@@ -135,8 +135,11 @@ function buildTrace(otlp, R, opts = {}) {
   const model = spans.map((s) => R.model(s.a)).find(Boolean) || "unknown";
   const userText = toText(opts.task || (agentSpan && R.userMsg(agentSpan.a, agentSpan.sp)) || (chats[0] && R.userMsg(chats[0].a, chats[0].sp)));
 
+  // stamp the source span/trace id onto each step so hosts can deep-link back to
+  // their trace store (Langfuse/Phoenix/…). Optional — absent if the spans lack ids.
+  const idOf = (sp) => (sp ? { ...(sp.spanId ? { spanId: sp.spanId } : {}), ...(sp.traceId ? { traceId: sp.traceId } : {}) } : {});
   const steps = [];
-  if (userText) steps.push({ kind: "prompt", brain: userText, cost: (chats[0] && cost(chats[0])) || { ms: 0, tokens: 0 } });
+  if (userText) steps.push({ kind: "prompt", brain: userText, cost: (chats[0] && cost(chats[0])) || { ms: 0, tokens: 0 }, ...idOf((agentSpan && agentSpan.sp) || (chats[0] && chats[0].sp)) });
 
   // two-pointer over the time-sorted chats: `ci` only moves forward as tools
   // advance, so the whole loop is O(T + C) (was O(T·C) with a per-tool reversed
@@ -152,6 +155,7 @@ function buildTrace(otlp, R, opts = {}) {
     steps.push({
       kind: "ask", tool: name, toolName: name, input: asObject(R.toolInput(a, t.sp)),
       brain: toText(before && R.assistantMsg(before.a, before.sp)) || ("Calling " + name), cost: half,
+      ...idOf(t.sp),
     });
     const cls = classifyReply(name, a, opts);
     // many runtimes emit no assistant message between tools; fall back to a
@@ -165,6 +169,7 @@ function buildTrace(otlp, R, opts = {}) {
         ? "Following " + (cls.skill || name)
         : "Reasoning over the result from " + name),
       cost: half,
+      ...idOf(t.sp),
     };
     if (cls.replyType !== "data") { ret.skill = cls.skill || name; ret.actChecklist = cls.actChecklist || []; }
     if (cls.replyType === "both") ret.actNote = toText(cls.actNote);
@@ -180,6 +185,7 @@ function buildTrace(otlp, R, opts = {}) {
     brain: answerText || (agentErr ? "Run failed." : "Done."),
     answer: { headline: (answerText || (agentErr || "Done.")).slice(0, 120), plan: [], budget: [], cta: opts.cta || "" },
     cost: (lastChat && cost(lastChat)) || (agentSpan && cost(agentSpan)) || { ms: 0, tokens: 0 },
+    ...idOf((agentSpan && agentSpan.sp) || (lastChat && lastChat.sp)),
   };
   if (agentErr) answerStep.error = agentErr;
   steps.push(answerStep);
@@ -234,7 +240,7 @@ function buildMulti(otlp, R, opts = {}) {
     const a = attrs(s);
     const own = ownSpans(s);
     const tr = buildTrace(own, R, { asker: opts.asker, title: R.agent(a) });
-    return { id: s.spanId, kind: "agent", name: R.agent(a) || tr.agent || "agent", role: a["gen_ai.agent.description"], status: own.some(spanError) ? "error" : "done", trace: tr };
+    return { id: s.spanId, kind: "agent", name: R.agent(a) || tr.agent || "agent", role: a["gen_ai.agent.description"], status: own.some(spanError) ? "error" : "done", trace: tr, ...(s.spanId ? { spanId: s.spanId } : {}), ...(s.traceId ? { traceId: s.traceId } : {}) };
   });
 
   const childCount = {}; agentSpans.forEach((s) => { const p = nearest[s.spanId]; if (p) childCount[p] = (childCount[p] || 0) + 1; });

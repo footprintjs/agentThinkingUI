@@ -43,8 +43,12 @@ playback in a resizable split.
 | `storageKey` | `string \| null` | derived from the trace | persist scrub position; `null` disables persistence |
 | `style` | `object` | — | inline style on the root (wins over theme vars) |
 | `onRender` | `(m: `[`RenderMetric`](#rendermetric)`) => void` | — | opt-in UI render metrics (wraps the tree in React's `<Profiler>`) |
+| `onSelect` | `(step: Step, index: number) => void` | — | fires on every beat; the step carries `spanId`/`traceId` (analytics / deep-link / sync) |
+| `linkResolver` | `(step: Step) => string \| null` | — | return a URL → renders an "open ↗" deep-link for the current step |
 
-`AgentFootprint` is a **deprecated alias** of `AgentThinkingUI`.
+`AgentFootprint` is a **deprecated alias** of `AgentThinkingUI`. The player also
+dispatches a DOM `CustomEvent("agentthinkingui:select", { detail: { step, index,
+spanId, traceId } })` on its root — for non-React/script-tag hosts.
 
 ## `<MultiAgentFlow>`
 
@@ -57,6 +61,9 @@ The multi-agent control-flow map; click an agent node to drill into its own
 | `theme` · `labels` · `icons` · `brand` | _as above_ | | carried into the drill-down player too |
 | `live` | `boolean` | `false` | tail the team timeline to the newest beat as the graph grows |
 | `onRender` | `(m: `[`RenderMetric`](#rendermetric)`) => void` | — | UI render metrics (adds `agents` to the metric) |
+| `onSelect` | `(step, index) => void` | — | fires on every team beat (the step carries `_agent` + `spanId`) |
+| `onNodeOpen` | `(node: FlowNode) => void` | — | fires when an agent node is drilled into |
+| `linkResolver` | `(node: FlowNode) => string \| null` | — | return a URL → renders an "↗" deep-link on the agent card |
 
 ---
 
@@ -159,7 +166,8 @@ for the narrative; the precise types are in
 ### `Trace`
 `{ task, title?, agent, model, asker, steps: Step[] }` — a `Step` is one of
 `prompt` · `ask` · `return` (`replyType: "data"|"instruction"|"both"`) · `answer`,
-each with a [`Cost`](#cost) and an optional `error`.
+each with a [`Cost`](#cost), an optional `error`, and optional `spanId`/`traceId`
+(stamped by the adapters — for `linkResolver`/`onSelect` deep-linking).
 
 ### `Cost`
 `{ ms, tokens, tokensIn?, tokensOut?, tokensCached? }`.

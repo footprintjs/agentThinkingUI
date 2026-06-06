@@ -122,6 +122,24 @@ describe("fromOTLPMulti (multi-agent span tree → FlowGraph)", () => {
   });
 });
 
+describe("source ids (for host deep-linking)", () => {
+  it("stamps spanId/traceId onto steps from the originating spans", () => {
+    const withId = (attrs, events) => ({ spanId: "S1", traceId: "T9", ...span(attrs, events) });
+    const tr = fromOTLP(otlp([withId({ "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "db", "gen_ai.tool.call.arguments": "{}" }, [{ name: "gen_ai.tool.message", attrs: { content: "{}" } }])]));
+    const ret = tr.steps.find((s) => s.kind === "return");
+    expect(ret.spanId).toBe("S1");
+    expect(ret.traceId).toBe("T9");
+  });
+  it("stamps spanId onto multi-agent nodes", () => {
+    const ms = (spanId, parentSpanId, attrs) => ({ spanId, parentSpanId, ...span(attrs) });
+    const g = fromOTLPMulti(otlp([
+      ms("o", undefined, { "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "Root" }),
+      ms("w", "o", { "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "Worker" }),
+    ]));
+    expect(g.nodes.find((n) => n.name === "Worker").spanId).toBe("w");
+  });
+});
+
 describe("createMonitor (push-based live ingestion)", () => {
   const tool = (i) => span({ "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "t" + i, "gen_ai.tool.call.arguments": "{}" }, [{ name: "gen_ai.tool.message", attrs: { content: "{}" } }]);
 

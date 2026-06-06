@@ -61,6 +61,9 @@ export interface PromptStep {
   kind: "prompt";
   brain: string;
   cost: Cost;
+  /** source span id / trace id (set by the adapters — for deep-linking back to your trace store) */
+  spanId?: string;
+  traceId?: string;
 }
 
 /** The brain reaches for a tool. */
@@ -71,6 +74,8 @@ export interface AskStep {
   input: Record<string, unknown>;
   brain: string;
   cost: Cost;
+  spanId?: string;
+  traceId?: string;
 }
 
 /** The tool replies — `data`, `instruction` (skill/steering), or `both`. */
@@ -92,6 +97,8 @@ export interface ReturnStep {
   actNote?: string;
   /** set when the tool span errored (status ERROR / exception event) */
   error?: string;
+  spanId?: string;
+  traceId?: string;
 }
 
 /** The loop ends in the answer (or a failure). */
@@ -100,6 +107,8 @@ export interface AnswerStep {
   to: string;
   brain: string;
   answer: Answer;
+  spanId?: string;
+  traceId?: string;
   cost: Cost;
   /** set when the agent run errored */
   error?: string;

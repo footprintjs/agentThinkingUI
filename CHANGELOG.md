@@ -6,6 +6,14 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Host integration hooks** — `onSelect(step, index)` on `<AgentThinkingUI>` and
+  `<MultiAgentFlow>` (plus `onNodeOpen(node)` on the latter), a DOM
+  `agentthinkingui:select` CustomEvent for non-React hosts, and a `linkResolver`
+  prop that renders an "open ↗" deep-link. The adapters now stamp `spanId` /
+  `traceId` onto steps and nodes, so you can link a beat back to its span in
+  Langfuse / Phoenix / your trace store. See [docs/integrations.md](docs/integrations.md).
+
 ## [0.6.0] - 2026-06-06
 
 ### Changed

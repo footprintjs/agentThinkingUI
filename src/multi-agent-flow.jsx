@@ -38,8 +38,9 @@ function TeamNote({ s, n, active }) {
    See docs/multi-agent-flow.md.
    ============================================================ */
 
-export function MultiAgentFlow({ trace, theme, labels, icons, brand, live, onRender }) {
+export function MultiAgentFlow({ trace, theme, labels, icons, brand, live, onRender, onSelect, onNodeOpen, linkResolver }) {
   const [sel, setSel] = useState(null);
+  const rootRef = React.useRef(null);
   const resolved = useMemo(() => AgentTheme.normalize({ theme, labels, icons }), [theme, labels, icons]);
   const vars = useMemo(() => AgentTheme.toVars(resolved), [resolved]);
   const nodes = useMemo(() => (trace.nodes || []).map((n) => ({ kind: "agent", ...n })), [trace]);
@@ -68,6 +69,17 @@ export function MultiAgentFlow({ trace, theme, labels, icons, brand, live, onRen
   const idx = Math.min(play.index, teamTrace.steps.length - 1);
   const cur = teamSteps[idx];
   const phaseOf = (id) => { const rr = ranges[id]; if (!rr) return "done"; if (idx < rr.start) return "future"; if (idx > rr.end) return "done"; return "current"; };
+
+  // opt-in selection events (team beat changed) — host integration / deep-link
+  React.useEffect(() => {
+    if (onSelect && cur) onSelect(cur);
+    const el = rootRef.current;
+    if (el && cur && typeof CustomEvent !== "undefined") {
+      el.dispatchEvent(new CustomEvent("agentthinkingui:select", { bubbles: true, detail: { step: cur, index: idx, agent: cur._agent, spanId: cur.spanId } }));
+    }
+  }, [idx]);
+  // drill into an agent + notify the host
+  const openAgent = (n) => { setSel(n.id); if (onNodeOpen) onNodeOpen(n); };
 
   // opt-in UI render metrics (React Profiler), enriched with team context
   const wrap = (tree) => onRender
@@ -103,7 +115,7 @@ export function MultiAgentFlow({ trace, theme, labels, icons, brand, live, onRen
 
   return wrap(
     <AgentThemeContext.Provider value={resolved}>
-      <div className="atui-swarm" style={vars} onKeyDown={play.onKeyDown}>
+      <div className="atui-swarm" style={vars} onKeyDown={play.onKeyDown} ref={rootRef}>
         <div className="swarm-bar">
           {brand && <div className="brand-name swarm-brand">{brand}</div>}
           <span className="swarm-task"><span className="rec" /><span className="lbl">flow</span> {task}</span>
@@ -156,9 +168,11 @@ export function MultiAgentFlow({ trace, theme, labels, icons, brand, live, onRen
               const tok = (n.trace && n.trace.steps || []).reduce((s, x) => s + ((x.cost && x.cost.tokens) || 0), 0);
               const ph = phaseOf(n.id);
               const k = ph === "current" ? "k-call current" : ph === "future" ? "k-answer future" : "k-answer";
+              const ext = linkResolver ? linkResolver(n) : null; // deep-link back to the trace store
               return (
-                <button key={n.id} className={"agent-card " + k} style={st} onClick={() => n.trace && setSel(n.id)} title={n.trace ? "Open " + n.name : n.name}>
+                <button key={n.id} className={"agent-card " + k} style={st} onClick={() => n.trace && openAgent(n)} title={n.trace ? "Open " + n.name : n.name}>
                   <span className="ac-status" />
+                  {ext && <span className="ac-extlink" title="Open in your trace store" onClick={(e) => { e.stopPropagation(); window.open(ext, "_blank", "noopener"); }}>↗</span>}
                   <div className="ac-head2">
                     <div className="ac-avatar"><BrainGlyph icon={n.icon} mode={n.status === "running" ? "act" : "reason"} /></div>
                     <div className="ac-id">

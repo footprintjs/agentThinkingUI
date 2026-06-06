@@ -18,8 +18,9 @@ import * as AgentTheme from "./theme.js";
    four components into their own layout (they're each independent).
    (window.AgentFootprint remains as a deprecated alias.)
    ============================================================ */
-export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, live = false, style, mobile, storageKey, onRender }) {
-  const { useState, useRef, useMemo } = React;
+export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, live = false, style, mobile, storageKey, onRender, onSelect, linkResolver }) {
+  const { useState, useRef, useMemo, useEffect } = React;
+  const rootRef = useRef(null);
   // persist scrub position per-trace so two players on one page don't collide;
   // pass storageKey={null} to disable, or a custom string to override.
   const key = storageKey !== undefined ? storageKey
@@ -59,6 +60,20 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
 
   const step = trace.steps[Math.min(index, trace.steps.length - 1)] || trace.steps[0];
 
+  // Opt-in selection events for host integration (deep-link to a span in your
+  // obs dashboard, analytics, two-way sync). Fires on every beat with the step
+  // (which carries `spanId`/`traceId` from the adapters); also as a DOM
+  // CustomEvent so non-React/script-tag hosts can listen. Zero cost when unused.
+  useEffect(() => {
+    if (onSelect) onSelect(step, index);
+    const el = rootRef.current;
+    if (el && typeof CustomEvent !== "undefined") {
+      el.dispatchEvent(new CustomEvent("agentthinkingui:select", { bubbles: true, detail: { step, index, spanId: step && step.spanId, traceId: step && step.traceId } }));
+    }
+  }, [index]);
+  // optional deep-link for the current step (host supplies the URL builder)
+  const stepLink = linkResolver && step ? linkResolver(step) : null;
+
   // Opt-in UI render metrics. When `onRender` is supplied we wrap the tree in
   // React's <Profiler> (the standard) and forward its timing, enriched with the
   // domain context React can't know (current step / total). Zero overhead when
@@ -72,7 +87,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
   if (mobile) {
     return wrap(
       <TC.Provider value={resolved}>
-      <div className="atui mobile" style={rootStyle} onKeyDown={onKeyDown}>
+      <div className="atui mobile" style={rootStyle} onKeyDown={onKeyDown} ref={rootRef}>
         <div className="topbar">
           {brand && <div className="brandmark"><div className="brand-name">{brand}</div></div>}
         </div>
@@ -94,7 +109,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
 
   return wrap(
     <TC.Provider value={resolved}>
-    <div className={"atui" + (mobile ? " mobile" : "")} style={rootStyle} onKeyDown={onKeyDown}>
+    <div className={"atui" + (mobile ? " mobile" : "")} style={rootStyle} onKeyDown={onKeyDown} ref={rootRef}>
       <div className="topbar">
         {brand && <div className="brandmark"><div className="brand-name">{brand}</div></div>}
         <div className="task-pill">
@@ -121,7 +136,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
             <div className="ws-insp">
               {rightView === "notepad"
                 ? <Notepad trace={trace} index={index} onCollapse={() => setInspOpen(false)} view={rightView} setView={setRightView} />
-                : <Inspector step={step} index={index} total={trace.steps.length} onCollapse={() => setInspOpen(false)} view={rightView} setView={setRightView} />}
+                : <Inspector step={step} index={index} total={trace.steps.length} onCollapse={() => setInspOpen(false)} view={rightView} setView={setRightView} link={stepLink} />}
             </div>
           </>
         ) : (

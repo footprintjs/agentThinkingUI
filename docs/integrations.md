@@ -86,6 +86,31 @@ stream.on("spans", (batch) => setTrace(mon.push(batch)));             // batch =
 <AgentThinkingUI live trace={trace} />
 ```
 
+## Deep-link back to your dashboard
+
+The adapters stamp each step/node with its source `spanId` (and `traceId`), so you
+can wire the replay *back* to the platform — click a beat → open that span in
+Langfuse / Phoenix. The library stays platform-neutral: **you** supply the URL.
+
+```jsx
+const url = (s) => s.spanId && `${LANGFUSE_HOST}/trace/${s.traceId}?observation=${s.spanId}`;
+
+// render an "open ↗" affordance per step / per agent:
+<AgentThinkingUI trace={trace} linkResolver={url} />
+<MultiAgentFlow  trace={flow}  linkResolver={(node) => url(node)} onNodeOpen={(n) => /* … */} />
+
+// or handle selection yourself (analytics, two-way highlight, custom routing):
+<AgentThinkingUI trace={trace} onSelect={(step, i) => openInDashboard(step.spanId)} />
+```
+
+Non-React host? The player also dispatches a DOM event on its root:
+
+```js
+el.addEventListener("agentthinkingui:select", (e) => {
+  const { spanId, traceId, index } = e.detail;   // jump to the span in your tool
+});
+```
+
 ## Notes
 
 - **Reply type.** The **data / instruction / both** distinction (and the

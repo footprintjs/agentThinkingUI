@@ -657,3 +657,9 @@
 
 /* truncation note for oversized tool I/O in the inspector code panes */
 .atui .code-trunc, .atui-swarm .code-trunc { color: var(--ink-faint); font-style: italic; }
+
+/* host deep-link affordances (only render when a linkResolver is supplied) */
+:where(.atui, .atui-swarm) .insp-link { margin-left: auto; margin-right: 8px; font-size: calc(12px * var(--af-text-scale)); font-weight: 700; color: var(--rust); text-decoration: none; white-space: nowrap; }
+:where(.atui, .atui-swarm) .insp-link:hover { text-decoration: underline; }
+:where(.atui-swarm) .agent-card .ac-extlink { position: absolute; top: 8px; right: 9px; font-size: 13px; line-height: 1; color: var(--ink-faint); cursor: pointer; padding: 2px; border-radius: 6px; }
+:where(.atui-swarm) .agent-card .ac-extlink:hover { color: var(--rust); background: var(--rust-tint); }
