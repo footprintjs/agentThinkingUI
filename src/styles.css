@@ -630,3 +630,22 @@ button { font-family: inherit; cursor: pointer; }
 .swarm-np-head { font-family: var(--font-display); font-weight: 700; font-size: calc(14px * var(--af-text-scale)); padding: 14px 16px 8px; }
 .agent-card.future { opacity: .48; }
 .agent-card.current { border-color: var(--accent); box-shadow: var(--shadow-md); }
+
+/* ============================================================
+   Accessibility — visible keyboard focus + reduced-motion.
+   (Added for full keyboard/AT support; pointer users are unaffected.)
+   ============================================================ */
+.app :focus-visible,
+.app-swarm :focus-visible { outline: 2px solid var(--rust); outline-offset: 2px; border-radius: 8px; }
+/* the timeline scrubber is a focusable role="slider" */
+.tl-track { outline: none; }
+.tl-track:focus-visible { outline: 2px solid var(--rust); outline-offset: 4px; border-radius: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .app *, .app-swarm * {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

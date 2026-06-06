@@ -129,11 +129,16 @@ function buildTrace(otlp, R, opts = {}) {
       brain: toText(before && R.assistantMsg(before.a, before.sp)) || ("Calling " + name), cost: half,
     });
     const cls = classifyReply(name, a, opts);
+    // many runtimes emit no assistant message between tools; fall back to a
+    // generic narration so the reasoning bubble is never blank.
+    const reasoned = toText(after && R.assistantMsg(after.a, after.sp));
     const ret = {
       kind: "return", tool: name, toolName: name, replyType: cls.replyType,
       output: asObject(R.toolOutput(a, t.sp)),
       brainMode: cls.replyType === "instruction" ? "act" : "reason",
-      brain: toText(after && R.assistantMsg(after.a, after.sp)),
+      brain: reasoned || (cls.replyType === "instruction"
+        ? "Following " + (cls.skill || name)
+        : "Reasoning over the result from " + name),
       cost: half,
     };
     if (cls.replyType !== "data") { ret.skill = cls.skill || name; ret.actChecklist = cls.actChecklist || []; }
