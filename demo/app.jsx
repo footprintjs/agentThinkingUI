@@ -182,11 +182,15 @@ function App() {
   const brandMark = <>Agent<b>ThinkingUI</b></>;
   return (
     <>
-      {view === "multi" && graph
-        ? <MultiAgentFlow key={graphImport ? "import" : flowKey} trace={graph} live={mLive}
-            theme={theme} labels={labels} icons={icons} brand={brandMark} />
-        : <AgentThinkingUI key={imported ? "otel" : sceneKey} trace={trace} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
-            live={live} theme={theme} labels={labels} icons={icons} brand={brandMark} />}
+      {/* reserve bottom space on desktop so the player's content clears the
+          fixed "Built with" credit pill (demo-only chrome) */}
+      <div style={{ height: "100%", boxSizing: "border-box", paddingBottom: isMobile ? 0 : 64 }}>
+        {view === "multi" && graph
+          ? <MultiAgentFlow key={graphImport ? "import" : flowKey} trace={graph} live={mLive}
+              theme={theme} labels={labels} icons={icons} brand={brandMark} />
+          : <AgentThinkingUI key={imported ? "otel" : sceneKey} trace={trace} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
+              live={live} theme={theme} labels={labels} icons={icons} brand={brandMark} />}
+      </div>
       <DemoSettings brand={brand} setBrand={setBrand}
         labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons}
         mode={mode} setMode={setMode}
