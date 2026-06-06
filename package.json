@@ -47,6 +47,8 @@
     "types",
     "docs/assets/hero-light.svg",
     "docs/assets/hero-dark.svg",
+    "docs/API.md",
+    "CHANGELOG.md",
     "AGENTS.md",
     "LICENSE",
     "README.md"

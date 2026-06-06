@@ -408,6 +408,16 @@ any element.
 
 Point a `trace` at your own recorded run (live or replay) and render — that's it.
 
+## Documentation
+
+- **[API reference](./docs/API.md)** — every component, prop, hook and adapter
+  (name · type · default · description).
+- **[Trace schema](#trace-schema-the-contract)** — the contract you produce.
+- **[Live playground](https://footprintjs.github.io/agentThinkingUI/)** — the demo
+  gear edits theme, names, icons, type scale, light/dark, scenarios, OTel/
+  OpenInference import and the multi-agent patterns, live.
+- **[Changelog](./CHANGELOG.md)** — what changed per release.
+
 ## For AI agents
 
 Building on top of this with a coding agent? Two guides are kept for that:
