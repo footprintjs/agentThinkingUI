@@ -103,6 +103,17 @@
     function Toggle({ label, v, set }) {
       return <label><input type="checkbox" checked={v} onChange={(e) => set(e.target.checked)} />{label}</label>;
     }
+    // a sample host widget for renderDetail — the raw content OTel didn't capture,
+    // that the company keeps elsewhere and fetches by spanId
+    function RawPanel({ step }) {
+      const raw = JSON.stringify({ spanId: step.spanId, kind: step.kind, source: "your store (joined by spanId)", note: "content the OTel/OpenInference span didn't carry" }, null, 2);
+      return (
+        <div>
+          <div className="ex-lbl" style={{ margin: "0 0 6px" }}>raw span · your store</div>
+          <pre style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, background: "#2C1F15", color: "#F3E7D4", padding: "10px 12px", borderRadius: 10, whiteSpace: "pre-wrap", margin: 0 }}>{raw}</pre>
+        </div>
+      );
+    }
 
     function Explorer() {
       const [comp, setComp] = useState("single");
@@ -116,15 +127,17 @@
       const [scale, setScale] = useState(1);
       const [brain, setBrain] = useState("default");
       const [deeplink, setDeeplink] = useState(true);
+      const [detail, setDetail] = useState(true);
       const [lastEvent, setLastEvent] = useState("");
 
       const theme = { mode, ...(color ? { colors: { brand: color } } : {}), ...(scale !== 1 ? { fonts: { scale } } : {}) };
       const icons = brain === "default" ? {} : { brain: { kind: "emoji", value: brain } };
       const brandNode = brand ? <span>Agent<b>ThinkingUI</b></span> : null;
 
+      const hooks = (deeplink ? "\n  linkResolver={(x) => obsURL(x)}" : "") + (detail ? "\n  renderDetail={(s) => <RawLog spanId={s.spanId} />}" : "");
       const code = comp === "single"
-        ? `<AgentThinkingUI\n  trace={trace}\n  theme={{ mode: "${mode}"${color ? `, colors: { brand: "${color}" }` : ""}${scale !== 1 ? `, fonts: { scale: ${scale} }` : ""} }}\n  ${brain !== "default" ? `icons={{ brain: { kind: "emoji", value: "${brain}" } }}\n  ` : ""}metaphor={${metaphor}} loop={${loop}} live={${live}} mobile={${mobile}}\n/>`
-        : `<MultiAgentFlow\n  trace={graph}\n  theme={{ mode: "${mode}"${color ? `, colors: { brand: "${color}" }` : ""} }}\n/>`;
+        ? `<AgentThinkingUI\n  trace={trace}\n  theme={{ mode: "${mode}"${color ? `, colors: { brand: "${color}" }` : ""}${scale !== 1 ? `, fonts: { scale: ${scale} }` : ""} }}\n  ${brain !== "default" ? `icons={{ brain: { kind: "emoji", value: "${brain}" } }}\n  ` : ""}metaphor={${metaphor}} loop={${loop}} live={${live}} mobile={${mobile}}${hooks}\n/>`
+        : `<MultiAgentFlow\n  trace={graph}\n  theme={{ mode: "${mode}"${color ? `, colors: { brand: "${color}" }` : ""} }}${hooks}\n/>`;
 
       const chip = (on) => "ex-chip" + (on ? " on" : "");
       return (
@@ -166,6 +179,7 @@
               </>}
               <div className="ex-lbl">Host hooks</div>
               <Toggle label="linkResolver → open ↗" v={deeplink} set={setDeeplink} />
+              <Toggle label="renderDetail → raw panel" v={detail} set={setDetail} />
               <div style={{ fontSize: 11.5, color: "#A2917C", marginTop: 4 }}>onSelect / onNodeOpen fire on interaction (see below).</div>
             </div>
             <div className="ex-main">
@@ -173,11 +187,13 @@
                 {comp === "single"
                   ? <AgentThinkingUI key={mode + scale + brain + mobile} trace={TRACE} theme={theme} icons={icons} brand={brandNode} metaphor={metaphor} loop={loop} live={live} mobile={mobile}
                       onSelect={(s, i) => setLastEvent("onSelect → #" + (i + 1) + " " + s.kind + (s.spanId ? " (" + s.spanId + ")" : ""))}
-                      linkResolver={deeplink ? (s) => "https://your-obs-tool.example/span/" + s.spanId : undefined} />
+                      linkResolver={deeplink ? (s) => "https://your-obs-tool.example/span/" + s.spanId : undefined}
+                      renderDetail={detail ? (s) => <RawPanel step={s} /> : undefined} />
                   : <MultiAgentFlow key={mode} trace={GRAPH} theme={theme} brand={brandNode}
                       onSelect={(s) => setLastEvent("onSelect → " + s._name + " · " + s.kind)}
                       onNodeOpen={(n) => setLastEvent("onNodeOpen → " + n.name + " (" + (n.spanId || n.id) + ")")}
-                      linkResolver={deeplink ? (n) => "https://your-obs-tool.example/agent/" + (n.spanId || n.id) : undefined} />}
+                      linkResolver={deeplink ? (n) => "https://your-obs-tool.example/agent/" + (n.spanId || n.id) : undefined}
+                      renderDetail={detail ? (s) => <RawPanel step={s} /> : undefined} />}
               </div>
               <div style={{ fontSize: 12.5, color: "#6E5C49" }}><b style={{ color: "#95380F" }}>event</b> &nbsp;{lastEvent || "— scrub or click an agent to fire onSelect / onNodeOpen —"}</div>
               <pre className="ex-code">{code}</pre>
