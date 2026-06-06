@@ -266,6 +266,34 @@ nested `invoke_agent` spans become the agent graph. The **reply type**
 `.skill` span attributes → a heuristic (skill/steering/policy/guardrail → instruction).
 **Errors are universal:** a span with status `ERROR` (or an `exception` event) becomes
 a red error beat (and a red agent node in the flow) — same for both adapters.
+
+### On top of your observability stack
+
+AgentThinkingUI is **complementary** to Langfuse / Arize Phoenix / LangSmith /
+OpenTelemetry, not a replacement: they record + evaluate the trace (dev-facing
+waterfalls, metrics); AgentThinkingUI is the **last-mile, user-facing** view you
+embed in your own product to show users, operators or stakeholders *what the agent
+did*. Since they all speak OTel/OpenInference, there's no re-instrumentation — your
+backend hands the spans to the same adapters:
+
+| your stack | spans are… | use |
+|---|---|---|
+| **Arize Phoenix** / LlamaIndex | OpenInference | `fromOpenInference` · `fromOpenInferenceMulti` |
+| **OpenTelemetry** / OpenLLMetry collector | OTel GenAI (OTLP) | `fromOTLP` · `fromOTLPMulti` |
+| **Langfuse** (OTLP export) | OTel GenAI | `fromOTLP` |
+| **LangSmith / LangGraph** (OTel export) | OTel GenAI | `fromOTLP` · `fromOTLPMulti` |
+
+```jsx
+// your backend queries the platform and returns ITS spans (OTLP/JSON, or an
+// OpenInference array) — the browser just renders them, no re-instrumentation
+const spans = await fetch(`/api/runs/${runId}/spans`).then((r) => r.json());
+const trace = fromOpenInference(spans, { asker: "you" }); // e.g. Arize Phoenix
+<AgentThinkingUI trace={trace} />                          // or fromOTLPMulti → <MultiAgentFlow>
+```
+
+The dev keeps their dashboard for debugging/evals; your end users get a branded,
+animated replay of the same run.
+
 ### Live monitoring
 
 For live runs, use **`createMonitor`** — a push-based ingestion handle. Feed it
