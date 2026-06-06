@@ -164,6 +164,7 @@ Four independent view components, plus a default container that composes them:
 | `<Inspector>` | per-step detail (tool I/O, reasoning, cost) |
 | `<Notepad>` | chronological journal that builds up beat-by-beat |
 | `<AgentThinkingUI trace>` | **default container** — wires the four + playback + a resizable split |
+| `<AgentSwarm trace>` | **multi-agent** control-flow map; drills into each agent's `<AgentThinkingUI>` |
 
 Use `<AgentThinkingUI trace={trace} />` for the whole thing, or import the four
 pieces into your own layout (each takes `trace` + the playback state from
@@ -177,6 +178,70 @@ bundle and shows it working — sample traces, live theming, and a live stream.
 Animation **ordering** lives as one block of staged `animation-delay`s in
 `src/styles.css` (search "choreography"): per beat the cloud → arc → packet →
 tool/bubble fire in sequence.
+
+## Multi-agent — `<AgentSwarm>`
+
+Real systems have more than one agent. `<AgentSwarm>` renders a team as a
+**control-flow graph** and drills into each agent's single-agent `<AgentThinkingUI>`.
+It takes a **`FlowGraph`** — typed nodes + edges that compose the four primitives
+(Sequence · Parallel · Conditional · Loop), which in turn express every named
+pattern (Hierarchical, Debate, Router, Reflexion, Swarm, Tree-of-Thoughts). See
+[`docs/multi-agent-flow.md`](docs/multi-agent-flow.md).
+
+```jsx
+import { AgentSwarm } from "agentthinkingui";
+
+const flow = {
+  task: "plan the offsite",
+  nodes: [
+    { id: "p", kind: "agent", name: "Planner", role: "orchestrator", icon: { kind: "emoji", value: "🧠" }, trace: plannerTrace },
+    { id: "r", kind: "decision", label: "in budget?" },
+    { id: "f", kind: "agent", name: "Flights", trace: flightsTrace },
+    { id: "m", kind: "merge", label: "synthesis" },
+  ],
+  edges: [
+    { from: "p", to: "r", kind: "seq" },
+    { from: "r", to: "f", kind: "conditional", label: "yes", taken: true },
+    { from: "f", to: "m", kind: "parallel" },
+    { from: "m", to: "p", kind: "loop", label: "until done ×2" },
+  ],
+};
+
+<AgentSwarm trace={flow} live={false} />
+```
+
+- **Nodes:** `agent` (shows the animated brain mascot, or `icon` emoji/image; click
+  to **drill in**) · `decision` (diamond) · `merge` · `start`/`end`.
+- **Edges:** `seq` · `parallel` · `conditional` (taken branch lit, rest dimmed) ·
+  `loop` (dashed back-arc with an "until / ×N" label).
+- **Team time-travel:** all agents' beats interleave into one scrubbable team
+  timeline — the current agent lights up, a commentary line narrates the beat, and a
+  toggle-able **team notepad** shows the agent-prefixed journal.
+- **`live`** tails the newest beat as the graph grows (stream nodes/steps in).
+
+## Adapters — bring your existing traces
+
+Already instrumented with **OpenTelemetry GenAI** (AWS Bedrock AgentCore, LangGraph,
+CrewAI, AutoGen, OpenAI Agents SDK, Google ADK, Pydantic AI, Strands…) or
+**OpenInference** (Arize/Phoenix/LlamaIndex)? Convert OTLP spans with no
+re-instrumentation:
+
+```js
+import { fromOTLP, fromOpenInference, fromOTLPMulti } from "agentthinkingui";
+
+const trace = fromOTLP(otlpJson, { asker: "Sam" });      // OTel GenAI → Trace
+const trace2 = fromOpenInference(spans);                  // OpenInference → Trace
+const flow = fromOTLPMulti(otlpJson, { asker: "Sam" });   // span tree → multi-agent FlowGraph
+```
+
+Mapping: agent span → trace/agent-node, tool execution → ask+return, first user
+message → prompt, final assistant message → answer, span duration + tokens → cost;
+nested `invoke_agent` spans become the agent graph. The **reply type**
+(`data`/`instruction`/`both`) isn't in those standards, so it's decided by an
+`opts.classify(toolName, attrs)` hook → opt-in `agentthinkingui.reply_type` /
+`.skill` span attributes → a heuristic (skill/steering/policy/guardrail → instruction).
+For **live monitoring**, accumulate spans and re-run the adapter on the growing set,
+feeding `<AgentThinkingUI live>` / `<AgentSwarm live>`.
 
 ## Theming
 

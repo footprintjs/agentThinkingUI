@@ -94,10 +94,14 @@ OpenInference (Arize/Phoenix/LlamaIndex)? Convert OTLP spans straight to a trace
 no re-instrumentation:
 
 ```js
-import { fromOTLP, fromOpenInference } from "agentthinkingui";
+import { fromOTLP, fromOpenInference, fromOTLPMulti } from "agentthinkingui";
 
-const trace = fromOTLP(otlpJson, { asker: "Sam" }); // or fromOpenInference(spans)
+const trace = fromOTLP(otlpJson, { asker: "Sam" });    // or fromOpenInference(spans)
 <AgentThinkingUI trace={trace} />
+
+// multi-agent: an OTel span tree → a FlowGraph for <AgentSwarm>
+const flow = fromOTLPMulti(otlpJson, { asker: "Sam" });
+<AgentSwarm trace={flow} />
 ```
 
 It maps agent span → trace, tool executions → ask+return, the first user message →
@@ -115,6 +119,34 @@ tails the newest beat:
 const acc = [];
 onSpanEnd((span) => { acc.push(span); setTrace(fromOTLP(acc, opts)); });
 ```
+
+## Multi-agent — `<AgentSwarm>`
+
+For teams of agents, render a **control-flow graph** that drills into each agent's
+single-agent player. It takes a `FlowGraph`:
+
+```ts
+type FlowGraph = {
+  task: string; asker?: string;
+  nodes: ({ id; kind?: "agent"; name; role?; status?; icon?; trace: Trace }
+        | { id; kind: "decision"; label }
+        | { id; kind: "merge" | "start" | "end"; label? })[];
+  edges: { from; to; kind: "seq" | "parallel" | "conditional" | "loop"; label?; taken? }[];
+};
+```
+
+```jsx
+<AgentSwarm trace={flow} live={false} />
+```
+
+The four edge kinds compose every named pattern (Hierarchical, Debate, Router,
+Reflexion, Swarm, Tree-of-Thoughts — see `docs/multi-agent-flow.md`). Each `agent`
+node carries a full `Trace` (so steps/cost/icons work per-agent), shows the animated
+brain mascot (or a per-agent `icon`), and **drills into the full interactive
+`<AgentThinkingUI>`**. The map has its own **team time-travel** (all agents' beats
+interleaved into one scrubbable timeline + commentary + team notepad); `live` tails
+the newest beat as the graph grows. Build one from real telemetry with
+`fromOTLPMulti`.
 
 ## Theming (match the host app)
 
