@@ -653,3 +653,6 @@
 :where(.atui, .atui-swarm) .cost-breakdown .cb-dot.in { background: var(--data); }
 :where(.atui, .atui-swarm) .cost-breakdown .cb-dot.out { background: var(--instr); }
 :where(.atui, .atui-swarm) .cost-breakdown .cb-item.cached { color: var(--answer-deep, var(--answer)); font-weight: 600; }
+
+/* truncation note for oversized tool I/O in the inspector code panes */
+.atui .code-trunc, .atui-swarm .code-trunc { color: var(--ink-faint); font-style: italic; }

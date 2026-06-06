@@ -5,9 +5,13 @@ const { useState: inspUseState } = React;
 // JSON syntax highlighter for the tool I/O panes. Tool output is UNTRUSTED
 // (arbitrary agent/telemetry data), so we tokenize into React nodes rather than
 // building an HTML string — no dangerouslySetInnerHTML, no injection surface.
+const MAX_JSON = 6000; // cap rendered tool I/O — arbitrary agent output can be huge
 function highlight(value) {
-  const json = JSON.stringify(value === undefined ? null : value, null, 2);
+  let json = JSON.stringify(value === undefined ? null : value, null, 2);
   if (typeof json !== "string") return String(json);
+  // bound the work + DOM: a 1MB blob would otherwise become thousands of nodes
+  let trunc = 0;
+  if (json.length > MAX_JSON) { trunc = json.length - MAX_JSON; json = json.slice(0, MAX_JSON); }
   const re = /("(?:\\.|[^"\\])*")(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g;
   const out = [];
   let last = 0, m, k = 0;
@@ -22,6 +26,7 @@ function highlight(value) {
     last = re.lastIndex;
   }
   if (last < json.length) out.push(json.slice(last));
+  if (trunc) out.push(<span className="code-trunc" key="trunc">{"\n… " + trunc.toLocaleString() + " more characters truncated"}</span>);
   return out;
 }
 

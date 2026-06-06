@@ -204,7 +204,10 @@ function buildMulti(otlp, R, opts = {}) {
   const spans = collectSpans(otlp);
   const byId = {}; spans.forEach((s) => { if (s.spanId) byId[s.spanId] = s; });
   const kids = {}; spans.forEach((s) => { if (s.parentSpanId) (kids[s.parentSpanId] = kids[s.parentSpanId] || []).push(s); });
-  const isAgent = (s) => { const op = R.op(flatAttrs(s)); return op === "invoke_agent" || op === "create_agent" || op === "AGENT" || !!R.agent(flatAttrs(s)); };
+  // parse each span's attributes once (flatAttrs walks the whole attr list)
+  const attrCache = new Map();
+  const attrs = (s) => { let a = attrCache.get(s); if (!a) { a = flatAttrs(s); attrCache.set(s, a); } return a; };
+  const isAgent = (s) => { const a = attrs(s), op = R.op(a); return op === "invoke_agent" || op === "create_agent" || op === "AGENT" || !!R.agent(a); };
   const agentSpans = spans.filter(isAgent);
 
   // 0–1 agents → a single-agent graph wrapping the whole run
@@ -214,7 +217,13 @@ function buildMulti(otlp, R, opts = {}) {
   }
 
   const agentIds = new Set(agentSpans.map((s) => s.spanId));
-  const nearestAgent = (s) => { let p = s.parentSpanId; while (p && byId[p]) { if (agentIds.has(p)) return p; p = byId[p].parentSpanId; } return null; };
+  // nearest agent-ancestor per agent span — computed ONCE (was walked 3×/node)
+  const nearest = {};
+  agentSpans.forEach((s) => {
+    let p = s.parentSpanId, found = null;
+    while (p && byId[p]) { if (agentIds.has(p)) { found = p; break; } p = byId[p].parentSpanId; }
+    nearest[s.spanId] = found;
+  });
   const ownSpans = (root) => { // subtree of root, minus nested agents' subtrees
     const out = [], stack = [root];
     while (stack.length) { const s = stack.pop(); out.push(s); (kids[s.spanId] || []).forEach((c) => { if (!agentIds.has(c.spanId)) stack.push(c); }); }
@@ -222,17 +231,17 @@ function buildMulti(otlp, R, opts = {}) {
   };
 
   const nodes = agentSpans.map((s) => {
-    const a = flatAttrs(s);
+    const a = attrs(s);
     const own = ownSpans(s);
     const tr = buildTrace(own, R, { asker: opts.asker, title: R.agent(a) });
     return { id: s.spanId, kind: "agent", name: R.agent(a) || tr.agent || "agent", role: a["gen_ai.agent.description"], status: own.some(spanError) ? "error" : "done", trace: tr };
   });
 
-  const childCount = {}; agentSpans.forEach((s) => { const p = nearestAgent(s); if (p) childCount[p] = (childCount[p] || 0) + 1; });
+  const childCount = {}; agentSpans.forEach((s) => { const p = nearest[s.spanId]; if (p) childCount[p] = (childCount[p] || 0) + 1; });
   const edges = [];
-  agentSpans.forEach((s) => { const p = nearestAgent(s); if (p) edges.push({ from: p, to: s.spanId, kind: childCount[p] > 1 ? "parallel" : "seq" }); });
+  agentSpans.forEach((s) => { const p = nearest[s.spanId]; if (p) edges.push({ from: p, to: s.spanId, kind: childCount[p] > 1 ? "parallel" : "seq" }); });
 
-  const root = agentSpans.find((s) => !nearestAgent(s)) || agentSpans[0];
+  const root = agentSpans.find((s) => !nearest[s.spanId]) || agentSpans[0];
   const rootNode = nodes.find((n) => n.id === root.spanId);
   return { task: opts.task || (rootNode && rootNode.trace.task) || "multi-agent run", asker: opts.asker || "user", nodes, edges };
 }

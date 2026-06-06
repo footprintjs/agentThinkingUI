@@ -100,4 +100,19 @@ describe("untrusted tool I/O is rendered as text, not HTML", () => {
     expect(code.querySelector(".k")).toBeTruthy(); // key span
     expect(code.querySelector(".s")).toBeTruthy(); // string-value span
   });
+
+  it("caps pathologically large tool I/O so the inspector can't be flooded", () => {
+    const huge = {}; for (let i = 0; i < 4000; i++) huge["field_" + i] = "value " + i; // ~megabyte of JSON
+    const big = trace({ title: "BIG", steps: [
+      { kind: "prompt", brain: "hi", cost: { ms: 1, tokens: 1 } },
+      { kind: "ask", tool: "x", toolName: "x", input: huge, brain: "calling", cost: { ms: 1, tokens: 1 } },
+      { kind: "answer", to: "x", brain: "done", answer, cost: { ms: 1, tokens: 1 } },
+    ] });
+    const { container, getByLabelText } = render(ui({ trace: big }));
+    fireEvent.click(getByLabelText("Next step"));
+    const code = container.querySelector(".code");
+    expect(code.textContent).toContain("truncated");
+    expect(code.textContent.length).toBeLessThan(7000);              // bounded, not ~1MB
+    expect(code.querySelectorAll("span").length).toBeLessThan(2000); // bounded DOM
+  });
 });
