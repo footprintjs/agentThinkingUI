@@ -1,6 +1,9 @@
 /* Demo-only page chrome (NOT part of the library). The library no longer
    styles <body>/<html> or .grain so it can't leak into a host app. */
 html, body { margin: 0; height: 100%; }
+/* the mount element must carry height so the player (.atui is height:100%) fills
+   the window; position/z-index keep it above the fixed .grain backdrop */
+#root { position: relative; z-index: 1; height: 100%; }
 body {
   font-family: var(--font-body);
   color: var(--ink);

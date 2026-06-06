@@ -89,7 +89,8 @@
 :where(.atui, .atui-swarm) .k-error { --accent: var(--error);   --accent-deep: var(--error-deep);   --accent-tint: var(--error-tint);  --accent-on: var(--on-error); }
 
 /* ---------- App shell ---------- */
-:where(.atui, .atui-swarm) #root { position: relative; z-index: 1; height: 100%; }
+/* `.atui` fills its parent — the host gives the mount element a height (the demo
+   does this in demo.css). It was previously a stray global `#root` rule. */
 .atui {
   height: 100%;
   display: flex; flex-direction: column;
