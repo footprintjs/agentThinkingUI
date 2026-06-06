@@ -8,6 +8,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # to commit the regenerated coverage badge back to main
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -16,12 +18,18 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
-      - run: npm run coverage
-      # optional: connect Codecov by adding the CODECOV_TOKEN secret
-      - name: Upload coverage to Codecov
-        if: ${{ hashFiles('coverage/lcov.info') != '' }}
-        uses: codecov/codecov-action@v4
-        with:
-          files: coverage/lcov.info
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
+      - run: npm run coverage   # also regenerates docs/assets/coverage.svg (token-free badge)
+      # commit the badge back when it changed (push to main only). Uses the
+      # auto-provided GITHUB_TOKEN — no Codecov account or secret required.
+      - name: Update coverage badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          if git diff --quiet -- docs/assets/coverage.svg; then
+            echo "coverage badge unchanged"
+          else
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/assets/coverage.svg
+            git commit -m "chore: update coverage badge [skip ci]"
+            git push
+          fi

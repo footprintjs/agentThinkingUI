@@ -6,7 +6,7 @@
   <a href="https://www.npmjs.com/package/agentthinkingui"><img alt="npm version" src="https://img.shields.io/npm/v/agentthinkingui?style=flat-square&color=C0531F&label=npm"></a>
   <a href="https://www.npmjs.com/package/agentthinkingui"><img alt="npm downloads" src="https://img.shields.io/npm/dm/agentthinkingui?style=flat-square&color=C98512&label=downloads"></a>
   <a href="https://github.com/footprintjs/agentThinkingUI/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/footprintjs/agentThinkingUI/ci.yml?style=flat-square&label=tests"></a>
-  <a href="https://codecov.io/gh/footprintjs/agentThinkingUI"><img alt="coverage" src="https://img.shields.io/codecov/c/github/footprintjs/agentThinkingUI?style=flat-square&color=3E9B4F&label=coverage"></a>
+  <a href="https://github.com/footprintjs/agentThinkingUI/actions/workflows/ci.yml"><img alt="coverage" src="docs/assets/coverage.svg"></a>
   <a href="https://github.com/footprintjs/agentThinkingUI/actions/workflows/pages.yml"><img alt="demo deploy" src="https://img.shields.io/github/actions/workflow/status/footprintjs/agentThinkingUI/pages.yml?style=flat-square&label=demo"></a>
   <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square"></a>
 </p>
