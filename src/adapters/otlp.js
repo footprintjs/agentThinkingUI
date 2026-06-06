@@ -155,6 +155,48 @@ export function fromOTLP(otlp, opts = {}) { return buildTrace(otlp, OTEL, opts);
 /** OpenInference (Arize/Phoenix/LlamaIndex) spans → Trace. */
 export function fromOpenInference(otlp, opts = {}) { return buildTrace(otlp, OPENINFERENCE, opts); }
 
+/** OpenTelemetry span TREE → a multi-agent FlowGraph for <AgentSwarm>.
+    Each invoke_agent span becomes an agent node (its Trace built from its own
+    subtree, excluding nested agents); parent→child agent links become edges
+    (parallel when a parent has several child agents, else seq). */
+export function fromOTLPMulti(otlp, opts = {}) {
+  const R = OTEL;
+  const spans = collectSpans(otlp);
+  const byId = {}; spans.forEach((s) => { if (s.spanId) byId[s.spanId] = s; });
+  const kids = {}; spans.forEach((s) => { if (s.parentSpanId) (kids[s.parentSpanId] = kids[s.parentSpanId] || []).push(s); });
+  const isAgent = (s) => { const a = flatAttrs(s); const op = R.op(a); return op === "invoke_agent" || op === "create_agent" || !!a["gen_ai.agent.name"]; };
+  const agentSpans = spans.filter(isAgent);
+
+  // 0–1 agents → a single-agent graph wrapping the whole run
+  if (agentSpans.length <= 1) {
+    const tr = buildTrace(spans, R, opts);
+    return { task: tr.task, asker: tr.asker, nodes: [{ id: (agentSpans[0] && agentSpans[0].spanId) || "agent", kind: "agent", name: tr.agent, trace: tr }], edges: [] };
+  }
+
+  const agentIds = new Set(agentSpans.map((s) => s.spanId));
+  const nearestAgent = (s) => { let p = s.parentSpanId; while (p && byId[p]) { if (agentIds.has(p)) return p; p = byId[p].parentSpanId; } return null; };
+  const ownSpans = (root) => { // subtree of root, minus nested agents' subtrees
+    const out = [], stack = [root];
+    while (stack.length) { const s = stack.pop(); out.push(s); (kids[s.spanId] || []).forEach((c) => { if (!agentIds.has(c.spanId)) stack.push(c); }); }
+    return out;
+  };
+
+  const nodes = agentSpans.map((s) => {
+    const a = flatAttrs(s);
+    const tr = buildTrace(ownSpans(s), R, { asker: opts.asker, title: R.agent(a) });
+    const code = s.status && s.status.code;
+    return { id: s.spanId, kind: "agent", name: R.agent(a) || tr.agent || "agent", role: a["gen_ai.agent.description"], status: (code === 2 || code === "STATUS_CODE_ERROR") ? "error" : "done", trace: tr };
+  });
+
+  const childCount = {}; agentSpans.forEach((s) => { const p = nearestAgent(s); if (p) childCount[p] = (childCount[p] || 0) + 1; });
+  const edges = [];
+  agentSpans.forEach((s) => { const p = nearestAgent(s); if (p) edges.push({ from: p, to: s.spanId, kind: childCount[p] > 1 ? "parallel" : "seq" }); });
+
+  const root = agentSpans.find((s) => !nearestAgent(s)) || agentSpans[0];
+  const rootNode = nodes.find((n) => n.id === root.spanId);
+  return { task: opts.task || (rootNode && rootNode.trace.task) || "multi-agent run", asker: opts.asker || "user", nodes, edges };
+}
+
 /* Live monitoring: accumulate spans as they finish and re-run the adapter on the
    growing set, then hand the result to <AgentThinkingUI live trace={...} />.
    (Pure + cheap; the player tails the newest beat.) Example:

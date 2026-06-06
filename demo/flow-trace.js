@@ -63,5 +63,22 @@
     edges: [E("root", "t1", "parallel"), E("root", "t2", "parallel"), E("root", "t3", "parallel"), E("t1", "sc", "seq"), E("t2", "sc", "seq"), E("t3", "sc", "seq"), E("sc", "out", "conditional", "good enough", true), E("sc", "root", "loop", "expand best ×3")],
   } };
 
+  // …and one graph BUILT from a real OpenTelemetry multi-agent span tree, via the
+  // adapter, to prove fromOTLPMulti end-to-end (Orchestrator → 3 specialists).
+  const tv = (o) => Object.entries(o).map(([key, v]) => ({ key, value: typeof v === "number" ? { intValue: String(v) } : { stringValue: String(v) } }));
+  const osp = (spanId, parent, attrs, events) => ({ spanId, parentSpanId: parent, startTimeUnixNano: "1700000000000000000", endTimeUnixNano: "1700000000600000000", attributes: tv(attrs), events: (events || []).map((e) => ({ name: e.name, attributes: tv(e.attrs) })) });
+  const OTLP_MULTI = { resourceSpans: [{ scopeSpans: [{ spans: [
+    osp("o", undefined, { "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "Orchestrator", "gen_ai.request.model": "loop" }, [{ name: "gen_ai.user.message", attrs: { content: "Plan a Lisbon offsite under $5,000" } }, { name: "gen_ai.assistant.message", attrs: { content: "Delegated to specialists and assembled the plan." } }]),
+    osp("f", "o", { "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "Flights" }),
+    osp("ft", "f", { "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "search_flights", "gen_ai.tool.call.arguments": '{"to":"LIS"}' }, [{ name: "gen_ai.tool.message", attrs: { content: '{"price":286}' } }]),
+    osp("h", "o", { "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "Hotels" }),
+    osp("ht", "h", { "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "search_hotels", "gen_ai.tool.call.arguments": "{}" }, [{ name: "gen_ai.tool.message", attrs: { content: '{"pick":"Baixa"}' } }]),
+    osp("ap", "o", { "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "Approvals" }),
+    osp("apt", "ap", { "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "approval_policy", "gen_ai.tool.call.arguments": "{}" }, [{ name: "gen_ai.tool.message", attrs: { content: '{"needs_signoff":true}' } }]),
+  ] }] }] };
+  if (window.AgentAdapters && window.AgentAdapters.fromOTLPMulti) {
+    flows.fromotel = { label: "From OTel ⚡", graph: window.AgentAdapters.fromOTLPMulti(OTLP_MULTI, { asker: "you" }) };
+  }
+
   window.AGENT_FLOWS = flows;
 })();

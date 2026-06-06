@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fromOTLP, fromOpenInference } from "../src/adapters/otlp.js";
+import { fromOTLP, fromOpenInference, fromOTLPMulti } from "../src/adapters/otlp.js";
 
 // build OTLP/JSON typed attributes + a span helper
 const A = (o) => Object.entries(o).map(([key, v]) => ({
@@ -80,6 +80,33 @@ describe("fromOTLP (OpenTelemetry GenAI)", () => {
       classify: (name) => (name === "lookup" ? { replyType: "instruction", skill: "X" } : undefined),
     });
     expect(t2.steps.find((s) => s.kind === "return").replyType).toBe("instruction");
+  });
+});
+
+describe("fromOTLPMulti (multi-agent span tree → FlowGraph)", () => {
+  const mspan = (spanId, parentSpanId, attrs, events) => ({ spanId, parentSpanId, ...span(attrs, events) });
+  const tree = otlp([
+    mspan("o", undefined, { "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "Planner", "gen_ai.request.model": "x" },
+      [{ name: "gen_ai.user.message", attrs: { content: "Plan the trip" } }, { name: "gen_ai.assistant.message", attrs: { content: "Delegated and assembled." } }]),
+    mspan("f", "o", { "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "Flights" }),
+    mspan("ft", "f", { "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "search_flights", "gen_ai.tool.call.arguments": '{"to":"LIS"}' }, [{ name: "gen_ai.tool.message", attrs: { content: '{"price":286}' } }]),
+    mspan("h", "o", { "gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "Hotels" }),
+    mspan("ht", "h", { "gen_ai.operation.name": "execute_tool", "gen_ai.tool.name": "search_hotels", "gen_ai.tool.call.arguments": "{}" }, [{ name: "gen_ai.tool.message", attrs: { content: '{"pick":"Baixa"}' } }]),
+  ]);
+  const g = fromOTLPMulti(tree, { asker: "John" });
+
+  it("makes an agent node per invoke_agent span", () => {
+    expect(g.nodes.map((n) => n.name).sort()).toEqual(["Flights", "Hotels", "Planner"]);
+  });
+  it("links parent → child agents as parallel edges", () => {
+    expect(g.edges.length).toBe(2);
+    expect(g.edges.every((e) => e.from === "o" && e.kind === "parallel")).toBe(true);
+  });
+  it("builds each agent's trace from its OWN subtree (tools belong to the child)", () => {
+    const flights = g.nodes.find((n) => n.name === "Flights");
+    expect(flights.trace.steps.some((s) => s.kind === "ask" && s.tool === "search_flights")).toBe(true);
+    const planner = g.nodes.find((n) => n.name === "Planner");
+    expect(planner.trace.steps.some((s) => s.kind === "ask")).toBe(false);
   });
 });
 
