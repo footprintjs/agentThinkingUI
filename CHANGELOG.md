@@ -8,20 +8,23 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [0.5.0] - 2026-06-06
+## [0.6.0] - 2026-06-06
 
 ### Changed
 - **Renamed `AgentSwarm` → `MultiAgentFlow` (breaking).** The component renders a
   multi-agent *control-flow graph* — "swarm" was just one of the patterns it draws
   (and clashed with OpenAI Swarm / agency-swarm), while "flow" matches the
-  `FlowGraph` type. No alias is kept (pre-adoption clean break).
+  `FlowGraph` type. No alias is kept (pre-adoption clean break). The `onRender`
+  metric `id` is now `"multiagentflow"`.
+
+## [0.5.0] - 2026-06-06
 
 ### Added
 - **Live monitoring interface** — `createMonitor({ format, multi, reader })`: a
   push-based handle (`push`/`result`/`spans`/`reset`) that re-derives the
-  Trace/FlowGraph as spans arrive, for `<AgentThinkingUI live>` / `<MultiAgentFlow live>`.
+  Trace/FlowGraph as spans arrive, for `<AgentThinkingUI live>` / `<AgentSwarm live>`.
 - **UI render metrics** — opt-in `onRender` prop on `<AgentThinkingUI>` and
-  `<MultiAgentFlow>`; wraps the tree in React's `<Profiler>` and reports
+  `<AgentSwarm>`; wraps the tree in React's `<Profiler>` and reports
   `{ phase, actualMs, baseMs, step, steps, … }`.
 - **Component explorer** — `demo/explorer.html`, a no-build Storybook-style props
   playground (controls + live preview + generated JSX + prop table).
@@ -86,11 +89,12 @@ to [Semantic Versioning](https://semver.org/).
 
 ### Added
 - Initial release: `<AgentThinkingUI>` single-agent player (scene · inspector ·
-  notepad · timeline · playback), `<AgentSwarm>` multi-agent control-flow map (renamed in 0.5.0),
+  notepad · timeline · playback), `<AgentSwarm>` multi-agent control-flow map (renamed in 0.6.0),
   prop-first scoped theming, and the `fromOTLP` / `fromOpenInference` /
   `fromOTLPMulti` adapters. Scoped ES modules with an ESM + UMD dual build.
 
-[Unreleased]: https://github.com/footprintjs/agentThinkingUI/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/footprintjs/agentThinkingUI/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.6.0
 [0.5.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.5.0
 [0.4.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.4.0
 [0.3.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.3.0

@@ -64,7 +64,7 @@ second product name.
 
 The multi-agent component is `<MultiAgentFlow>` (in `multi-agent-flow.jsx`) — it
 renders a control-flow graph, so "flow" matches the `FlowGraph` type. It was named
-`AgentSwarm` through 0.4.0; renamed in 0.5.0 with **no alias** ("swarm" is only one
+`AgentSwarm` through 0.5.0; renamed in 0.6.0 with **no alias** ("swarm" is only one
 of the patterns it draws and clashed with OpenAI Swarm). Don't reintroduce the old
 name. CSS classes stay `.atui-swarm` / `swarm-*` (internal styling, not the API).
 
