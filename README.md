@@ -33,6 +33,9 @@ agent loop as an animated, scrubbable story — the LLM **brain** reaching for
 **tools**, the replies coming back, the reasoning building up, beat by beat. You
 can time-travel through every step.
 
+> **Developers can debug what they can see — the failures that hurt look fine in
+> JSON and are only wrong in *meaning*.** ([Who debugs the agent?](docs/blog/who-debugs-the-agent.md))
+
 It isn't tied to any vendor, framework, or model. If you can record a run as a
 small trace — a hand-rolled loop, a RAG pipeline, LangChain/LlamaIndex, Claude or
 OpenAI tool-calling — AgentThinkingUI can play it. Everything visual flows through
@@ -456,6 +459,9 @@ Point a `trace` at your own recorded run (live or replay) and render — that's 
 - **Essay — [Who debugs the agent?](./docs/blog/who-debugs-the-agent.md)** —
   developers triage infra/logic; the *semantic* failures only a domain expert can
   catch — without reading JSON.
+- **Essay — [Data, or instruction?](./docs/blog/data-or-instruction.md)** — the
+  design bet: model an agent as a brain + a tool, and label every reply as data
+  (reason) or instruction (act).
 
 ## FAQ
 

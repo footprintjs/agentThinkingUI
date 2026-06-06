@@ -10,6 +10,9 @@ to [Semantic Versioning](https://semver.org/).
 - Essay — **[Who debugs the agent?](docs/blog/who-debugs-the-agent.md)**: developers
   triage infra/logic, but the semantic/content failures only a domain expert can
   catch — and they shouldn't have to read JSON.
+- Essay — **[Data, or instruction?](docs/blog/data-or-instruction.md)**: the design
+  rationale — model an agent as a brain + a tool, and label every reply data (reason)
+  or instruction (act); that's where content drives the decision.
 
 ## [0.8.0] - 2026-06-06
 
