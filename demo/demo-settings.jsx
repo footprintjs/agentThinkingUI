@@ -53,7 +53,7 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
           <button onClick={() => setOpen(false)} title="Close" style={{ border: 'none', background: 'transparent', fontSize: 22, color: '#A2917C', cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
         </div>
         <div style={{ display: 'flex', gap: 3, margin: '12px 20px 0', background: '#F4EBDB', border: '1px solid #E6D8C2', borderRadius: 11, padding: 3 }}>
-          {tabBtn('single', 'Single agent')}{tabBtn('multi', 'Multi-agent')}
+          {tabBtn('single', flows ? 'Appearance' : 'Single agent')}{tabBtn('multi', flows ? 'Flow & agents' : 'Multi-agent')}
         </div>
         <div style={{ overflowY: 'auto', padding: '2px 20px 20px' }}>
           {tab === 'single' && <>
