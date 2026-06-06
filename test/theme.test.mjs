@@ -55,6 +55,54 @@ describe("normalize", () => {
   });
 });
 
+describe("neutrals, error, radii, shadows", () => {
+  it("exposes neutral surface/line/text tokens with defaults", () => {
+    const R = Theme.normalize({});
+    expect(R.colors.surface).toBe("#FFFFFF");
+    expect(R.colors.line).toBe("#E6D8C2");
+    expect(R.colors.inkSoft).toBe("#6E5C49");
+    expect(R.colors.error.base).toBe("#C0392B");
+  });
+  it("lets a consumer override surface/line via props", () => {
+    const R = Theme.normalize({ theme: { colors: { surface: "#101418", line: "#2A2F36" } } });
+    expect(R.colors.surface).toBe("#101418");
+    expect(R.colors.line).toBe("#2A2F36");
+  });
+  it("derives shadow tint from ink (not a fixed warm brown)", () => {
+    const warm = Theme.normalize({}).shadows.md;
+    const cool = Theme.normalize({ theme: { colors: { ink: "#0A1A2F" } } }).shadows.md;
+    expect(warm).not.toBe(cool); // shadow colour tracks ink
+    expect(cool).toContain("rgba(10,26,47"); // ink rgb baked into the shadow
+  });
+  it("passes radii/shadows overrides through", () => {
+    const R = Theme.normalize({ theme: { radii: { md: "4px" }, shadows: { md: "none" } } });
+    expect(R.radii.md).toBe("4px");
+    expect(R.shadows.md).toBe("none");
+  });
+});
+
+describe("dark mode", () => {
+  it("swaps the neutral palette (dark surfaces, light ink) without touching accent hues", () => {
+    const R = Theme.normalize({ theme: { mode: "dark" } });
+    expect(lum(R.colors.paper)).toBeLessThan(lum("#888888")); // dark paper
+    expect(lum(R.colors.ink)).toBeGreaterThan(lum("#888888")); // light ink
+    expect(R.colors.data.base).toBe("#0E8A82"); // accent hue unchanged
+  });
+  it("recomputes accent tints toward the dark surface (not near-white)", () => {
+    const light = Theme.normalize({ theme: { colors: { data: "#2563EB" } } });
+    const dark = Theme.normalize({ theme: { mode: "dark", colors: { data: "#2563EB" } } });
+    expect(lum(dark.colors.data.tint)).toBeLessThan(lum(light.colors.data.tint));
+  });
+});
+
+describe("contrast-aware on-accent foreground", () => {
+  it("picks ink over a light accent and white over a dark accent", () => {
+    const R = Theme.normalize({ theme: { colors: { brand: "#FFE100", data: "#0E8A82" } } });
+    expect(R.on.brand).toBe(R.colors.ink); // yellow brand → dark text
+    expect(R.on.data).toBe("#FFFFFF");      // teal → white text
+  });
+});
+
 describe("toVars", () => {
   it("maps resolved tokens to the CSS variables the stylesheet reads", () => {
     const R = Theme.normalize({ theme: { colors: { data: "#0E8A82" }, fonts: { scale: 0.9 } } });
@@ -63,6 +111,17 @@ describe("toVars", () => {
     expect(v["--rust"]).toBe(R.colors.brand.base); // brand → --rust
     expect(v["--af-text-scale"]).toBe(0.9);
     expect(v["--font-body"]).toBe(R.fonts.body);
+  });
+  it("emits the full surface: neutrals, error, on-accent, radii, shadows, code", () => {
+    const v = Theme.toVars(Theme.normalize({}));
+    expect(v["--card"]).toBe("#FFFFFF");
+    expect(v["--ink-soft"]).toBe("#6E5C49");
+    expect(v["--line"]).toBe("#E6D8C2");
+    expect(v["--error"]).toBe("#C0392B");
+    expect(v["--on-rust"]).toBeTruthy();
+    expect(v["--r-md"]).toBe("14px");
+    expect(v["--shadow-md"]).toContain("rgba");
+    expect(v["--code-bg"]).toBeTruthy();
   });
 });
 

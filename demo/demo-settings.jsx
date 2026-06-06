@@ -21,7 +21,7 @@ const FONT_PRESETS = {
   serif:  { label: "Serif",  fonts: { display: 'Georgia, "Times New Roman", serif', body: "Georgia, serif", mono: "ui-monospace, monospace", hand: "Georgia, serif" } },
 };
 
-function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle, scenarios, sceneKey, setSceneKey, setFont, onLive, liveOn, onImport, otlpSample, oiSample, onImportMulti, otlpMultiSample, oiMultiSample, flows, flowKey, setFlowKey, view, setView }) {
+function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, containerStyle, scenarios, sceneKey, setSceneKey, setFont, onLive, liveOn, onImport, otlpSample, oiSample, onImportMulti, otlpMultiSample, oiMultiSample, flows, flowKey, setFlowKey, view, setView, mode: themeMode, setMode }) {
   const [open, setOpen] = dsUseState(false);
   const [fmt, setFmt] = dsUseState("otel");
   const taRef = React.useRef(null);
@@ -85,6 +85,13 @@ function DemoSettings({ brand, setBrand, labels, setLabels, icons, setIcons, con
         )}
         <div style={{ overflowY: 'auto', padding: (setView ? '4px' : '14px') + ' 20px 20px' }}>
           {/* Appearance — shared, applies to whichever view is on screen */}
+          {setMode && <>
+            <div style={lbl}>Mode</div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button style={chip(themeMode !== 'dark')} onClick={() => setMode('light')}>☀ Light</button>
+              <button style={chip(themeMode === 'dark')} onClick={() => setMode('dark')}>☾ Dark</button>
+            </div>
+          </>}
           <div style={lbl}>Brand colour</div>
           <div style={{ display: 'flex', gap: 8 }}>{['#C0531F', '#2563EB', '#1F8A5B', '#7A5AE0'].map(c => <button key={c} onClick={() => setBrand(c)} style={{ width: 26, height: 26, borderRadius: 8, background: c, border: '2px solid #fff', boxShadow: '0 0 0 ' + (brand === c ? '2px' : '1px') + ' ' + (brand === c ? '#C0531F' : '#E6D8C2'), cursor: 'pointer' }} />)}</div>
           <div style={lbl}>Display names</div>
