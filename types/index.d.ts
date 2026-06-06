@@ -9,8 +9,21 @@ export interface IconConfig {
 }
 
 export interface ThemeConfig {
+  /** "light" (default) or "dark" — swaps the neutral surface/text palette */
+  mode?: "light" | "dark";
+  /**
+   * Accents: `brand` `call` `data` `instruction` `answer` `error` — a hex
+   * (deep/tint derived) or a full `{ base, deep, tint }`.
+   * Neutrals (flat hex): `paper` `surface` (card) `surface2` `surface3`
+   * `ink` `inkSoft` `inkFaint` `line` `lineSoft`, plus `brainFrom`/`brainTo`,
+   * an `onBrand` foreground override, and `sceneGlow` / `grainInk` / `codeBg` …
+   */
   colors?: Record<string, string | { base: string; deep?: string; tint?: string }>;
   fonts?: { display?: string; body?: string; mono?: string; hand?: string; scale?: number };
+  /** corner-radius scale (CSS lengths) → --r-sm/md/lg/xl */
+  radii?: { sm?: string; md?: string; lg?: string; xl?: string };
+  /** elevation → --shadow-sm/md/lg (default tint derives from `ink`) */
+  shadows?: { sm?: string; md?: string; lg?: string };
 }
 
 export interface AgentThinkingUIProps {

@@ -94,6 +94,7 @@ function App() {
   const [labels, setLabels] = useState({});
   const [icons, setIcons] = useState({});
   const [font, setFont] = useState(null);
+  const [mode, setMode] = useState("light"); // light ⟷ dark theme
   const [sceneKey, setSceneKey] = useState(SCENARIOS[0].key);
   const [live, setLive] = useState(false);
   const [liveSteps, setLiveSteps] = useState(null);
@@ -168,13 +169,15 @@ function App() {
 
   const acc = ACCENTS[t.accent] || ACCENTS["teal-amber"];
   const theme = useMemo(() => ({
+    mode,
     colors: {
-      data: { base: acc.data[0], deep: acc.data[1], tint: acc.data[2] },
-      instruction: { base: acc.instr[0], deep: acc.instr[1], tint: acc.instr[2] },
+      // in dark mode let the accents derive their own tints (skip the light presets)
+      data: mode === "dark" ? acc.data[0] : { base: acc.data[0], deep: acc.data[1], tint: acc.data[2] },
+      instruction: mode === "dark" ? acc.instr[0] : { base: acc.instr[0], deep: acc.instr[1], tint: acc.instr[2] },
       ...(brand ? { brand } : {}),
     },
     ...(font ? { fonts: font } : {}),
-  }), [t.accent, brand, font]);
+  }), [t.accent, brand, font, mode]);
 
   const brandMark = <>Agent<b>ThinkingUI</b></>;
   return (
@@ -186,6 +189,7 @@ function App() {
             live={live} theme={theme} labels={labels} icons={icons} brand={brandMark} />}
       <DemoSettings brand={brand} setBrand={setBrand}
         labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons}
+        mode={mode} setMode={setMode}
         view={view} setView={setView}
         scenarios={SCENARIOS} sceneKey={sceneKey} setSceneKey={selectScenario} setFont={setFont}
         onLive={onLive} liveOn={liveOn} onImport={onImport}
