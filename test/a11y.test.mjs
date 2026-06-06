@@ -30,6 +30,20 @@ describe("Timeline robustness", () => {
     container.querySelectorAll(".tl-seg").forEach((s) => expect(s.style.width).not.toContain("NaN"));
   });
 
+  it("keeps the DOM bounded on a long (live) trace — gradient track, not N divs", () => {
+    const many = [{ kind: "prompt", brain: "a", cost: { ms: 5, tokens: 1 } }];
+    for (let i = 0; i < 600; i++) {
+      many.push({ kind: "ask", tool: "t", toolName: "t", input: {}, brain: "x", cost: { ms: 3, tokens: 1 } });
+      many.push({ kind: "return", tool: "t", toolName: "t", replyType: "data", output: {}, brain: "y", cost: { ms: 3, tokens: 1 } });
+    }
+    many.push({ kind: "answer", to: "x", brain: "done", answer, cost: { ms: 5, tokens: 1 } });
+    const { container } = render(ui({ trace: trace({ title: "LONG", steps: many }) }));
+    expect(many.length).toBeGreaterThan(1000);
+    expect(container.querySelectorAll(".tl-seg").length).toBe(0); // no per-step divs
+    expect(container.querySelector(".tl-fill")).toBeTruthy();     // single gradient track
+    expect(container.querySelector(".playhead")).toBeTruthy();    // still scrubbable
+  });
+
   it("tolerates steps missing a cost object", () => {
     const noCost = trace({ title: "NC", steps: [
       { kind: "prompt", brain: "a" },

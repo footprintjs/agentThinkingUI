@@ -50,6 +50,18 @@ export function Timeline({ trace, index, setIndex, playing, setPlaying, speed, s
 
   const segKind = (s) => s.kind === "return" ? s.replyType : s.kind;
 
+  // Scale guard: a long live trace would otherwise render one DOM node per step.
+  // Past a cap we paint the track as a single gradient (O(1) nodes) instead of
+  // N segment divs — same colours, same click-to-seek (scrubTo maps x → step).
+  const MANY = 240;
+  const SEG_VAR = { prompt: "--rust", ask: "--call", data: "--data", instruction: "--instr", both: "--instr", answer: "--answer" };
+  const segColor = (s) => "var(" + (s.error ? "--error" : (SEG_VAR[segKind(s)] || "--call")) + ")";
+  const big = steps.length > MANY;
+  const gradient = big
+    ? "linear-gradient(90deg," + segs.map((g, i) => `${segColor(steps[i])} ${g.start}% ${g.start + g.w}%`).join(",") + ")"
+    : null;
+  const futureStart = segs[cur].start + segs[cur].w; // where the not-yet-played tail begins
+
   const scrubTo = (clientX) => {
     const r = trackRef.current.getBoundingClientRect();
     const frac = Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * 100;
@@ -78,8 +90,13 @@ export function Timeline({ trace, index, setIndex, playing, setPlaying, speed, s
         <div className="tl-track" ref={trackRef} onPointerDown={onDown} onKeyDown={onTrackKey}
           role="slider" tabIndex={0} aria-label="Timeline — scrub through the agent's steps"
           aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={cur + 1}
-          aria-valuetext={`Step ${cur + 1} of ${steps.length}`}>
-          {steps.map((s, i) => (
+          aria-valuetext={`Step ${cur + 1} of ${steps.length}`}
+          style={big ? { position: "relative" } : undefined}>
+          {big ? (
+            <div className="tl-fill" style={{ position: "absolute", inset: 0, borderRadius: "inherit", background: gradient }}>
+              {futureStart < 100 && <div className="tl-future-mask" style={{ position: "absolute", top: 0, bottom: 0, left: futureStart + "%", width: (100 - futureStart) + "%", background: "var(--paper)", opacity: 0.5, pointerEvents: "none" }} />}
+            </div>
+          ) : steps.map((s, i) => (
             <div
               key={i}
               className={"tl-seg s-" + segKind(s) + (s.error ? " err" : "") + (i > cur ? " future" : "")}
