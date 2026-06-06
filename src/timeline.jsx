@@ -17,21 +17,36 @@ function Icon({ type }) {
 export function Timeline({ trace, index, setIndex, playing, setPlaying, speed, setSpeed, minimal }) {
   const trackRef = tlUseRef(null);
   const steps = trace.steps;
+  const ms = (s) => (s.cost && s.cost.ms) || 0;
+  const tok = (s) => (s.cost && s.cost.tokens) || 0;
 
-  // segment widths weighted by latency → a real time axis
-  const totalMs = steps.reduce((a, s) => a + s.cost.ms, 0);
+  // segment widths weighted by latency → a real time axis. Guard against a
+  // zero-latency trace (instantaneous spans / empty fallback) → no NaN widths.
+  const totalMs = steps.reduce((a, s) => a + ms(s), 0) || 1;
   let acc = 0;
   const segs = steps.map((s) => {
     const start = (acc / totalMs) * 100;
-    const w = (s.cost.ms / totalMs) * 100;
-    acc += s.cost.ms;
+    const w = (ms(s) / totalMs) * 100 || (100 / steps.length); // even split when all-zero
+    acc += ms(s);
     return { start, w };
   });
   const cur = Math.min(index, steps.length - 1); // live traces can grow/shrink under us
   const head = segs[cur].start + segs[cur].w / 2;
 
-  const elapsedMs = steps.slice(0, index + 1).reduce((a, s) => a + s.cost.ms, 0);
-  const elapsedTok = steps.slice(0, index + 1).reduce((a, s) => a + s.cost.tokens, 0);
+  const elapsedMs = steps.slice(0, index + 1).reduce((a, s) => a + ms(s), 0);
+  const elapsedTok = steps.slice(0, index + 1).reduce((a, s) => a + tok(s), 0);
+
+  // keyboard scrubbing when the track itself is focused (role=slider)
+  const onTrackKey = (e) => {
+    let i;
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") i = Math.min(steps.length - 1, cur + 1);
+    else if (e.key === "ArrowLeft" || e.key === "ArrowDown") i = Math.max(0, cur - 1);
+    else if (e.key === "Home") i = 0;
+    else if (e.key === "End") i = steps.length - 1;
+    else return;
+    e.preventDefault(); e.stopPropagation(); // don't double-fire the player's handler
+    setPlaying(false); setIndex(i);
+  };
 
   const segKind = (s) => s.kind === "return" ? s.replyType : s.kind;
 
@@ -60,7 +75,10 @@ export function Timeline({ trace, index, setIndex, playing, setPlaying, speed, s
   return (
     <div className={"panel timeline" + (minimal ? " minimal" : "")}>
       <div className="tl-track-wrap">
-        <div className="tl-track" ref={trackRef} onPointerDown={onDown}>
+        <div className="tl-track" ref={trackRef} onPointerDown={onDown} onKeyDown={onTrackKey}
+          role="slider" tabIndex={0} aria-label="Timeline — scrub through the agent's steps"
+          aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={cur + 1}
+          aria-valuetext={`Step ${cur + 1} of ${steps.length}`}>
           {steps.map((s, i) => (
             <div
               key={i}
@@ -76,12 +94,12 @@ export function Timeline({ trace, index, setIndex, playing, setPlaying, speed, s
 
       <div className="tl-controls">
         <div className="tl-btns">
-          <button className="tl-btn" onClick={() => setIndex(Math.max(0, index - 1))} title="Previous step"><Icon type="prev" /></button>
-          <button className="tl-btn play" onClick={() => { if (index === steps.length - 1 && !playing) setIndex(0); setPlaying(!playing); }} title={playing ? "Pause" : "Play"}>
+          <button className="tl-btn" onClick={() => setIndex(Math.max(0, index - 1))} title="Previous step" aria-label="Previous step"><Icon type="prev" /></button>
+          <button className="tl-btn play" onClick={() => { if (index === steps.length - 1 && !playing) setIndex(0); setPlaying(!playing); }} title={playing ? "Pause" : "Play"} aria-label={playing ? "Pause" : "Play"} aria-pressed={playing}>
             <Icon type={playing ? "pause" : "play"} />
           </button>
-          <button className="tl-btn" onClick={() => setIndex(Math.min(steps.length - 1, index + 1))} title="Next step"><Icon type="next" /></button>
-          <button className="tl-btn" onClick={() => { setIndex(0); setPlaying(false); }} title="Restart"><Icon type="restart" /></button>
+          <button className="tl-btn" onClick={() => setIndex(Math.min(steps.length - 1, index + 1))} title="Next step" aria-label="Next step"><Icon type="next" /></button>
+          <button className="tl-btn" onClick={() => { setIndex(0); setPlaying(false); }} title="Restart" aria-label="Restart from the beginning"><Icon type="restart" /></button>
         </div>
 
         <div className="tl-readout">
@@ -102,9 +120,9 @@ export function Timeline({ trace, index, setIndex, playing, setPlaying, speed, s
           <span className="lg"><span className="sw" style={{ background: "var(--answer)" }} />Answer</span>
         </div>
 
-        <div className="speed-group">
+        <div className="speed-group" role="group" aria-label="Playback speed">
           {[0.5, 1, 2].map((sp) => (
-            <button key={sp} className={speed === sp ? "on" : ""} onClick={() => setSpeed(sp)}>{sp}×</button>
+            <button key={sp} className={speed === sp ? "on" : ""} onClick={() => setSpeed(sp)} aria-pressed={speed === sp} aria-label={sp + "× speed"}>{sp}×</button>
           ))}
         </div>
       </div>

@@ -92,7 +92,7 @@ export function AgentSwarm({ trace, theme, labels, icons, brand, live }) {
     return { teamSteps: steps, ranges: r };
   }, [nodes, pos]);
   const teamTrace = useMemo(() => ({ task, agent: "team", model: "", asker: "", steps: teamSteps.length ? teamSteps : [{ kind: "prompt", brain: "", cost: { ms: 0, tokens: 0 } }] }), [teamSteps, task]);
-  const play = usePlayback(teamTrace, { storageKey: "agentthinkingui.swarm", live });
+  const play = usePlayback(teamTrace, { storageKey: "agentthinkingui.swarm:" + (task || "default"), live });
   const idx = Math.min(play.index, teamTrace.steps.length - 1);
   const cur = teamSteps[idx];
   const phaseOf = (id) => { const rr = ranges[id]; if (!rr) return "done"; if (idx < rr.start) return "future"; if (idx > rr.end) return "done"; return "current"; };
@@ -125,7 +125,7 @@ export function AgentSwarm({ trace, theme, labels, icons, brand, live }) {
 
   return (
     <AgentThemeContext.Provider value={resolved}>
-      <div className="app-swarm" style={vars}>
+      <div className="app-swarm" style={vars} onKeyDown={play.onKeyDown}>
         <div className="swarm-bar">
           {brand && <div className="brand-name swarm-brand">{brand}</div>}
           <span className="swarm-task"><span className="rec" /><span className="lbl">flow</span> {task}</span>
@@ -167,6 +167,7 @@ export function AgentSwarm({ trace, theme, labels, icons, brand, live }) {
 
             {nodes.map((n) => {
               const p = pos[n.id], d = dimOf(n);
+              if (!p) return null; // defensive: a malformed/duplicate id never crashes the map
               const st = { left: p.cx - d.w / 2, top: p.cy - d.h / 2, width: d.w, height: d.h };
               if (n.kind === "decision") return (
                 <div key={n.id} className="flow-decision" style={st}><span>{n.label || n.predicate || "?"}</span></div>

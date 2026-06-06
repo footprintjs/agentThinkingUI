@@ -2,15 +2,27 @@ import React from "react";
 
 const { useState: inspUseState } = React;
 
-// JSON syntax highlighter for the tool I/O panes
-function syntax(value) {
-  const json = JSON.stringify(value, null, 2);
-  const html = json
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/"([^"]+)":/g, '<span class="k">"$1"</span>:')
-    .replace(/: "([^"]*)"/g, ': <span class="s">"$1"</span>')
-    .replace(/: (\d+\.?\d*)/g, ': <span class="n">$1</span>');
-  return { __html: html };
+// JSON syntax highlighter for the tool I/O panes. Tool output is UNTRUSTED
+// (arbitrary agent/telemetry data), so we tokenize into React nodes rather than
+// building an HTML string — no dangerouslySetInnerHTML, no injection surface.
+function highlight(value) {
+  const json = JSON.stringify(value === undefined ? null : value, null, 2);
+  if (typeof json !== "string") return String(json);
+  const re = /("(?:\\.|[^"\\])*")(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g;
+  const out = [];
+  let last = 0, m, k = 0;
+  while ((m = re.exec(json))) {
+    if (m.index > last) out.push(json.slice(last, m.index));
+    if (m[1] !== undefined) {
+      if (m[2] !== undefined) { out.push(<span className="k" key={k++}>{m[1]}</span>); out.push(m[2]); } // key
+      else out.push(<span className="s" key={k++}>{m[1]}</span>); // string value
+    } else if (m[3] !== undefined) {
+      out.push(<span className="n" key={k++}>{m[3]}</span>); // number
+    }
+    last = re.lastIndex;
+  }
+  if (last < json.length) out.push(json.slice(last));
+  return out;
 }
 
 function Chevron({ open }) {
@@ -25,7 +37,7 @@ function Section({ label, dot, defaultOpen = true, accentDot, children }) {
   const [open, setOpen] = inspUseState(defaultOpen);
   return (
     <div className={"acc" + (open ? " open" : "")}>
-      <button className="acc-head" onClick={() => setOpen((o) => !o)}>
+      <button className="acc-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <Chevron open={open} />
         <span className="acc-label">{dot && <span className="tagdot" style={accentDot ? { background: accentDot } : null} />}{label}</span>
       </button>
@@ -38,9 +50,9 @@ function Section({ label, dot, defaultOpen = true, accentDot, children }) {
 
 function PanelTabs({ view, setView }) {
   return (
-    <div className="panel-tabs">
-      <button className={view === "inspector" ? "on" : ""} onClick={() => setView("inspector")}>Inspector</button>
-      <button className={view === "notepad" ? "on" : ""} onClick={() => setView("notepad")}>Notepad</button>
+    <div className="panel-tabs" role="tablist" aria-label="Right panel view">
+      <button role="tab" aria-selected={view === "inspector"} className={view === "inspector" ? "on" : ""} onClick={() => setView("inspector")}>Inspector</button>
+      <button role="tab" aria-selected={view === "notepad"} className={view === "notepad" ? "on" : ""} onClick={() => setView("notepad")}>Notepad</button>
     </div>
   );
 }
@@ -77,7 +89,7 @@ function NoteEntry({ step, n, active }) {
           <span className="note-title">{j.title}</span>
         </div>
         <div className="note-text">{j.note}</div>
-        <div className="note-meta">⏱ {fmtLatency(step.cost.ms)} · ◇ {step.cost.tokens} tok</div>
+        <div className="note-meta">⏱ {fmtLatency((step.cost && step.cost.ms) || 0)} · ◇ {(step.cost && step.cost.tokens) || 0} tok</div>
       </div>
     </div>
   );
@@ -94,7 +106,7 @@ export function Notepad({ trace, index, onCollapse, view, setView }) {
       <div className="panel-head">
         <span className="h-title">Agent notepad</span>
         <PanelTabs view={view} setView={setView} />
-        <button className="insp-collapse" onClick={onCollapse} title="Collapse">›</button>
+        <button className="insp-collapse" onClick={onCollapse} title="Collapse" aria-label="Collapse panel">›</button>
       </div>
       <div className="insp-body note-list" ref={listRef}>
         {entries.map((s, i) => <NoteEntry key={i} step={s} n={i} active={i === index} />)}
@@ -126,11 +138,11 @@ export function Inspector({ step, index, total, onCollapse, view, setView }) {
       <div className="panel-head">
         <span className="h-title">Step inspector</span>
         <PanelTabs view={view} setView={setView} />
-        <button className="insp-collapse" onClick={onCollapse} title="Collapse inspector">›</button>
+        <button className="insp-collapse" onClick={onCollapse} title="Collapse inspector" aria-label="Collapse inspector">›</button>
       </div>
 
       <div className="insp-body">
-        {step.error && <div className="err-banner"><span className="eb-tag">⚠ error</span><span className="eb-text">{step.error}</span></div>}
+        {step.error && <div className="err-banner" role="alert"><span className="eb-tag">⚠ error</span><span className="eb-text">{step.error}</span></div>}
         {/* PROMPT */}
         {step.kind === "prompt" && (
           <Section label="Task received">
@@ -143,7 +155,7 @@ export function Inspector({ step, index, total, onCollapse, view, setView }) {
           <>
             <Section label={"Calling · " + (step.toolName || step.tool)} dot>
               <div className="io-label">input</div>
-              <pre className="code" dangerouslySetInnerHTML={syntax(step.input)} />
+              <pre className="code">{highlight(step.input)}</pre>
             </Section>
             <Section label="LLM brain">
               <div className="brain-text">{step.brain}</div>
@@ -156,7 +168,7 @@ export function Inspector({ step, index, total, onCollapse, view, setView }) {
           <>
             <Section label={"Returned · " + (step.toolName || step.tool)} dot>
               <div className="io-label">output</div>
-              <pre className="code" dangerouslySetInnerHTML={syntax(step.output)} />
+              <pre className="code">{highlight(step.output)}</pre>
             </Section>
 
             <div className="reply-banner">
@@ -207,11 +219,11 @@ export function Inspector({ step, index, total, onCollapse, view, setView }) {
         <Section label="This step cost" defaultOpen={false}>
           <div className="cost-row">
             <div className="c-item">
-              <span className="c-val">{(step.cost.ms / 1000).toFixed(1)}s</span>
+              <span className="c-val">{(((step.cost && step.cost.ms) || 0) / 1000).toFixed(1)}s</span>
               <span className="c-unit">latency</span>
             </div>
             <div className="c-item">
-              <span className="c-val">{step.cost.tokens}</span>
+              <span className="c-val">{(step.cost && step.cost.tokens) || 0}</span>
               <span className="c-unit">tokens</span>
             </div>
           </div>

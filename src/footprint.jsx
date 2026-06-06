@@ -18,9 +18,13 @@ import * as AgentTheme from "./theme.js";
    four components into their own layout (they're each independent).
    (window.AgentFootprint remains as a deprecated alias.)
    ============================================================ */
-export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, live = false, style, mobile }) {
+export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, live = false, style, mobile, storageKey }) {
   const { useState, useRef, useMemo } = React;
-  const { index, seek, playing, setPlaying, speed, setSpeed } = usePlayback(trace, { loop, live });
+  // persist scrub position per-trace so two players on one page don't collide;
+  // pass storageKey={null} to disable, or a custom string to override.
+  const key = storageKey !== undefined ? storageKey
+    : "agentthinkingui.index:" + (trace.title || trace.agent || trace.task || "default");
+  const { index, seek, playing, setPlaying, speed, setSpeed, onKeyDown } = usePlayback(trace, { loop, live, storageKey: key });
 
   // Resolve theme/labels/icons and scope them to THIS player's element:
   // CSS variables ride on the .app container (not :root), so multiple players
@@ -58,13 +62,13 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
   if (mobile) {
     return (
       <TC.Provider value={resolved}>
-      <div className="app mobile" style={rootStyle}>
+      <div className="app mobile" style={rootStyle} onKeyDown={onKeyDown}>
         <div className="topbar">
           {brand && <div className="brandmark"><div className="brand-name">{brand}</div></div>}
         </div>
-        <div className="m-tabs">
-          <button className={mobileView === "thinking" ? "on" : ""} onClick={() => setMobileView("thinking")}>Thinking</button>
-          <button className={mobileView === "notepad" ? "on" : ""} onClick={() => setMobileView("notepad")}>Agent notepad</button>
+        <div className="m-tabs" role="tablist" aria-label="View">
+          <button role="tab" aria-selected={mobileView === "thinking"} className={mobileView === "thinking" ? "on" : ""} onClick={() => setMobileView("thinking")}>Thinking</button>
+          <button role="tab" aria-selected={mobileView === "notepad"} className={mobileView === "notepad" ? "on" : ""} onClick={() => setMobileView("notepad")}>Agent notepad</button>
         </div>
         <div className="m-view">
           {mobileView === "notepad"
@@ -80,7 +84,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
 
   return (
     <TC.Provider value={resolved}>
-    <div className={"app" + (mobile ? " mobile" : "")} style={rootStyle}>
+    <div className={"app" + (mobile ? " mobile" : "")} style={rootStyle} onKeyDown={onKeyDown}>
       <div className="topbar">
         {brand && <div className="brandmark"><div className="brand-name">{brand}</div></div>}
         <div className="task-pill">
