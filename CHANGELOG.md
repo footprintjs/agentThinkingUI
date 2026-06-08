@@ -6,6 +6,15 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **Timeline playhead now stays on its step's segment.** Segment widths lean on
+  latency but every beat keeps a visible slice; the playhead's `start` was
+  latency-cumulative while segments rendered by width, so on 0ms beats (every
+  tool-return beat) the cursor drifted left of its step — and could even run past
+  100% (off the track). Widths are now normalized to sum to 100 and `start` is
+  cumulative width, so the playhead, the click hit-testing, and the rendered
+  segments share one axis. Regression test: `test/timeline-cursor.test.mjs`.
+
 ## [0.8.1] - 2026-06-08
 
 ### Fixed

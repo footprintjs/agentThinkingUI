@@ -20,14 +20,21 @@ export function Timeline({ trace, index, setIndex, playing, setPlaying, speed, s
   const ms = (s) => (s.cost && s.cost.ms) || 0;
   const tok = (s) => (s.cost && s.cost.tokens) || 0;
 
-  // segment widths weighted by latency → a real time axis. Guard against a
-  // zero-latency trace (instantaneous spans / empty fallback) → no NaN widths.
+  // Segment widths lean on latency (a real time axis), but every step keeps a
+  // visible slice (a step-scrubber must show + allow clicking every beat) and
+  // the widths are NORMALIZED to sum to exactly 100 — so the playhead, the click
+  // hit-testing (scrubTo), and the rendered segments all share ONE axis.
+  // Previously `start` was latency-cumulative while segments rendered by width,
+  // so the playhead drifted left of its step whenever earlier beats were 0ms
+  // (every tool-return beat is) — "scene moves, cursor in the wrong place".
   const totalMs = steps.reduce((a, s) => a + ms(s), 0) || 1;
+  const rawW = steps.map((s) => (ms(s) / totalMs) * 100 || (100 / steps.length));
+  const sumW = rawW.reduce((a, b) => a + b, 0) || 1;
   let acc = 0;
-  const segs = steps.map((s) => {
-    const start = (acc / totalMs) * 100;
-    const w = (ms(s) / totalMs) * 100 || (100 / steps.length); // even split when all-zero
-    acc += ms(s);
+  const segs = rawW.map((w0) => {
+    const w = (w0 / sumW) * 100; // normalize → widths tile exactly 0..100
+    const start = acc; // cumulative WIDTH — matches the rendered segments
+    acc += w;
     return { start, w };
   });
   const cur = Math.min(index, steps.length - 1); // live traces can grow/shrink under us
