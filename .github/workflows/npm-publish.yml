@@ -1,8 +1,9 @@
 name: Publish to npm
 
 # Publishes the package when you cut a GitHub Release (or run it manually).
-# One-time setup: add an npm automation token as the repo secret NPM_TOKEN
-# (npmjs.com → Access Tokens → Generate → "Automation").
+# Auth: OIDC "trusted publishing" — NO token, no repo secret. One-time setup on
+# npmjs.com: package `agentthinkingui` → Settings → Trusted Publisher →
+# GitHub Actions → repo `footprintjs/agentThinkingUI`, workflow `npm-publish.yml`.
 on:
   release:
     types: [published]
@@ -10,7 +11,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write   # for npm provenance
+  id-token: write   # OIDC token for trusted publishing + provenance
 
 jobs:
   publish:
@@ -21,7 +22,9 @@ jobs:
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org
+      # Trusted publishing requires npm >= 11.5.1 (newer than node 20's bundled npm).
+      - run: npm install -g npm@latest
       # No build step — this library ships as-is (plain scripts + types).
+      # No NODE_AUTH_TOKEN: npm authenticates via the GitHub OIDC token above,
+      # verified against the package's trusted-publisher config on npmjs.
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
