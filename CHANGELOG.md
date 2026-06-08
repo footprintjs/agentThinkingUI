@@ -6,6 +6,15 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **Optional trace fields no longer crash the player.** `SkillDoc` and the
+  Inspector mapped over `actChecklist`, `answer.plan`, and `answer.budget`
+  without guards — all OPTIONAL per the trace contract — so a valid, minimal
+  trace (only required fields) threw `Cannot read properties of undefined
+  (reading 'map')`. They now default / render conditionally. (Surfaced by the
+  agentfootprint `agentThinkingTrace` adapter, which emits exactly such minimal
+  traces.) Regression test: `test/optional-fields.test.mjs`.
+
 ### Docs
 - Essay — **[Who debugs the agent?](docs/blog/who-debugs-the-agent.md)**: developers
   triage infra/logic, but the semantic/content failures only a domain expert can

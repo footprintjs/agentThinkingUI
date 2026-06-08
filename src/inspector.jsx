@@ -208,15 +208,20 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
             <div className="brain-text" style={{ marginBottom: 12 }}>{step.brain}</div>
             <div className="answer-card">
               <div className="ac-head">{step.answer.headline}</div>
-              <ul>{step.answer.plan.map((p, i) => <li key={i}>{p}</li>)}</ul>
-              <table className="budget-tbl">
-                <tbody>
-                  {step.answer.budget.map((row, i) => (
-                    <tr key={i}><td>{row[0]}</td><td>{row[1]}</td></tr>
-                  ))}
-                </tbody>
-              </table>
-              <button className="answer-cta">{step.answer.cta}</button>
+              {/* plan / budget / cta are OPTIONAL in the trace contract — only an
+                  `headline` is required. Render each only when present so a
+                  plain `{ headline }` answer doesn't crash the inspector. */}
+              {step.answer.plan && <ul>{step.answer.plan.map((p, i) => <li key={i}>{p}</li>)}</ul>}
+              {step.answer.budget && (
+                <table className="budget-tbl">
+                  <tbody>
+                    {step.answer.budget.map((row, i) => (
+                      <tr key={i}><td>{row[0]}</td><td>{row[1]}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {step.answer.cta && <button className="answer-cta">{step.answer.cta}</button>}
             </div>
           </Section>
         )}

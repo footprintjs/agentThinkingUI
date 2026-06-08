@@ -89,7 +89,10 @@ function Cloud({ tag, text, metaphor, compact, tone }) {
   );
 }
 
-function SkillDoc({ skill, checklist, metaphor, compact }) {
+function SkillDoc({ skill, checklist = [], metaphor, compact }) {
+  // `actChecklist` is OPTIONAL in the trace contract — an instruction reply can
+  // be a steering doc with no explicit checklist. Default to [] and only render
+  // the list when there are items (don't crash on a valid checklist-less trace).
   return (
     <div className={"skilldoc" + (compact ? " compact" : "")}>
       {metaphor && <div className="sd-tag">acting<Dots /></div>}
@@ -98,13 +101,15 @@ function SkillDoc({ skill, checklist, metaphor, compact }) {
         <span className="sd-name">{skill}</span>
         <span className="sd-kicker">steering doc</span>
       </div>
-      <ul className="sd-list">
-        {checklist.map((c, i) => (
-          <li key={i} style={{ animationDelay: 0.85 + i * 0.2 + "s" }}>
-            <span className="box">✓</span><span>{c.text}</span>
-          </li>
-        ))}
-      </ul>
+      {checklist.length > 0 && (
+        <ul className="sd-list">
+          {checklist.map((c, i) => (
+            <li key={i} style={{ animationDelay: 0.85 + i * 0.2 + "s" }}>
+              <span className="box">✓</span><span>{c.text}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
