@@ -89,6 +89,25 @@ function Cloud({ tag, text, metaphor, compact, tone }) {
   );
 }
 
+// The model's extended-thinking chain-of-thought, shown above the action as a
+// collapsible "💭 thinking" callout (it can be long — preview collapsed, full on
+// expand). Only rendered when the beat carries `thinking`.
+function ThinkingCallout({ text }) {
+  const [open, setOpen] = React.useState(false);
+  if (!text) return null;
+  const preview = text.length > 90 ? text.slice(0, 90).trimEnd() + "…" : text;
+  return (
+    <div className={"thinking-callout" + (open ? " open" : "")}>
+      <button type="button" className="tc-toggle" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <span className="tc-ico" aria-hidden="true">💭</span>
+        <span className="tc-label">thinking</span>
+        <span className="tc-chev" aria-hidden="true">{open ? "▾" : "▸"}</span>
+      </button>
+      <div className="tc-text">{open ? text : preview}</div>
+    </div>
+  );
+}
+
 function SkillDoc({ skill, checklist = [], metaphor, compact }) {
   // `actChecklist` is OPTIONAL in the trace contract — an instruction reply can
   // be a steering doc with no explicit checklist. Default to [] and only render
@@ -163,6 +182,9 @@ function SceneInner({ step, dims, metaphor, straight }) {
     step.kind === "ask" ? "calling" :
     step.kind === "answer" ? "wrapping up" : "thinking";
 
+  // The model's extended-thinking sits ABOVE the action callout (when present).
+  const thinkingEl = step.thinking ? <ThinkingCallout text={step.thinking} /> : null;
+
   // single bubble hugs above the brain; BOTH = think (teal, left) + act (amber, right) over the brain
   let thought = null, dualThoughts = null;
   if (isBoth) {
@@ -170,14 +192,15 @@ function SceneInner({ step, dims, metaphor, straight }) {
     const dualLeft = Math.max(half + 12, Math.min(w - half - 12, G.bx + 78));
     dualThoughts = (
       <div className="dual-thoughts" style={{ left: dualLeft, bottom: h - by + 54 }}>
+        {thinkingEl}
         <Cloud tag="thinking" text={step.brain} metaphor={metaphor} compact tone="data" />
         <SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} compact />
       </div>
     );
   } else if (isAct) {
-    thought = <div className="thoughtpos"><SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} /></div>;
+    thought = <div className="thoughtpos">{thinkingEl}<SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} /></div>;
   } else {
-    thought = <div className="thoughtpos"><Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} /></div>;
+    thought = <div className="thoughtpos">{thinkingEl}<Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} /></div>;
   }
 
   const brainMode = isAct ? "act" : "reason";

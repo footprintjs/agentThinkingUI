@@ -6,6 +6,17 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-08
+
+### Added
+- **Extended-thinking callout.** A beat may now carry an optional `thinking`
+  field (the model's chain-of-thought). When present, the scene renders it as a
+  **collapsible "💭 thinking" callout above the action** (preview collapsed, full
+  reasoning on expand), and the inspector shows an "Extended thinking" section.
+  Beats without `thinking` are unchanged. Populated by agentfootprint's
+  `agentThinkingTrace` (≥ 6.3.0) from Claude's reasoning blocks; render-only here
+  (the trace contract gains one optional field). Test: `test/thinking-callout`.
+
 ## [0.8.2] - 2026-06-08
 
 ### Fixed

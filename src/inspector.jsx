@@ -166,6 +166,11 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
             <Section label="LLM brain">
               <div className="brain-text">{step.brain}</div>
             </Section>
+            {step.thinking && (
+              <Section label="💭 Extended thinking">
+                <div className="brain-text thinking">{step.thinking}</div>
+              </Section>
+            )}
           </>
         )}
 
@@ -205,6 +210,12 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
         {/* ANSWER */}
         {step.kind === "answer" && (
           <Section label={"Answer to " + step.to} dot>
+            {step.thinking && (
+              <>
+                <div className="io-label">💭 extended thinking</div>
+                <div className="brain-text thinking" style={{ marginBottom: 12 }}>{step.thinking}</div>
+              </>
+            )}
             <div className="brain-text" style={{ marginBottom: 12 }}>{step.brain}</div>
             <div className="answer-card">
               <div className="ac-head">{step.answer.headline}</div>
