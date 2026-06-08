@@ -21,10 +21,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
           registry-url: https://registry.npmjs.org
+      # Install devDeps (esbuild) — `prepublishOnly` builds via build.mjs on publish.
+      - run: npm ci
+      - run: npm test
       # Trusted publishing requires npm >= 11.5.1 (newer than node 20's bundled npm).
       - run: npm install -g npm@latest
-      # No build step — this library ships as-is (plain scripts + types).
       # No NODE_AUTH_TOKEN: npm authenticates via the GitHub OIDC token above,
       # verified against the package's trusted-publisher config on npmjs.
       - run: npm publish --provenance --access public
