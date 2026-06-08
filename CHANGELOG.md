@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-06-08
+
 ### Fixed
 - **Optional trace fields no longer crash the player.** `SkillDoc` and the
   Inspector mapped over `actChecklist`, `answer.plan`, and `answer.budget`
@@ -136,7 +138,8 @@ to [Semantic Versioning](https://semver.org/).
   prop-first scoped theming, and the `fromOTLP` / `fromOpenInference` /
   `fromOTLPMulti` adapters. Scoped ES modules with an ESM + UMD dual build.
 
-[Unreleased]: https://github.com/footprintjs/agentThinkingUI/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/footprintjs/agentThinkingUI/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.8.1
 [0.8.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.8.0
 [0.7.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.7.0
 [0.6.0]: https://github.com/footprintjs/agentThinkingUI/releases/tag/v0.6.0
