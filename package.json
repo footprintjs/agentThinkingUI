@@ -1,6 +1,6 @@
 {
   "name": "agentthinkingui",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Framework-agnostic player that replays an agent's runtime footprint (a recorded trace) as an animated, scrubbable story — the LLM brain calling tools and getting back data (reason), an instruction (act), or both.",
   "keywords": [
     "agent",
