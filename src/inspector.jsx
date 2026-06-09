@@ -53,6 +53,24 @@ function Section({ label, dot, defaultOpen = true, accentDot, children }) {
   );
 }
 
+// The tool menu the model saw for this call — collapsed by default; expand to
+// read the descriptions a domain expert needs to debug WHY a tool was chosen.
+function ToolsSeen({ tools }) {
+  if (!tools || !tools.length) return null;
+  return (
+    <Section label={"🔧 Tools the model saw (" + tools.length + ")"} defaultOpen={false}>
+      <ul className="tools-seen">
+        {tools.map((t, i) => (
+          <li key={(t.name || "") + i}>
+            <code className="ts-name">{t.name}</code>
+            {t.description ? <span className="ts-desc"> — {t.description}</span> : null}
+          </li>
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
 function PanelTabs({ view, setView }) {
   return (
     <div className="panel-tabs" role="tablist" aria-label="Right panel view">
@@ -171,6 +189,7 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
                 <div className="brain-text thinking">{step.thinking}</div>
               </Section>
             )}
+            <ToolsSeen tools={step.toolsSeen} />
           </>
         )}
 
@@ -234,6 +253,7 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
               )}
               {step.answer.cta && <button className="answer-cta">{step.answer.cta}</button>}
             </div>
+            <ToolsSeen tools={step.toolsSeen} />
           </Section>
         )}
 

@@ -420,6 +420,12 @@
 :where(.atui, .atui-swarm) .code .k { color: var(--code-key); } :where(.atui, .atui-swarm) .code .s { color: var(--code-str); } :where(.atui, .atui-swarm) .code .n { color: var(--code-num); }
 :where(.atui, .atui-swarm) .io-label { font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-faint); margin-bottom: 4px; }
 
+/* "Tools the model saw" — the tool menu behind a tool-selection decision. */
+:where(.atui, .atui-swarm) .tools-seen { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+:where(.atui, .atui-swarm) .tools-seen li { font-size: calc(12px * var(--af-text-scale)); line-height: 1.45; }
+:where(.atui, .atui-swarm) .ts-name { font-family: var(--font-mono); font-size: calc(11px * var(--af-text-scale)); padding: 1px 6px; border-radius: 6px; background: var(--surface-sunken, rgba(127,127,127,0.12)); color: var(--ink); }
+:where(.atui, .atui-swarm) .ts-desc { color: var(--ink-soft, var(--ink-faint)); }
+
 :where(.atui, .atui-swarm) .reply-banner { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 12px;
   background: var(--accent-tint); border: 1px solid var(--accent); margin: 12px 16px; }
 :where(.atui, .atui-swarm) .err-banner { display: flex; align-items: center; gap: 10px; margin: 12px 16px; padding: 10px 13px; border-radius: 12px;

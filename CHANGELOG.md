@@ -6,6 +6,19 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-06-09
+
+### Added
+- **"Tools the model saw" inspector section.** An `ask` / `answer` beat may now
+  carry `toolsSeen` — the tool menu (`{ name, description }[]`) the model had at
+  its disposal for that call. The step inspector renders it as a **collapsed
+  "🔧 Tools the model saw (N)" section**; expand it to read the descriptions a
+  domain expert needs to debug WHY the model chose (or skipped) a tool, right next
+  to its reasoning. Beats without `toolsSeen` show no section. Fed by
+  agentfootprint ≥ 6.6.0's `agentThinkingTrace` (which reads `stream.llm_start`'s
+  new tool catalog). Types: `ToolSeen` + `toolsSeen` on `AskStep`/`AnswerStep`
+  (also back-filled the previously-undocumented `thinking` field on those types).
+
 ## [0.9.0] - 2026-06-08
 
 ### Added

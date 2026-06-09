@@ -66,6 +66,12 @@ export interface PromptStep {
   traceId?: string;
 }
 
+/** A tool the model had at its disposal for a call — the menu it chose from. */
+export interface ToolSeen {
+  name: string;
+  description?: string;
+}
+
 /** The brain reaches for a tool. */
 export interface AskStep {
   kind: "ask";
@@ -74,6 +80,11 @@ export interface AskStep {
   input: Record<string, unknown>;
   brain: string;
   cost: Cost;
+  /** Model's extended-thinking chain-of-thought for this iteration. */
+  thinking?: string;
+  /** The tools the model saw (name + description) for this call — expandable in
+   *  the inspector to debug tool selection. On the iteration's first ask. */
+  toolsSeen?: ToolSeen[];
   spanId?: string;
   traceId?: string;
 }
@@ -112,6 +123,10 @@ export interface AnswerStep {
   cost: Cost;
   /** set when the agent run errored */
   error?: string;
+  /** Model's extended-thinking chain-of-thought before the final answer. */
+  thinking?: string;
+  /** The tools the model saw (name + description) for the final call. */
+  toolsSeen?: ToolSeen[];
 }
 
 export type Step = PromptStep | AskStep | ReturnStep | AnswerStep;
