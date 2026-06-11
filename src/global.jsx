@@ -6,6 +6,7 @@
    ============================================================ */
 import { AgentThinkingUI } from "./footprint.jsx";
 import { MultiAgentFlow } from "./multi-agent-flow.jsx";
+import { BacktrackView, BacktrackOverlay } from "./backtrack.jsx";
 import { Stage, ToolIcon } from "./stage.jsx";
 import { Inspector, Notepad } from "./inspector.jsx";
 import { Timeline } from "./timeline.jsx";
@@ -20,6 +21,8 @@ Object.assign(w, {
   AgentThinkingUI,
   AgentFootprint: AgentThinkingUI, // deprecated alias
   MultiAgentFlow,
+  BacktrackView,
+  BacktrackOverlay,
   Stage, ToolIcon, Inspector, Notepad, Timeline,
   usePlayback, AF_DWELL, arcLayout, AF_LAYOUT,
   AgentTheme, AgentThemeContext,

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgentThinkingUI — BacktrackView (the "why?" board)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesque:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../src/styles.css" />
+  <link rel="stylesheet" href="demo.css" />
+  <style>
+    /* page chrome only — the library never styles the host */
+    .bt-page { max-width: 960px; margin: 26px auto 60px; padding: 0 18px; }
+    .bt-page-head { font-family: "Bricolage Grotesque", sans-serif; margin: 0 0 4px; font-size: 21px; }
+    .bt-page-sub { color: #6E5C49; margin: 0 0 14px; font-size: 13.5px; }
+    .bt-pick { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .bt-pick button { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 12.5px;
+      padding: 7px 14px; border-radius: 999px; border: 1.5px solid #D9C8B2; background: #FFFDFA; color: #6E5C49; cursor: pointer; }
+    .bt-pick button.on { background: #C0531F; border-color: #95380F; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="grain"></div>
+  <div class="bt-page">
+    <h1 class="bt-page-head">BacktrackView — the “why?” board</h1>
+    <p class="bt-page-sub">A decision walked backwards to the piece of context (or code) that caused it —
+      final answers, mid-loop tool choices, and deterministic <code>decide()</code> rules are all decision points.
+      Real data: agentfootprint’s context-bisect example. Add <code>?play=1</code> for the animated reveal.</p>
+    <div class="bt-pick" id="pick"></div>
+    <div id="root"></div>
+  </div>
+
+  <script src="../node_modules/react/umd/react.development.js"></script>
+  <script src="../node_modules/react-dom/umd/react-dom.development.js"></script>
+  <script src="../dist/agentthinkingui.umd.js"></script>
+  <script src="backtrack-trace.js"></script>
+  <script>
+    const SCENARIOS = [
+      ["answer", "wrong answer — LLM · causal"],
+      ["tool", "tool choice — LLM · mid-loop"],
+      ["rule", "rule decision — decide() · exact"],
+    ];
+    const params = new URLSearchParams(location.search);
+    const play = params.has("play");
+    let current = SCENARIOS.some(([k]) => k === params.get("trace")) ? params.get("trace") : "answer";
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    const pick = document.getElementById("pick");
+
+    let asModal = false;
+    function render() {
+      pick.innerHTML = "";
+      for (const [key, label] of SCENARIOS) {
+        const b = document.createElement("button");
+        b.textContent = label;
+        b.className = key === current ? "on" : "";
+        b.onclick = () => { current = key; render(); };
+        pick.appendChild(b);
+      }
+      const m = document.createElement("button");
+      m.textContent = "open as modal ▣";
+      m.className = "modal-toggle";
+      m.onclick = () => { asModal = true; render(); };
+      pick.appendChild(m);
+      const props = {
+        key: current + (asModal ? ":modal" : ""),
+        trace: window.BACKTRACK_TRACES[current],
+        brand: "AgentThinkingUI",
+        autoPlay: play,
+      };
+      root.render(asModal
+        ? React.createElement(BacktrackOverlay, { ...props, open: true, onClose: () => { asModal = false; render(); } })
+        : React.createElement(BacktrackView, props));
+    }
+    render();
+  </script>
+</body>
+</html>

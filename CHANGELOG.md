@@ -6,6 +6,24 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **`<BacktrackView>` — the "why?" board.** A decision walked backwards to the
+  piece of context (or code) that caused it, fed by a new framework-agnostic
+  `BacktrackTrace` contract (agentfootprint's `localizeContextBug` report maps
+  1:1). Works at ANY decision point: final answer, mid-loop tool choice, or a
+  deterministic rule (`decide()`) — the rule variant swaps the brain for a
+  decision diamond and shows the exact recorded trail. Scrubbable beats with a
+  sticky stepper + auto-scroll: the bug → who answered → what it was given →
+  the scores (per-card influence meters: 100% track, colored fill + value
+  overlay; hatched + starred for path-only upper bounds) → the test (ablation
+  stamps; ranking-only traces show none, honestly) → the culprit (chain of
+  custody that doubles as a REWIND player — click a hop to replay the recorded
+  state: the assembled prompt the model saw, the mutating commit, the rule
+  operands, culprit span highlighted). Suspects paginate past three.
+- **`<BacktrackOverlay>`** — the host entry point: centered modal on desktop,
+  full-screen view with a back button under 640px; Esc / scrim / back close it.
+  Trigger it from any decision point in a main UI.
+
 ## [0.10.0] - 2026-06-09
 
 ### Added

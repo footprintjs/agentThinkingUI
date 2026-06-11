@@ -5,6 +5,7 @@
    ============================================================ */
 export { AgentThinkingUI, AgentThinkingUI as AgentFootprint } from "./footprint.jsx";
 export { MultiAgentFlow } from "./multi-agent-flow.jsx";
+export { BacktrackView, BacktrackOverlay } from "./backtrack.jsx";
 export { Stage, ToolIcon } from "./stage.jsx";
 export { Inspector, Notepad } from "./inspector.jsx";
 export { Timeline } from "./timeline.jsx";

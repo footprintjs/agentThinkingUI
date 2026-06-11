@@ -120,6 +120,108 @@ export interface MultiAgentFlowProps {
 /** Multi-agent control-flow map; agent nodes drill into their AgentThinkingUI. */
 export const MultiAgentFlow: FC<MultiAgentFlowProps>;
 
+/* ── BacktrackView — the "why?" board ─────────────────────────────────────
+   One decision walked backwards to the piece of context (or code) that
+   caused it. A decision point is ANY step under investigation: the final
+   answer, a mid-loop tool choice, or a deterministic rule/predicate.
+   Framework-agnostic like Trace: agentfootprint's localizeContextBug
+   report maps 1:1, but anything that can serialize a causal slice feeds it. */
+
+/** One hop in a suspect's chain of custody. Hops with `content` are
+ *  clickable in the rewind player and replay the recorded state. */
+export interface BacktrackCustodyHop {
+  /** short uppercase-styled stage of the chain — "born" | "landed" | "read" | … */
+  step: string;
+  detail: string;
+  /** runtimeStageId (or other step id) where the hop happened */
+  at?: string;
+  /** the variable the hop touched */
+  variable?: string;
+  /** the recorded state at this hop (prompt text, commit payload, code, rule operands) */
+  content?: string;
+  /** exact substring of `content` to highlight as the culprit span */
+  highlight?: string;
+}
+
+export interface BacktrackEdge {
+  key?: string;
+  weight?: number;
+  kind?: "data" | "control";
+}
+
+export interface BacktrackSuspect {
+  kind: "injection" | "tool" | "stage" | "arg" | string;
+  flavor?: string;
+  name: string;
+  text?: string;
+  /** influence score 0..1 — a proxy, never a causal claim */
+  score: number;
+  /** true position in the source report, when the cards shown are a subset */
+  rank?: number;
+  /** the score is a path-only upper bound (no content signal) — hatched meter, starred value */
+  upperBound?: boolean;
+  /** the last hop that fed the decision */
+  edge?: BacktrackEdge;
+  /** the full hop chain back from the decision */
+  path?: { key: string; kind?: "data" | "control"; via?: string }[];
+  bornAt?: { id: string; label?: string; via?: string };
+  custody?: BacktrackCustodyHop[];
+  /** ablation outcome — the ONLY tier that makes causal claims */
+  verdict?: { kind: "confirmed" | "not-confirmed" | "none"; flips?: number; samples?: number; claim?: string };
+}
+
+export interface BacktrackTrace {
+  /** the headline question ("approved 47 days late — why?") */
+  claim: string;
+  /** "causal" = ablation-tested verdicts; "correlational" = ranking only */
+  mode: "causal" | "correlational";
+  /** override for the mode chip (e.g. "exact chain · proxy ranking") */
+  modeLabel?: string;
+  agent?: string;
+  model?: string;
+  answer: { text: string; label?: string; tone?: "error" | "question" };
+  /** the decision point under investigation — ANY step: final answer, mid-loop call, rule stage */
+  decidedAt: { id: string; label?: string; kind?: "llm" | "rule"; note?: ReactNode };
+  suspects: BacktrackSuspect[];
+  /** exact recorded hops for deterministic decisions with no ablation verdict */
+  trail?: { title?: string; custody?: BacktrackCustodyHop[]; claim?: string };
+  /** one line for slice hops not shown as cards */
+  folded?: string;
+  /** one line under the score meters (margins, tie warnings) */
+  scoreNote?: string;
+  /** the no-ablation control line */
+  baseline?: string;
+  /** the report's own claims-discipline lines, verbatim */
+  honesty?: string[];
+}
+
+export interface BacktrackViewProps {
+  trace: BacktrackTrace;
+  theme?: ThemeConfig;
+  labels?: { agent?: string; toolbox?: string };
+  icons?: { brain?: IconConfig; toolbox?: IconConfig };
+  brand?: ReactNode;
+  /** auto-advance the reveal beats on mount (default true); false starts on the final beat */
+  autoPlay?: boolean;
+  /** fires when the active beat changes */
+  onBeat?: (beat: number, label: string) => void;
+}
+/** The "why?" board — a decision walked backwards through suspects, scores,
+ *  ablation verdicts, and a clickable chain-of-custody rewind player. */
+export const BacktrackView: FC<BacktrackViewProps>;
+
+export interface BacktrackOverlayProps extends BacktrackViewProps {
+  /** controlled visibility — the host owns it */
+  open: boolean;
+  /** fires on Escape, the scrim, and the back button */
+  onClose?: () => void;
+  /** back-button label (default "back") */
+  backLabel?: string;
+}
+/** BacktrackView as a host overlay: centered modal on desktop, full-screen
+ *  view with a back button under 640px. Trigger it from any decision point. */
+export const BacktrackOverlay: FC<BacktrackOverlayProps>;
+
 export const Stage: FC<any>;
 export const Inspector: FC<any>;
 export const Notepad: FC<any>;

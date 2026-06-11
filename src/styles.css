@@ -231,7 +231,7 @@
 /* (the fixed arcs are static; only the packet + bubbles animate) */
 
 /* --- brain node (left) --- */
-:where(.atui, .atui-swarm) .brain-node { position: absolute; transform: translate(-50%, -50%); }
+:where(.atui, .atui-swarm, .atui-backtrack) .brain-node { position: absolute; transform: translate(-50%, -50%); }
 :where(.atui, .atui-swarm) .thoughtpos { position: absolute; bottom: 100%; margin-bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 6; }
 
 /* Extended-thinking callout — the model's chain-of-thought, above the action. */
@@ -241,7 +241,7 @@
 :where(.atui, .atui-swarm) .thinking-callout .tc-chev { margin-left: auto; color: var(--ink-faint); }
 :where(.atui, .atui-swarm) .thinking-callout .tc-text { margin-top: 5px; font-size: calc(12px * var(--af-text-scale)); line-height: 1.5; color: var(--ink); white-space: pre-wrap; word-break: break-word; }
 :where(.atui, .atui-swarm) .thinking-callout.open .tc-text { max-height: 220px; overflow: auto; }
-:where(.atui, .atui-swarm) .brain-label { position: absolute; top: 100%; margin-top: 10px; left: 50%; transform: translateX(-50%); white-space: normal;
+:where(.atui, .atui-swarm, .atui-backtrack) .brain-label { position: absolute; top: 100%; margin-top: 10px; left: 50%; transform: translateX(-50%); white-space: normal;
   max-width: 100px; text-align: center; line-height: 1.2; font-size: calc(11.5px * var(--af-text-scale)); font-weight: 700; color: var(--ink-soft); letter-spacing: .01em; }
 :where(.atui, .atui-swarm) .io-tag { position: absolute; right: 100%; margin-right: 16px; top: 50%; transform: translateY(-50%); white-space: nowrap;
   font-family: var(--font-display); font-weight: 700; font-size: calc(11px * var(--af-text-scale)); letter-spacing: .03em; padding: 5px 11px; border-radius: 999px;
@@ -283,36 +283,36 @@
 @keyframes checkIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
 
 /* the brain itself */
-:where(.atui, .atui-swarm) .brain {
+:where(.atui, .atui-swarm, .atui-backtrack) .brain {
   width: 112px; height: 98px; position: relative;
   filter: drop-shadow(0 8px 16px rgba(150,70,30,.18));
 }
-:where(.atui, .atui-swarm) .brain-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+:where(.atui, .atui-swarm, .atui-backtrack) .brain-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-:where(.atui, .atui-swarm) .brain .blob {
+:where(.atui, .atui-swarm, .atui-backtrack) .brain .blob {
   position: absolute; inset: 0; border-radius: 49% 51% 47% 53% / 55% 52% 48% 45%;
   background: linear-gradient(155deg, var(--brain-from), var(--brain-to));
   border: 2.5px solid #fff;
 }
 /* themeable brain: emoji or image instead of the drawn blob */
-:where(.atui, .atui-swarm) .brain.brain-custom { display: grid; place-items: center; border-radius: 50%; overflow: hidden;
+:where(.atui, .atui-swarm, .atui-backtrack) .brain.brain-custom { display: grid; place-items: center; border-radius: 50%; overflow: hidden;
   background: var(--paper-2); border: 2.5px solid #fff; box-shadow: inset 0 0 0 1px var(--line); }
-:where(.atui, .atui-swarm) .brain.brain-custom img { width: 100%; height: 100%; object-fit: cover; }
-:where(.atui, .atui-swarm) .brain.brain-emoji { font-size: calc(56px * var(--af-text-scale)); line-height: 1; background: linear-gradient(155deg, var(--brain-from), var(--brain-to)); }
-:where(.atui, .atui-swarm) .brain-label-legacy { display: none; }
-:where(.atui, .atui-swarm) .brain .seam { position: absolute; top: 7px; bottom: 20px; left: 50%; width: 2.5px; transform: translateX(-50%);
+:where(.atui, .atui-swarm, .atui-backtrack) .brain.brain-custom img { width: 100%; height: 100%; object-fit: cover; }
+:where(.atui, .atui-swarm, .atui-backtrack) .brain.brain-emoji { font-size: calc(56px * var(--af-text-scale)); line-height: 1; background: linear-gradient(155deg, var(--brain-from), var(--brain-to)); }
+:where(.atui, .atui-swarm, .atui-backtrack) .brain-label-legacy { display: none; }
+:where(.atui, .atui-swarm, .atui-backtrack) .brain .seam { position: absolute; top: 7px; bottom: 20px; left: 50%; width: 2.5px; transform: translateX(-50%);
   background: rgba(255,255,255,.55); border-radius: 2px; opacity: .5; }
-:where(.atui, .atui-swarm) .brain .gyrus { position: absolute; inset: 9px; border-radius: inherit; opacity: .5;
+:where(.atui, .atui-swarm, .atui-backtrack) .brain .gyrus { position: absolute; inset: 9px; border-radius: inherit; opacity: .5;
   background:
     radial-gradient(circle at 26% 30%, transparent 6px, rgba(255,255,255,.5) 7px, transparent 8px),
     radial-gradient(circle at 70% 26%, transparent 5px, rgba(255,255,255,.45) 6px, transparent 7px),
     radial-gradient(circle at 30% 60%, transparent 7px, rgba(255,255,255,.45) 8px, transparent 9px),
     radial-gradient(circle at 72% 62%, transparent 6px, rgba(255,255,255,.4) 7px, transparent 8px);
 }
-:where(.atui, .atui-swarm) .brain .eyes { position: absolute; top: 42px; left: 0; right: 0; display: flex; justify-content: center; gap: 16px; transition: transform .3s; }
-:where(.atui, .atui-swarm) .brain .eye { width: 11px; height: 11px; border-radius: 50%; background: var(--ink); position: relative; }
-:where(.atui, .atui-swarm) .brain .eye::after { content: ""; position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #fff; top: 1px; right: 1px; }
-:where(.atui, .atui-swarm) .brain.thinking .eyes { transform: translateY(-3px); animation: glance 3s ease-in-out infinite; }
+:where(.atui, .atui-swarm, .atui-backtrack) .brain .eyes { position: absolute; top: 42px; left: 0; right: 0; display: flex; justify-content: center; gap: 16px; transition: transform .3s; }
+:where(.atui, .atui-swarm, .atui-backtrack) .brain .eye { width: 11px; height: 11px; border-radius: 50%; background: var(--ink); position: relative; }
+:where(.atui, .atui-swarm, .atui-backtrack) .brain .eye::after { content: ""; position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #fff; top: 1px; right: 1px; }
+:where(.atui, .atui-swarm, .atui-backtrack) .brain.thinking .eyes { transform: translateY(-3px); animation: glance 3s ease-in-out infinite; }
 @keyframes glance {
   0%, 60%, 100% { transform: translate(0, -3px) scaleY(1); }
   18% { transform: translate(-3.5px, -3px) scaleY(1); }
@@ -320,9 +320,9 @@
   84% { transform: translate(0, -3px) scaleY(.16); }
   90% { transform: translate(0, -3px) scaleY(1); }
 }
-:where(.atui, .atui-swarm) .brain .mouth { position: absolute; bottom: 26px; left: 50%; width: 16px; height: 8px; border-radius: 0 0 16px 16px;
+:where(.atui, .atui-swarm, .atui-backtrack) .brain .mouth { position: absolute; bottom: 26px; left: 50%; width: 16px; height: 8px; border-radius: 0 0 16px 16px;
   border: 2px solid var(--ink); border-top: 0; transform: translateX(-50%); }
-:where(.atui, .atui-swarm) .brain.acting .mouth { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ink); bottom: 24px; }
+:where(.atui, .atui-swarm, .atui-backtrack) .brain.acting .mouth { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ink); bottom: 24px; }
 @keyframes pop { from { opacity: 0; transform: scale(.85) translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes fadeIn { to { opacity: 1; } }
@@ -437,8 +437,8 @@
   background: var(--accent); color: var(--accent-on, #fff); padding: 4px 10px; border-radius: 7px; }
 :where(.atui, .atui-swarm) .reply-banner .rb-text { font-size: calc(12.5px * var(--af-text-scale)); color: var(--accent-deep); font-weight: 600; line-height: 1.3; }
 
-:where(.atui, .atui-swarm) .brain-text { font-size: calc(14px * var(--af-text-scale)); line-height: 1.5; color: var(--ink); }
-:where(.atui, .atui-swarm) .brain-text.act { font-family: var(--font-body); }
+:where(.atui, .atui-swarm, .atui-backtrack) .brain-text { font-size: calc(14px * var(--af-text-scale)); line-height: 1.5; color: var(--ink); }
+:where(.atui, .atui-swarm, .atui-backtrack) .brain-text.act { font-family: var(--font-body); }
 :where(.atui, .atui-swarm) .steer-row { display: inline-flex; align-items: center; gap: 7px; background: var(--instr-tint); border: 1px solid var(--instr);
   color: var(--instr-deep); border-radius: 8px; padding: 5px 10px; font-family: var(--font-mono); font-size: calc(12px * var(--af-text-scale)); font-weight: 700; }
 
@@ -565,7 +565,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :where(.atui, .atui-swarm) .brain .eyes, :where(.atui, .atui-swarm) .cloud .ctag .dots i, :where(.atui, .atui-swarm) .task-pill .rec { animation: none !important; }
+  :where(.atui, .atui-swarm, .atui-backtrack) .brain .eyes, :where(.atui, .atui-swarm) .cloud .ctag .dots i, :where(.atui, .atui-swarm) .task-pill .rec { animation: none !important; }
+  :where(.atui-backtrack) .bt-why .rec, :where(.atui-backtrack) .bt-stamp, :where(.atui-backtrack) .bt-custody li { animation: none !important; opacity: 1; }
+  :where(.atui-backtrack) .bt-meter .bt-fill, :where(.atui-backtrack) .bt-meter-val, :where(.atui-backtrack) .bt-sc-note { transition: none !important; }
 }
 
 /* ---------- <MultiAgentFlow> — multi-agent map + drill-down ---------- */
@@ -680,3 +682,190 @@
 
 /* host-supplied per-step detail slot (renderDetail) — sits under the inspector sections */
 :where(.atui, .atui-swarm) .insp-extra { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   <BacktrackView> — the "why?" board. All rules scoped under .atui-backtrack
+   (no host leakage), reading the same theme variables as the player.
+   Beat reveal: the scene carries cumulative classes s1..s4. */
+.atui-backtrack, :where(.atui-backtrack) * { box-sizing: border-box; }
+.atui-backtrack {
+  font-family: var(--font-body); color: var(--ink); background: var(--paper);
+  border: 1px solid var(--line-soft); border-radius: var(--r-xl, 18px);
+  box-shadow: var(--shadow-md);
+  /* no overflow:hidden — it would break the sticky stepper (a clipping
+     ancestor becomes the sticky containing scrollport); the bar and the
+     stepper round their own corners instead */
+}
+:where(.atui-backtrack) button { font-family: inherit; cursor: pointer; }
+:where(.atui-backtrack) :focus-visible { outline: 2px solid var(--rust); outline-offset: 2px; }
+:where(.atui-backtrack) code { font-family: var(--font-mono); font-size: .92em; background: var(--paper-2); border: 1px solid var(--line-soft); border-radius: 5px; padding: 0 4px; }
+
+/* top bar */
+:where(.atui-backtrack) .bt-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line-soft); background: var(--card); border-radius: var(--r-xl, 18px) var(--r-xl, 18px) 0 0; }
+:where(.atui-backtrack) .bt-brand { font-family: var(--font-display); font-weight: 800; font-size: calc(13px * var(--af-text-scale)); color: var(--rust-deep); }
+:where(.atui-backtrack) .bt-why { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-weight: 800; font-size: calc(13px * var(--af-text-scale)); color: var(--error-deep); text-transform: uppercase; letter-spacing: .06em; }
+:where(.atui-backtrack) .bt-why .rec { width: 8px; height: 8px; border-radius: 50%; background: var(--error); animation: bt-blink 1.6s ease-in-out infinite; }
+@keyframes bt-blink { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+:where(.atui-backtrack) .bt-claim { flex: 1; min-width: 0; font-size: calc(13.5px * var(--af-text-scale)); color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:where(.atui-backtrack) .bt-mode { font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); padding: 3px 9px; border-radius: 999px; background: var(--call-tint); color: var(--call-deep); border: 1px solid var(--line-soft); white-space: nowrap; }
+:where(.atui-backtrack) .bt-mode.causal { background: var(--answer-tint); color: var(--answer-deep); }
+
+/* scene column */
+:where(.atui-backtrack) .bt-scene { max-width: 880px; margin: 0 auto; padding: 22px 22px 10px; }
+:where(.atui-backtrack) .bt-kicker { font-family: var(--font-display); font-size: calc(10.5px * var(--af-text-scale)); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--error-deep); margin-bottom: 4px; }
+
+/* beat 0 — the answer under investigation */
+:where(.atui-backtrack) .bt-answer { display: flex; gap: 12px; align-items: flex-start; background: var(--card); border: 1.5px solid var(--error); border-radius: var(--r-lg, 14px); padding: 14px 16px; box-shadow: var(--shadow-sm); }
+:where(.atui-backtrack) .bt-x { flex: 0 0 auto; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--error); color: #fff; font-weight: 800; font-size: 14px; }
+:where(.atui-backtrack) .bt-answer-text { font-size: calc(14.5px * var(--af-text-scale)); line-height: 1.45; }
+
+/* beat 1 — who answered */
+:where(.atui-backtrack) .bt-brainblock, :where(.atui-backtrack) .bt-suspectblock, :where(.atui-backtrack) .bt-folded, :where(.atui-backtrack) .bt-culprit, :where(.atui-backtrack) .bt-honesty { opacity: 0; transform: translateY(8px); transition: opacity .45s ease, transform .45s ease; }
+:where(.atui-backtrack) .bt-scene.s1 .bt-brainblock,
+:where(.atui-backtrack) .bt-scene.s2 .bt-suspectblock,
+:where(.atui-backtrack) .bt-scene.s2 .bt-folded,
+:where(.atui-backtrack) .bt-scene.s3 .bt-honesty,
+:where(.atui-backtrack) .bt-scene.final .bt-culprit { opacity: 1; transform: none; }
+:where(.atui-backtrack) .bt-uplink { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 2px 0; }
+:where(.atui-backtrack) .bt-upstem { width: 2px; height: 16px; background: var(--line); }
+:where(.atui-backtrack) .bt-upchip { font-family: var(--font-mono); font-size: calc(11px * var(--af-text-scale)); color: var(--ink-soft); }
+:where(.atui-backtrack) .bt-brainrow { display: flex; align-items: center; gap: 16px; justify-content: center; padding: 6px 0 2px; }
+:where(.atui-backtrack) .bt-brainfig { transform: scale(.62); transform-origin: center; margin: -16px -18px; }
+:where(.atui-backtrack) .bt-brainnote { max-width: 430px; font-size: calc(13.5px * var(--af-text-scale)); line-height: 1.45; color: var(--ink-soft); }
+:where(.atui-backtrack) .bt-brainnote b { color: var(--ink); }
+
+/* beat 2 — the suspects (the provable candidate set) */
+:where(.atui-backtrack) .bt-suspects { display: flex; gap: 14px; align-items: stretch; margin-top: 2px; }
+:where(.atui-backtrack) .bt-suspect { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; transition: opacity .4s ease, filter .4s ease; }
+:where(.atui-backtrack) .bt-stemwrap { display: flex; flex-direction: column; align-items: center; gap: 3px; padding-bottom: 4px; }
+:where(.atui-backtrack) .bt-stem { width: 3px; height: 22px; background: var(--line); border-radius: 2px; }
+:where(.atui-backtrack) .bt-suspect.confirmed .bt-stem { background: var(--error); }
+:where(.atui-backtrack) .bt-edge { font-family: var(--font-mono); font-size: calc(10px * var(--af-text-scale)); color: var(--ink-faint); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+:where(.atui-backtrack) .bt-edge.is-control { color: var(--instr-deep); }
+:where(.atui-backtrack) .bt-su-card { position: relative; flex: 1; background: var(--card); border: 1.5px solid var(--line); border-radius: var(--r-md, 12px); padding: 12px 13px 14px; box-shadow: var(--shadow-sm); }
+:where(.atui-backtrack) .bt-suspect.confirmed .bt-su-card { border-color: var(--error); box-shadow: 0 0 0 3px var(--error-tint), var(--shadow-sm); }
+:where(.atui-backtrack) .bt-suspect.cleared { opacity: .55; filter: saturate(.6); }
+:where(.atui-backtrack) .bt-su-head { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+:where(.atui-backtrack) .bt-su-rank { font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-faint); }
+:where(.atui-backtrack) .bt-su-kind { font-family: var(--font-display); font-size: calc(10px * var(--af-text-scale)); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; padding: 2px 7px; border-radius: 999px; background: var(--instr-tint); color: var(--instr-deep); }
+:where(.atui-backtrack) .bt-su-kind.k-tool { background: var(--call-tint); color: var(--call-deep); }
+:where(.atui-backtrack) .bt-su-kind.k-stage, :where(.atui-backtrack) .bt-su-kind.k-arg { background: var(--paper-2); color: var(--ink-soft); }
+:where(.atui-backtrack) .bt-su-name { font-family: var(--font-mono); font-weight: 700; font-size: calc(12.5px * var(--af-text-scale)); margin-bottom: 6px; }
+:where(.atui-backtrack) .bt-su-text { font-size: calc(12px * var(--af-text-scale)); line-height: 1.4; color: var(--ink-soft); margin-bottom: 9px; }
+/* the influence meter — the track is always the full 100%; the colored
+   fill + value OVERLAY it and only land on "the scores" beat (s3) */
+:where(.atui-backtrack) .bt-meter { position: relative; height: 16px; border-radius: 9px; background: var(--paper-2); border: 1px solid var(--line-soft); overflow: hidden; margin-bottom: 7px; }
+:where(.atui-backtrack) .bt-meter .bt-fill { position: absolute; inset: 0 auto 0 0; border-radius: 8px; transform: scaleX(0); transform-origin: left; transition: transform .7s ease; }
+:where(.atui-backtrack) .bt-scene.s3 .bt-meter .bt-fill { transform: scaleX(1); }
+:where(.atui-backtrack) .bt-meter.hot .bt-fill { background: var(--error); }
+:where(.atui-backtrack) .bt-meter.warm .bt-fill { background: var(--instr); }
+:where(.atui-backtrack) .bt-meter.cool .bt-fill { background: var(--call); }
+/* path-only upper bound: hatched fill — a 1.0 that isn't evidence */
+:where(.atui-backtrack) .bt-meter.ub .bt-fill { background: repeating-linear-gradient(45deg, var(--paper-2), var(--paper-2) 4px, var(--line) 4px, var(--line) 7px); opacity: .6; }
+:where(.atui-backtrack) .bt-meter-val { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); font-family: var(--font-mono); font-weight: 700; font-size: calc(9.5px * var(--af-text-scale)); padding: 0 5px; border-radius: 6px; background: rgba(255, 255, 255, .82); color: var(--ink-soft); opacity: 0; transition: opacity .45s ease .25s; }
+:where(.atui-backtrack) .bt-scene.s3 .bt-meter-val { opacity: 1; }
+:where(.atui-backtrack) .bt-meter.hot .bt-meter-val { color: var(--error-deep); }
+:where(.atui-backtrack) .bt-meter.warm .bt-meter-val { color: var(--instr-deep); }
+:where(.atui-backtrack) .bt-meter.ub .bt-meter-val { color: var(--ink-faint); }
+:where(.atui-backtrack) .bt-su-born { font-size: calc(11px * var(--af-text-scale)); color: var(--ink-faint); }
+:where(.atui-backtrack) .bt-stamp { display: inline-block; margin-top: 9px; padding: 3px 10px; border: 2px solid var(--error); border-radius: 7px; color: var(--error-deep); background: var(--error-tint); font-family: var(--font-display); font-weight: 800; font-size: calc(11.5px * var(--af-text-scale)); letter-spacing: .04em; transform: rotate(-3deg); animation: bt-stamp-in .35s cubic-bezier(.2, 1.6, .4, 1) both; }
+@keyframes bt-stamp-in { from { transform: rotate(-3deg) scale(1.6); opacity: 0; } to { transform: rotate(-3deg) scale(1); opacity: 1; } }
+:where(.atui-backtrack) .bt-cleared-tag { display: inline-block; margin-top: 9px; font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-faint); }
+:where(.atui-backtrack) .bt-folded { margin-top: 10px; text-align: center; font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-faint); }
+
+/* beat 4 — the culprit's chain of custody */
+:where(.atui-backtrack) .bt-culprit { margin-top: 16px; background: var(--card); border: 1.5px solid var(--error); border-radius: var(--r-lg, 14px); padding: 14px 16px; box-shadow: var(--shadow-sm); }
+:where(.atui-backtrack) .bt-cu-head { font-family: var(--font-display); font-size: calc(13.5px * var(--af-text-scale)); margin-bottom: 8px; }
+:where(.atui-backtrack) .bt-custody { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+:where(.atui-backtrack) .bt-scene.final .bt-custody li { display: flex; gap: 10px; align-items: baseline; opacity: 0; animation: bt-hop-in .4s ease forwards; }
+@keyframes bt-hop-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+:where(.atui-backtrack) .bt-cu-step { flex: 0 0 84px; font-family: var(--font-display); font-size: calc(10.5px * var(--af-text-scale)); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--rust-deep); text-align: right; }
+:where(.atui-backtrack) .bt-cu-detail { font-size: calc(12.5px * var(--af-text-scale)); line-height: 1.4; color: var(--ink-soft); }
+:where(.atui-backtrack) .bt-cu-detail code { color: var(--ink); }
+:where(.atui-backtrack) .bt-cu-claim { border-top: 1px dashed var(--line); padding-top: 9px; font-size: calc(12.5px * var(--af-text-scale)); font-weight: 600; color: var(--error-deep); }
+
+/* honesty footer — the report's claims discipline, verbatim */
+:where(.atui-backtrack) .bt-honesty { margin-top: 14px; display: flex; flex-direction: column; gap: 3px; border-top: 1px dashed var(--line); padding-top: 10px; }
+:where(.atui-backtrack) .bt-h-line { font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-faint); line-height: 1.5; }
+
+/* beat stepper */
+:where(.atui-backtrack) .bt-stepper { display: flex; align-items: flex-start; justify-content: center; gap: 14px; padding: 12px 16px 14px; border-top: 1px solid var(--line-soft); background: var(--card); margin-top: 14px; position: sticky; bottom: 0; z-index: 5; border-radius: 0 0 var(--r-xl, 18px) var(--r-xl, 18px); box-shadow: 0 -8px 18px -12px rgba(44, 31, 21, .35); }
+:where(.atui-backtrack) .bt-nav { border: 1px solid var(--line); background: var(--paper); color: var(--ink-soft); width: 26px; height: 26px; border-radius: 50%; font-size: 15px; line-height: 1; }
+:where(.atui-backtrack) .bt-nav:disabled { opacity: .35; cursor: default; }
+:where(.atui-backtrack) .bt-dot { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; padding: 2px 4px; }
+:where(.atui-backtrack) .bt-dot-i { width: 10px; height: 10px; border-radius: 50%; background: var(--paper-2); border: 1.5px solid var(--line); transition: background .25s ease, border-color .25s ease; }
+:where(.atui-backtrack) .bt-dot.past .bt-dot-i { background: var(--rust-tint); border-color: var(--rust); }
+:where(.atui-backtrack) .bt-dot.on .bt-dot-i { background: var(--rust); border-color: var(--rust-deep); }
+:where(.atui-backtrack) .bt-dot-label { font-family: var(--font-display); font-size: calc(10px * var(--af-text-scale)); font-weight: 700; color: var(--ink-faint); white-space: nowrap; }
+:where(.atui-backtrack) .bt-dot.on .bt-dot-label { color: var(--rust-deep); }
+
+/* narrow screens: suspects stack */
+@media (max-width: 640px) {
+  :where(.atui-backtrack) .bt-suspects { flex-direction: column; }
+  :where(.atui-backtrack) .bt-stemwrap { flex-direction: row; justify-content: center; }
+  :where(.atui-backtrack) .bt-stem { width: 22px !important; height: 3px; }
+}
+
+/* BacktrackView — decision-point variants + the rewind player */
+/* a "?" decision (mid-loop choice) instead of a ✕ bug */
+:where(.atui-backtrack) .bt-answer.tone-question { border-color: var(--instr); }
+:where(.atui-backtrack) .bt-answer.tone-question .bt-x { background: var(--instr); }
+:where(.atui-backtrack) .bt-answer.tone-question .bt-kicker { color: var(--instr-deep); }
+
+/* deterministic decider — the decision diamond (decide()/if-on-tool-result) */
+:where(.atui-backtrack) .bt-diamond { width: 64px; height: 64px; margin: 14px 16px; transform: rotate(45deg); border-radius: 12px;
+  background: linear-gradient(155deg, var(--instr-tint), var(--instr)); border: 2.5px solid #fff;
+  display: grid; place-items: center; filter: drop-shadow(0 8px 16px rgba(150,70,30,.18)); }
+:where(.atui-backtrack) .bt-diamond span { transform: rotate(-45deg); font-family: var(--font-display); font-weight: 800;
+  font-size: 26px; color: var(--instr-deep); }
+
+/* full hop chain on a suspect card (multi-hop paths, control hops labeled) */
+:where(.atui-backtrack) .bt-su-path { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+:where(.atui-backtrack) .bt-hop { font-family: var(--font-mono); font-size: calc(10px * var(--af-text-scale)); color: var(--ink-faint); line-height: 1.45; }
+:where(.atui-backtrack) .bt-hop.is-control { color: var(--instr-deep); }
+
+/* the exact-trail variant of the custody card (no causal claim — recorded hops) */
+:where(.atui-backtrack) .bt-culprit.tone-exact { border-color: var(--instr); }
+:where(.atui-backtrack) .bt-culprit.tone-exact .bt-cu-step { color: var(--instr-deep); }
+:where(.atui-backtrack) .bt-culprit.tone-exact .bt-cu-claim { color: var(--ink-soft); }
+
+/* custody rows double as the rewind scrubber when they carry recorded state */
+:where(.atui-backtrack) .bt-custody li.has-evidence { cursor: pointer; border-radius: 8px; margin: 0 -6px; padding: 2px 6px; }
+:where(.atui-backtrack) .bt-custody li.has-evidence:hover { background: var(--paper-2); }
+:where(.atui-backtrack) .bt-custody li.sel { background: var(--paper-2); }
+:where(.atui-backtrack) .bt-cu-eye { color: var(--rust); font-weight: 700; }
+
+/* the rewind pane — the actual recorded state at the selected hop */
+:where(.atui-backtrack) .bt-rewind { margin: 4px 0 10px; border: 1px solid var(--line-soft); border-radius: var(--r-md, 12px); overflow: hidden; }
+:where(.atui-backtrack) .bt-rw-bar { display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: var(--paper-2); border-bottom: 1px solid var(--line-soft); }
+:where(.atui-backtrack) .bt-rw-label { font-family: var(--font-display); font-size: calc(10.5px * var(--af-text-scale)); font-weight: 800; letter-spacing: .04em; color: var(--rust-deep); white-space: nowrap; }
+:where(.atui-backtrack) .bt-rw-where { flex: 1; min-width: 0; font-size: calc(11px * var(--af-text-scale)); color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:where(.atui-backtrack) .bt-rw-nav { display: flex; gap: 4px; }
+:where(.atui-backtrack) .bt-rw-nav button { border: 1px solid var(--line); background: var(--paper); color: var(--ink-soft); width: 22px; height: 22px; border-radius: 50%; font-size: 13px; line-height: 1; }
+:where(.atui-backtrack) .bt-rw-nav button:disabled { opacity: .35; cursor: default; }
+:where(.atui-backtrack) .bt-evidence { margin: 0; padding: 12px 14px; background: var(--code-bg); color: var(--code-ink);
+  font-family: var(--font-mono); font-size: calc(11.5px * var(--af-text-scale)); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+:where(.atui-backtrack) .bt-mark { background: var(--error-tint); color: var(--error-deep); border-bottom: 2px solid var(--error); border-radius: 3px; padding: 0 2px; font-weight: 700; }
+
+/* suspects pagination — real slices carry many suspects */
+:where(.atui-backtrack) .bt-su-pager { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-bottom: 6px; }
+:where(.atui-backtrack) .bt-su-count { font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-faint); }
+
+/* score-tie note — rides inside the suspect block, lands with the scores */
+:where(.atui-backtrack) .bt-sc-note { margin-top: 10px; text-align: center; font-size: calc(11.5px * var(--af-text-scale)); color: var(--ink-soft); opacity: 0; transition: opacity .45s ease; }
+:where(.atui-backtrack) .bt-scene.s3 .bt-sc-note { opacity: 1; }
+
+/* <BacktrackOverlay> — desktop modal / mobile full-screen with back nav */
+.atui-backtrack-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(30, 20, 12, .45); display: grid; place-items: center; padding: 26px; }
+:where(.atui-backtrack-overlay) .bto-sheet { width: min(960px, 100%); max-height: 92vh; overflow: auto; border-radius: 18px; background: #FFFDFA; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
+:where(.atui-backtrack-overlay) .bto-bar { position: sticky; top: 0; z-index: 6; display: flex; align-items: center; padding: 7px 10px; background: rgba(255, 253, 250, .94); border-bottom: 1px solid rgba(0, 0, 0, .07); backdrop-filter: blur(3px); }
+:where(.atui-backtrack-overlay) .bto-back { border: none; background: none; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 13px; color: #95380F; padding: 4px 8px; border-radius: 8px; }
+:where(.atui-backtrack-overlay) .bto-back:hover { background: rgba(192, 83, 31, .1); }
+/* inside the sheet the board sheds its own card chrome */
+:where(.atui-backtrack-overlay) .atui-backtrack { border: none; box-shadow: none; border-radius: 0; }
+:where(.atui-backtrack-overlay) .atui-backtrack .bt-bar { border-radius: 0; }
+:where(.atui-backtrack-overlay) .atui-backtrack .bt-stepper { border-radius: 0; }
+@media (max-width: 640px) {
+  .atui-backtrack-overlay { padding: 0; }
+  :where(.atui-backtrack-overlay) .bto-sheet { width: 100%; height: 100dvh; max-height: none; border-radius: 0; }
+}

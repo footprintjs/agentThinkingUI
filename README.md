@@ -234,6 +234,51 @@ const flow = {
   toggle-able **team notepad** shows the agent-prefixed journal.
 - **`live`** tails the newest beat as the graph grows (stream nodes/steps in).
 
+## Backtracking — `<BacktrackView>` (the "why?" board)
+
+The player answers *"what did the agent do?"* — `<BacktrackView>` answers
+*"**why** did it decide that?"*: one decision walked backwards to the piece of
+context (or code) that caused it. A decision point is **any** step under
+investigation — the final answer, a mid-loop tool choice, or a deterministic
+rule/predicate (`decide()`, an `if` on a tool result).
+
+<img alt="BacktrackView — a wrong refund approval walked backwards: the suspects with influence meters, the CAUSAL 3/3 ablation stamp, and the chain-of-custody rewind showing the exact system prompt the model saw with the culprit sentence highlighted." src="docs/assets/backtrack.png" width="100%"/>
+
+```jsx
+import { BacktrackView, BacktrackOverlay } from "agentthinkingui";
+
+<BacktrackView trace={backtrackTrace} />
+
+// or triggered from any decision point in your main UI:
+// a centered modal on desktop, a full-screen view with a back button on mobile
+<BacktrackOverlay open={why !== null} onClose={() => setWhy(null)} trace={why} />
+```
+
+The reveal is scrubbable beats, like everything else here: **the bug → who
+answered → what it was given → the scores → the test → the culprit**.
+
+- **Suspects** — every input that *provably* reached the decision (paginated
+  past three), each with its feeding edge and where it was born.
+- **The scores** — influence meters overlay each card: the track is always the
+  full 100%, the colored fill + value sweep in on this beat. Scores are
+  **proxies**; path-only upper bounds render hatched with a starred value so a
+  `1.0*` never masquerades as evidence.
+- **The test** — ablation verdicts stamp the cards (`CAUSAL ✓ 3/3 flips` vs
+  `not confirmed · 0/3`). Only verdicts make causal claims; a ranking-only
+  trace shows no stamps and says so.
+- **The culprit / the trail** — a chain of custody (*born → allowed → landed →
+  read → answer*) that doubles as a **rewind player**: click a hop to replay
+  the recorded state at that moment — the exact assembled prompt the model
+  saw, the commit that mutated state, the rule operands — with the culprit
+  span highlighted.
+
+It takes a **`BacktrackTrace`** — framework-agnostic like `Trace`
+(see [`types/index.d.ts`](types/index.d.ts)). agentfootprint's
+`localizeContextBug` report maps 1:1; anything that can serialize a causal
+slice can feed it. Demo: [`demo/backtrack.html`](demo/backtrack.html) — three
+real scenarios (LLM answer · mid-loop tool choice · deterministic rule) with
+captured data.
+
 ## Adapters — bring your existing traces
 
 Already instrumented? Point an adapter at your spans — no re-instrumentation.
