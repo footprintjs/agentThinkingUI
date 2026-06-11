@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-06-11
+
 ### Added
 - **`<BacktrackView>` — the "why?" board.** A decision walked backwards to the
   piece of context (or code) that caused it, fed by a new framework-agnostic
