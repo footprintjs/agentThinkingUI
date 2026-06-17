@@ -384,6 +384,10 @@
 :where(.atui, .atui-swarm) .why-wrap.why-flash { animation: whyFlash .9s ease; }
 @keyframes whyFlash { 0% { background: var(--call-tint); box-shadow: 0 0 0 6px var(--call-tint); } 100% { background: transparent; box-shadow: 0 0 0 0 transparent; } }
 :where(.atui, .atui-swarm) .why-sub { font-size: calc(11px * var(--af-text-scale)); color: var(--ink-faint); margin-bottom: 9px; line-height: 1.4; }
+/* "Copy for LLM" — the bars are a proxy; this hands the trajectory to a real LLM */
+:where(.atui, .atui-swarm) .why-copy { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 11px; padding: 6px 11px; border-radius: 9px; border: 1px solid var(--line); background: var(--paper-2); color: var(--ink); font-family: var(--font-body); font-size: calc(11.5px * var(--af-text-scale)); font-weight: 700; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+:where(.atui, .atui-swarm) .why-copy:hover { border-color: var(--ink-faint); background: var(--card); }
+:where(.atui, .atui-swarm) .why-copy:focus-visible { outline: 2px solid var(--rust); outline-offset: 1px; }
 :where(.atui, .atui-swarm) .why-tool { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
 :where(.atui, .atui-swarm) .why-tool .wt-row { padding: 7px 9px; border-radius: 9px; border: 1px solid transparent; }
 :where(.atui, .atui-swarm) .why-tool .wt-row.focus { border-color: var(--line); background: var(--paper-2); }

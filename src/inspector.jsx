@@ -1,6 +1,7 @@
 import React from "react";
 import { toolRelevance } from "./relevance.js";
 import { isSkillName } from "./stage.jsx";
+import { buildToolWhyText } from "./copyForLLM.js";
 
 const { useState: inspUseState } = React;
 
@@ -80,6 +81,7 @@ function ToolsSeen({ tools }) {
 // the day a tool carries a numeric `relevance`.
 function WhyTool({ trace, step, focusName, pickedName }) {
   const ref = React.useRef(null);
+  const [copied, setCopied] = React.useState(false);
   const tools = React.useMemo(() => {
     const m = new Map();
     for (const s of trace.steps) for (const t of (s.toolsSeen || [])) if (!m.has(t.name)) m.set(t.name, t);
@@ -89,6 +91,7 @@ function WhyTool({ trace, step, focusName, pickedName }) {
   // (re)focus bring it into view + flash it — the click happens in the scene's
   // rack/button (left), this lands in the inspector (right).
   React.useEffect(() => {
+    setCopied(false);
     const el = ref.current;
     if (!el) return;
     if (typeof el.scrollIntoView === "function") el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -105,10 +108,23 @@ function WhyTool({ trace, step, focusName, pickedName }) {
   const isProxy = ranked.some((r) => !r.provided);
   // a skill surfaces as a tool but it's an instruction — call it what it is
   const noun = isSkillName(focus) ? "skill" : "tool";
+  // the bars are a proxy; the REAL why = hand the trajectory to an LLM. Copy it.
+  const copyForLlm = async () => {
+    const text = buildToolWhyText({ trace, step, ranked, focusName: focus });
+    try { await navigator.clipboard.writeText(text); } catch { /* clipboard unavailable (insecure ctx) */ }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
   return (
     <div ref={ref} className="why-wrap">
     <Section label={"🔍 Why this " + noun + "?"}>
       <div className="why-sub">{isProxy ? "relevance — term match with the task (a proxy, not the model's own reason)" : "relevance score"}</div>
+      {isProxy && (
+        <button type="button" className="why-copy" onClick={copyForLlm}
+          title={"Copy the task + trajectory + " + noun + " menu as an LLM-ready prompt — paste into Claude/ChatGPT for the real why"}>
+          {copied ? "✓ Copied — paste into your LLM" : "📋 Copy for LLM (the real why)"}
+        </button>
+      )}
       <ul className="why-tool">
         {ranked.map((r, i) => {
           const isFocus = r.name === focus;

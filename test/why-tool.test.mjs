@@ -37,6 +37,13 @@ describe("<Inspector> — Why this tool? (rack mode, click-only)", () => {
     expect(renderInsp({ toolMenu: "rack", whyTool: "get_interface_status" }).container.querySelector(".why-tool")).toBeTruthy();
   });
 
+  it("offers a 'Copy for LLM' button (the proxy isn't the real why)", () => {
+    const { container } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status" });
+    const btn = container.querySelector(".why-copy");
+    expect(btn).toBeTruthy();
+    expect(btn.textContent).toMatch(/copy for llm/i);
+  });
+
   it("ranks the tools with bars and tags the picked one", () => {
     const { container, getByText } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status" });
     expect(getByText(/Why this tool\?/)).toBeTruthy();
