@@ -1,6 +1,6 @@
 import React from "react";
-import { describe, it, expect, afterEach } from "vitest";
-import { render, cleanup } from "@testing-library/react";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { render, cleanup, fireEvent } from "@testing-library/react";
 import { Inspector } from "../src/inspector.jsx";
 
 afterEach(cleanup);
@@ -67,5 +67,29 @@ describe("<Inspector> — Why this tool? (rack mode, click-only)", () => {
 
   it("shows nothing in card mode even if whyTool is set", () => {
     expect(renderInsp({ toolMenu: "card", whyTool: "get_interface_status" }).container.querySelector(".why-tool")).toBeNull();
+  });
+
+  it("offers 'Explain (live)' only when onExplain is wired", () => {
+    expect(renderInsp({ toolMenu: "rack", whyTool: "get_interface_status" }).container.querySelector(".why-explain")).toBeNull();
+    const onExplain = vi.fn().mockResolvedValue("because…");
+    expect(renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", onExplain }).container.querySelector(".why-explain")).toBeTruthy();
+  });
+
+  it("calls onExplain with the tool-choice context + prompt and renders the reason in place", async () => {
+    const onExplain = vi.fn().mockResolvedValue("It picked it because the step was about the interface flap.");
+    const { getByText, findByText } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", onExplain });
+    fireEvent.click(getByText(/Explain \(live\)/));
+    await findByText(/because the step was about the interface flap/);
+    const ctx = onExplain.mock.calls[0][0];
+    expect(ctx.tool).toBe("get_interface_status");
+    expect(ctx.prompt).toMatch(/Why did the agent pick/);
+    expect(ctx.step).toBe(askStep);
+  });
+
+  it("renders an error message if onExplain rejects", async () => {
+    const onExplain = vi.fn().mockRejectedValue(new Error("no API key"));
+    const { getByText, findByText } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", onExplain });
+    fireEvent.click(getByText(/Explain \(live\)/));
+    await findByText(/Couldn't get the explanation: no API key/);
   });
 });

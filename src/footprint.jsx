@@ -18,7 +18,7 @@ import * as AgentTheme from "./theme.js";
    four components into their own layout (they're each independent).
    (window.AgentFootprint remains as a deprecated alias.)
    ============================================================ */
-export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, live = false, toolMenu = "card", style, mobile, storageKey, onRender, onSelect, linkResolver, renderDetail }) {
+export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor = true, loop = false, live = false, toolMenu = "card", onExplain, style, mobile, storageKey, onRender, onSelect, linkResolver, renderDetail }) {
   const { useState, useRef, useMemo, useEffect } = React;
   const rootRef = useRef(null);
   // persist scrub position per-trace so two players on one page don't collide;
@@ -145,7 +145,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
             <div className="ws-insp">
               {rightView === "notepad"
                 ? <Notepad trace={trace} index={index} onCollapse={() => setInspOpen(false)} view={rightView} setView={setRightView} />
-                : <Inspector step={step} index={index} total={trace.steps.length} onCollapse={() => setInspOpen(false)} view={rightView} setView={setRightView} link={stepLink} detail={stepDetail} trace={trace} toolMenu={toolMenu} whyTool={whyTool} />}
+                : <Inspector step={step} index={index} total={trace.steps.length} onCollapse={() => setInspOpen(false)} view={rightView} setView={setRightView} link={stepLink} detail={stepDetail} trace={trace} toolMenu={toolMenu} whyTool={whyTool} onExplain={onExplain} />}
             </div>
           </>
         ) : (

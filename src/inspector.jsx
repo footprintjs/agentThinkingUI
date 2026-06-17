@@ -79,9 +79,11 @@ function ToolsSeen({ tools }) {
 // picked one tagged and the focused one's matched terms shown. The score is a
 // lexical PROXY today (honestly labelled) — the panel swaps in real attribution
 // the day a tool carries a numeric `relevance`.
-function WhyTool({ trace, step, focusName, pickedName }) {
+function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
   const ref = React.useRef(null);
   const [copied, setCopied] = React.useState(false);
+  const [explaining, setExplaining] = React.useState(false);
+  const [explanation, setExplanation] = React.useState(null);
   const tools = React.useMemo(() => {
     const m = new Map();
     for (const s of trace.steps) for (const t of (s.toolsSeen || [])) if (!m.has(t.name)) m.set(t.name, t);
@@ -92,6 +94,8 @@ function WhyTool({ trace, step, focusName, pickedName }) {
   // rack/button (left), this lands in the inspector (right).
   React.useEffect(() => {
     setCopied(false);
+    setExplanation(null);
+    setExplaining(false);
     const el = ref.current;
     if (!el) return;
     if (typeof el.scrollIntoView === "function") el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -115,15 +119,44 @@ function WhyTool({ trace, step, focusName, pickedName }) {
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   };
+  // live path: hand the same prompt to the consumer's LLM (onExplain) and render
+  // the real reason in place — no copy-paste. The lib stays pure; the consumer
+  // owns the call (and the key).
+  const explainLive = async () => {
+    if (!onExplain || explaining) return;
+    setExplaining(true);
+    setExplanation(null);
+    try {
+      const prompt = buildToolWhyText({ trace, step, ranked, focusName: focus });
+      const res = await onExplain({ trace, step, tool: focus, prompt });
+      const reason = typeof res === "string" ? res : (res && res.reason) || "";
+      setExplanation(reason || "(the explainer returned nothing)");
+    } catch (e) {
+      setExplanation("⚠ Couldn't get the explanation: " + (e && e.message ? e.message : String(e)));
+    } finally {
+      setExplaining(false);
+    }
+  };
   return (
     <div ref={ref} className="why-wrap">
     <Section label={"🔍 Why this " + noun + "?"}>
       <div className="why-sub">{isProxy ? "relevance — term match with the task (a proxy, not the model's own reason)" : "relevance score"}</div>
-      {isProxy && (
-        <button type="button" className="why-copy" onClick={copyForLlm}
-          title={"Copy the task + trajectory + " + noun + " menu as an LLM-ready prompt — paste into Claude/ChatGPT for the real why"}>
-          {copied ? "✓ Copied — paste into your LLM" : "📋 Copy for LLM (the real why)"}
-        </button>
+      <div className="why-actions">
+        {isProxy && (
+          <button type="button" className="why-copy" onClick={copyForLlm}
+            title={"Copy the task + trajectory + " + noun + " menu as an LLM-ready prompt — paste into Claude/ChatGPT for the real why"}>
+            {copied ? "✓ Copied — paste into your LLM" : "📋 Copy for LLM"}
+          </button>
+        )}
+        {onExplain && (
+          <button type="button" className="why-explain" onClick={explainLive} disabled={explaining}
+            title={"Ask the live LLM why the agent picked this " + noun}>
+            {explaining ? "✨ Explaining…" : "✨ Explain (live)"}
+          </button>
+        )}
+      </div>
+      {explanation && (
+        <div className="why-explanation"><span className="we-tag">✨ live</span>{explanation}</div>
       )}
       <ul className="why-tool">
         {ranked.map((r, i) => {
@@ -216,7 +249,7 @@ export function Notepad({ trace, index, onCollapse, view, setView }) {
   );
 }
 
-export function Inspector({ step, index, total, onCollapse, view, setView, link, detail, trace, toolMenu, whyTool }) {
+export function Inspector({ step, index, total, onCollapse, view, setView, link, detail, trace, toolMenu, whyTool, onExplain }) {
   const accentClass = step.error ? "k-error" :
     step.kind === "answer" ? "k-answer" :
     step.kind === "prompt" ? "k-prompt" :
@@ -339,7 +372,7 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
             tool in the rack or the "Why this tool?" button (whyTool set), then
             auto-scrolls into view. Not shown on every step → keeps the UI clean. */}
         {toolMenu === "rack" && trace && whyTool && (
-          <WhyTool trace={trace} step={step} focusName={whyTool} pickedName={step.tool} />
+          <WhyTool trace={trace} step={step} focusName={whyTool} pickedName={step.tool} onExplain={onExplain} />
         )}
 
         {/* COST */}
