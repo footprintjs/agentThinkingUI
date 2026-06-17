@@ -6,6 +6,16 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-06-17
+
+### Added
+- **"Why this tool?" button + click-only Why panel (rack mode).** A discoverable
+  "Why this tool?" button floats below the rack; the inspector's Why panel is now
+  **click-only** — it appears when you click the button or a rack row (not on
+  every step → clean by default) and **auto-scrolls into view + flashes** on
+  focus. Clicking opens the inspector on its tab. Says **"Why this skill?"** when
+  the focused entry is a skill.
+
 ## [0.14.1] - 2026-06-17
 
 ### Fixed
