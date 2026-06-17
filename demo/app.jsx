@@ -27,7 +27,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "accent": "teal-amber",
   "metaphor": true,
   "loop": false,
-  "toolMenu": "card"
+  "toolMenu": "rack"
 }/*EDITMODE-END*/;
 
 // a tiny real OpenTelemetry GenAI (OTLP/JSON) trace — prefilled in the gear's
