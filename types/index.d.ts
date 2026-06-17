@@ -37,6 +37,10 @@ export interface AgentThinkingUIProps {
   brand?: ReactNode;
   /** show the storytelling tags (default true) */
   metaphor?: boolean;
+  /** tool-menu layout (default "card"): "card" pops the picked tool out of the
+   *  toolbox with a "saw N" menu; "rack" shows a vertical rack of every tool the
+   *  model saw, the picked one lit, with a "Why this tool?" inspector panel. */
+  toolMenu?: "card" | "rack";
   /** auto-loop playback */
   loop?: boolean;
   /** live monitoring: tail the newest step as the trace grows */

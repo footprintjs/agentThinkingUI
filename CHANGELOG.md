@@ -6,6 +6,13 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-06-17
+
+### Fixed
+- Declare the `toolMenu` prop on `AgentThinkingUIProps` in the TypeScript types —
+  it was added to the component in 0.13.0 but missing from the `.d.ts`, so TS
+  consumers (e.g. neo) couldn't set `toolMenu="rack"` without a type error.
+
 ## [0.14.0] - 2026-06-17
 
 ### Added
