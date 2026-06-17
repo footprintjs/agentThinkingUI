@@ -6,6 +6,26 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-06-17
+
+### Added
+- **"Saw N, picked 1" tool menu.** Under the picked-tool card, a compact menu of
+  every tool the model saw for that call (from `step.toolsSeen`) — the picked one
+  lit, the rest dimmed; skills get the steering-doc glyph. Surfaces the prompt's
+  tool menu at a glance ("the model chose this out of N"). Reuses existing trace
+  data — no recorder change. New exports: `ToolMenu`, `isSkillName`.
+
+### Changed
+- **Calmer scene.** The brain mascot now scales down — container-responsive and
+  capped (`iconScaleFor`) — *without* shrinking the tool card, so the new menu
+  stays readable; only the brain end of the connector arc tracks the shrink. New
+  `--af-icon-scale` CSS variable (defaults to 1; unchanged for swarm/backtrack).
+- **Clearer transport.** Back/Next are the prominent filled pair, Play/Restart are
+  calm ghost buttons, and hovering no longer lifts the buttons (the vertical jump
+  read as a confusing height change).
+- **Legend on demand.** The colour key is now a compact "key" chip that reveals the
+  full legend on hover/focus, reclaiming toolbar width.
+
 ## [0.11.0] - 2026-06-11
 
 ### Added
