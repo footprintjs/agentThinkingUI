@@ -282,7 +282,8 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools }) {
   const useRack = toolMenu === "rack" && Array.isArray(rackTools) && rackTools.length > 0;
   const rackV = useRack ? rackView(rackTools, isTool ? step.tool : null) : null;
   const toolY = rackV && rackV.pickedIndex >= 0 ? rackPickedY(by, rackV.rowCount, rackV.pickedIndex) : by;
-  const G = arcLayout(w, h, by, straight, iconScale, toolY);
+  // rack mode: the brain→tool "ask" is a straight line pointing at the picked row
+  const G = arcLayout(w, h, by, straight, iconScale, toolY, useRack);
   const active = isTool ? (dir === "ask" ? G.down : G.up) : null;
 
   const cloudTag =

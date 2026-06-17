@@ -38,7 +38,7 @@ export function rackPickedY(cy, count, index, itemH = RACK_ITEM_H) {
 
 // both sweeping arcs + anchors. ask dips LOW to the toolbox; the reply
 // rises HIGH, starting from the popped tool card.
-export function arcLayout(w, h, by, straight, iconScale = 1, toolY = by) {
+export function arcLayout(w, h, by, straight, iconScale = 1, toolY = by, straightLine = false) {
   const L = AF_LAYOUT;
   const bx = w * L.brainX;
   const tx = w * L.toolX, ty = by;
@@ -60,7 +60,13 @@ export function arcLayout(w, h, by, straight, iconScale = 1, toolY = by) {
     };
   }
 
-  const down = {
+  // RACK mode draws the brain→tool "ask" as a STRAIGHT line (it points right at
+  // the picked row — cleaner than a sweep). The tool→brain "reply" stays CURVED
+  // (like the old one), and CARD mode keeps both curved to the toolbox.
+  const down = straightLine ? {
+    d: `M ${bRight} ${by + 10} L ${tLeft} ${toolY + 10}`,
+    hx: tLeft, hy: toolY + 10, ang: Math.atan2((toolY + 10) - (by + 10), tLeft - bRight) * 180 / Math.PI,
+  } : {
     d: `M ${bRight} ${by + 10} Q ${midX} ${by + off} ${tLeft} ${toolY + 10}`,
     hx: tLeft, hy: toolY + 10, ang: Math.atan2((toolY + 10) - (by + off), tLeft - midX) * 180 / Math.PI,
   };

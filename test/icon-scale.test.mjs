@@ -76,6 +76,19 @@ describe("arcLayout — edge offsets track the icon scale", () => {
     const g = arcLayout(w, h, by, false, 1);
     expect(g.down.hy).toBeCloseTo(by + 10, 5);
   });
+
+  it("rack mode: brain→tool 'ask' is STRAIGHT, tool→brain 'reply' stays CURVED", () => {
+    const g = arcLayout(w, h, by, false, 1, by + 40, true); // straightLine = true
+    expect(g.down.d).toMatch(/ L /); // ask = straight line
+    expect(g.down.d).not.toMatch(/ Q /);
+    expect(g.up.d).toMatch(/ Q /); // reply = curved (like the old one)
+  });
+
+  it("card mode: both arcs are curved", () => {
+    const g = arcLayout(w, h, by, false, 1, by, false);
+    expect(g.down.d).toMatch(/ Q /);
+    expect(g.up.d).toMatch(/ Q /);
+  });
 });
 
 describe("rackPickedY — arrow target for the picked rack row", () => {
