@@ -6,6 +6,15 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-06-17
+
+### Added
+- **`onExplain` — live LLM explanation in the Why panel (rack mode).** The live
+  counterpart to Copy-for-LLM: wire the "✨ Explain (live)" button to your LLM via
+  the `onExplain` callback prop; the panel hands it a ready-made prompt and renders
+  the real reason IN PLACE (no copy-paste, no proxy caveat). The library makes no
+  LLM calls itself — you own the call and the key. Loading + error states handled.
+
 ## [0.16.0] - 2026-06-17
 
 ### Added
