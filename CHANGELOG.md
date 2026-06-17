@@ -6,6 +6,18 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-06-17
+
+### Added
+- **"Why this tool?" inspector panel (rack mode).** Click a tool in the rack and
+  the inspector ranks the tools the model saw by relevance (bars), tags the
+  picked one, and shows the focused tool's matched terms. The score is a LEXICAL
+  proxy today — term overlap between the step's reasoning + the task and each
+  tool, honestly labelled "a proxy, not the model's own reason" — and swaps in
+  real attribution the day a tool carries a numeric `relevance`. New module
+  `src/relevance.js` (`toolRelevance`, `relevanceTerms`); rack rows are
+  keyboard-accessible buttons; `<AgentThinkingUI>` lifts the clicked-tool state.
+
 ## [0.13.0] - 2026-06-17
 
 ### Added
