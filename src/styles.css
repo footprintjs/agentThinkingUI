@@ -369,6 +369,25 @@
 :where(.atui, .atui-swarm) .tool-rack .tr-item.skill.on .tr-ico { background: var(--instr); color: var(--on-instr, #fff); }
 :where(.atui, .atui-swarm) .tool-rack .tr-item.skill.on .tr-name { color: var(--instr-deep); }
 :where(.atui, .atui-swarm) .tool-rack .tr-more { height: var(--tr-item-h, 48px); display: grid; place-items: center; font-family: var(--font-mono); font-size: calc(10px * var(--af-text-scale)); color: var(--ink-faint); }
+/* clickable rack (rack mode): each tool opens the inspector's "Why this tool?" */
+:where(.atui, .atui-swarm) .tool-rack.clickable .tr-item { cursor: pointer; }
+:where(.atui, .atui-swarm) .tool-rack.clickable .tr-item:hover { opacity: 1; background: var(--paper-3, var(--paper-2)); }
+:where(.atui, .atui-swarm) .tool-rack.clickable .tr-item:focus-visible { outline: 2px solid var(--call); outline-offset: 1px; }
+
+/* "Why this tool?" inspector panel — tools ranked by relevance (bars). */
+:where(.atui, .atui-swarm) .why-sub { font-size: calc(11px * var(--af-text-scale)); color: var(--ink-faint); margin-bottom: 9px; line-height: 1.4; }
+:where(.atui, .atui-swarm) .why-tool { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+:where(.atui, .atui-swarm) .why-tool .wt-row { padding: 7px 9px; border-radius: 9px; border: 1px solid transparent; }
+:where(.atui, .atui-swarm) .why-tool .wt-row.focus { border-color: var(--line); background: var(--paper-2); }
+:where(.atui, .atui-swarm) .why-tool .wt-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+:where(.atui, .atui-swarm) .why-tool .wt-name { font-family: var(--font-mono); font-size: calc(11.5px * var(--af-text-scale)); color: var(--ink); font-weight: 700; }
+:where(.atui, .atui-swarm) .why-tool .wt-row.picked .wt-name { color: var(--call-deep); }
+:where(.atui, .atui-swarm) .why-tool .wt-tag { font-family: var(--font-mono); font-size: calc(9px * var(--af-text-scale)); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--on-call, #fff); background: var(--call); border-radius: 5px; padding: 1px 6px; }
+:where(.atui, .atui-swarm) .why-tool .wt-val { margin-left: auto; font-family: var(--font-mono); font-size: calc(11px * var(--af-text-scale)); color: var(--ink-soft); }
+:where(.atui, .atui-swarm) .why-tool .wt-meter { display: block; height: 7px; border-radius: 999px; background: var(--paper-3, var(--paper-2)); overflow: hidden; }
+:where(.atui, .atui-swarm) .why-tool .wt-fill { display: block; height: 100%; border-radius: 999px; background: var(--ink-faint); transition: width .3s ease; }
+:where(.atui, .atui-swarm) .why-tool .wt-row.picked .wt-fill { background: var(--call); }
+:where(.atui, .atui-swarm) .why-tool .wt-matched { margin-top: 6px; font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-soft); }
 /* a tool that returns BOTH is two-tone: data (teal) shell + instruction (amber) icon */
 :where(.atui, .atui-swarm) .k-both .tool-out { border-color: var(--data); box-shadow: 0 0 0 3px var(--data-tint), var(--shadow-md); }
 :where(.atui, .atui-swarm) .k-both .tool-out .to-ico { background: var(--instr); }

@@ -1,4 +1,5 @@
 import React from "react";
+import { toolRelevance } from "./relevance.js";
 
 const { useState: inspUseState } = React;
 
@@ -71,6 +72,50 @@ function ToolsSeen({ tools }) {
   );
 }
 
+// "Why this tool?" — rack mode. Clicking a tool in the rack focuses it here:
+// the tools the model saw, ranked by relevance to the task (bars), with the
+// picked one tagged and the focused one's matched terms shown. The score is a
+// lexical PROXY today (honestly labelled) — the panel swaps in real attribution
+// the day a tool carries a numeric `relevance`.
+function WhyTool({ trace, step, focusName, pickedName }) {
+  const tools = React.useMemo(() => {
+    const m = new Map();
+    for (const s of trace.steps) for (const t of (s.toolsSeen || [])) if (!m.has(t.name)) m.set(t.name, t);
+    return [...m.values()];
+  }, [trace]);
+  if (tools.length < 2) return null;
+  // score against THIS step's reasoning (what the model was thinking when it
+  // chose) plus the task — that's the per-step "why", not just the overall ask.
+  const query = [step && step.brain, trace.task].filter(Boolean).join(" ");
+  const ranked = toolRelevance(query, tools);
+  const focus = focusName || pickedName;
+  const isProxy = ranked.some((r) => !r.provided);
+  return (
+    <Section label="🔍 Why this tool?">
+      <div className="why-sub">{isProxy ? "relevance — term match with the task (a proxy, not the model's own reason)" : "relevance score"}</div>
+      <ul className="why-tool">
+        {ranked.map((r, i) => {
+          const isFocus = r.name === focus;
+          const isPicked = r.name === pickedName;
+          return (
+            <li key={r.name + i} className={"wt-row" + (isFocus ? " focus" : "") + (isPicked ? " picked" : "")}>
+              <div className="wt-head">
+                <code className="wt-name">{r.name}</code>
+                {isPicked && <span className="wt-tag">picked</span>}
+                <span className="wt-val">{r.score.toFixed(2)}</span>
+              </div>
+              <span className="wt-meter"><span className="wt-fill" style={{ width: Math.round(r.score * 100) + "%" }} /></span>
+              {isFocus && r.matched && r.matched.length > 0 && (
+                <div className="wt-matched">matched: {r.matched.join(", ")}</div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </Section>
+  );
+}
+
 function PanelTabs({ view, setView }) {
   return (
     <div className="panel-tabs" role="tablist" aria-label="Right panel view">
@@ -138,7 +183,7 @@ export function Notepad({ trace, index, onCollapse, view, setView }) {
   );
 }
 
-export function Inspector({ step, index, total, onCollapse, view, setView, link, detail }) {
+export function Inspector({ step, index, total, onCollapse, view, setView, link, detail, trace, toolMenu, whyTool }) {
   const accentClass = step.error ? "k-error" :
     step.kind === "answer" ? "k-answer" :
     step.kind === "prompt" ? "k-prompt" :
@@ -255,6 +300,11 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
             </div>
             <ToolsSeen tools={step.toolsSeen} />
           </Section>
+        )}
+
+        {/* WHY THIS TOOL? — rack mode only; focus follows the clicked rack tool */}
+        {toolMenu === "rack" && trace && (step.tool || whyTool) && (
+          <WhyTool trace={trace} step={step} focusName={whyTool} pickedName={step.tool} />
         )}
 
         {/* COST */}

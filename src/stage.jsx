@@ -61,21 +61,27 @@ export function rackView(tools, picked, cap = RACK_CAP) {
 // the picked one lit and the rest dimmed — "the model chose this out of N", laid
 // out spatially so the connector arrow can point right at the chosen tool. Takes a
 // precomputed `view` (from rackView) so the scene can derive the arrow target from
-// the same layout. Skills get the doc glyph; tools get the tool icon.
-export function ToolRack({ view }) {
+// the same layout. Skills get the doc glyph; tools get the tool icon. When `onPick`
+// is supplied, rows are clickable — click a tool to see WHY it scored (the
+// inspector's "Why this tool?" panel).
+export function ToolRack({ view, onPick }) {
   const { rows, moreCount, pickedIndex } = view || {};
   if (!rows || !rows.length) return null;
+  const clickable = typeof onPick === "function";
   return (
-    <div className="tool-rack" style={{ "--tr-item-h": RACK_ITEM_H + "px" }} role="list" aria-label="tools the model can use">
+    <div className={"tool-rack" + (clickable ? " clickable" : "")} style={{ "--tr-item-h": RACK_ITEM_H + "px" }} role="list" aria-label="tools the model can use">
       {rows.map((t, i) => {
         const on = i === pickedIndex;
         return (
           <div
             key={(t.name || "") + i}
-            role="listitem"
+            role={clickable ? "button" : "listitem"}
+            tabIndex={clickable ? 0 : undefined}
+            onClick={clickable ? () => onPick(t.name) : undefined}
+            onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick(t.name); } } : undefined}
             className={"tr-item" + (on ? " on" : "") + (isSkillName(t.name) ? " skill" : "")}
             aria-current={on ? "true" : undefined}
-            title={t.name + (t.description ? " — " + t.description : "") + (on ? "  (picked)" : "")}
+            title={t.name + (t.description ? " — " + t.description : "") + (on ? "  (picked)" : clickable ? "  (click: why?)" : "")}
           >
             <span className="tr-ico"><MenuGlyph name={t.name} /></span>
             <span className="tr-name">{t.name}</span>
@@ -258,7 +264,7 @@ function Toolbox({ active }) {
   );
 }
 
-function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools }) {
+function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToolClick }) {
   const { w, h } = dims;
   const resolved = React.useContext(AgentThemeContext);
 
@@ -371,7 +377,7 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools }) {
           on a call, with the "saw N" menu beneath. */}
       {useRack ? (
         <div className={"tool-node rack" + (isTool ? "" : " idle")} style={{ left: G.tx, top: G.ty }}>
-          <ToolRack view={rackV} />
+          <ToolRack view={rackV} onPick={onToolClick} />
         </div>
       ) : isTool ? (
         <div className="tool-node" style={{ left: G.tx, top: G.ty }}>
@@ -391,7 +397,7 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools }) {
   );
 }
 
-export function Stage({ trace, step, index, metaphor, straight, toolMenu }) {
+export function Stage({ trace, step, index, metaphor, straight, toolMenu, onToolClick }) {
   const sceneRef = sUseRef(null);
   const [dims, setDims] = sUseState({ w: 720, h: 460 });
 
@@ -425,7 +431,7 @@ export function Stage({ trace, step, index, metaphor, straight, toolMenu }) {
   return (
     <div className={"panel stage " + accentClass}>
       <div className="flowscene" ref={sceneRef}>
-        <SceneInner key={index} step={step} dims={dims} metaphor={metaphor} straight={straight} toolMenu={toolMenu} rackTools={rackTools} />
+        <SceneInner key={index} step={step} dims={dims} metaphor={metaphor} straight={straight} toolMenu={toolMenu} rackTools={rackTools} onToolClick={onToolClick} />
       </div>
     </div>
   );

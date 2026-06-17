@@ -39,6 +39,8 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
   const [inspOpen, setInspOpen] = useState(true);
   const [rightView, setRightView] = useState("inspector");
   const [mobileView, setMobileView] = useState("thinking");
+  // rack mode: which tool the user clicked to inspect "why?" (null = the picked one)
+  const [whyTool, setWhyTool] = useState(null);
   const wsRef = useRef(null);
 
   const onSplitDown = (e) => {
@@ -65,6 +67,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
   // (which carries `spanId`/`traceId` from the adapters); also as a DOM
   // CustomEvent so non-React/script-tag hosts can listen. Zero cost when unused.
   useEffect(() => {
+    setWhyTool(null); // each step starts focused on its own picked tool
     if (onSelect) onSelect(step, index);
     const el = rootRef.current;
     if (el && typeof CustomEvent !== "undefined") {
@@ -128,7 +131,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
 
       <div className={"workspace" + (inspOpen ? "" : " insp-collapsed")} ref={wsRef}>
         <div className="ws-runtime" style={inspOpen ? { flex: `0 0 ${runtimePct}%` } : { flex: "1 1 auto" }}>
-          <Stage trace={trace} step={step} index={index} metaphor={metaphor} toolMenu={toolMenu} />
+          <Stage trace={trace} step={step} index={index} metaphor={metaphor} toolMenu={toolMenu} onToolClick={setWhyTool} />
         </div>
 
         {inspOpen ? (
@@ -139,7 +142,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
             <div className="ws-insp">
               {rightView === "notepad"
                 ? <Notepad trace={trace} index={index} onCollapse={() => setInspOpen(false)} view={rightView} setView={setRightView} />
-                : <Inspector step={step} index={index} total={trace.steps.length} onCollapse={() => setInspOpen(false)} view={rightView} setView={setRightView} link={stepLink} detail={stepDetail} />}
+                : <Inspector step={step} index={index} total={trace.steps.length} onCollapse={() => setInspOpen(false)} view={rightView} setView={setRightView} link={stepLink} detail={stepDetail} trace={trace} toolMenu={toolMenu} whyTool={whyTool} />}
             </div>
           </>
         ) : (
