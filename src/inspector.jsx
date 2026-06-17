@@ -1,5 +1,6 @@
 import React from "react";
 import { toolRelevance } from "./relevance.js";
+import { isSkillName } from "./stage.jsx";
 
 const { useState: inspUseState } = React;
 
@@ -78,11 +79,23 @@ function ToolsSeen({ tools }) {
 // lexical PROXY today (honestly labelled) — the panel swaps in real attribution
 // the day a tool carries a numeric `relevance`.
 function WhyTool({ trace, step, focusName, pickedName }) {
+  const ref = React.useRef(null);
   const tools = React.useMemo(() => {
     const m = new Map();
     for (const s of trace.steps) for (const t of (s.toolsSeen || [])) if (!m.has(t.name)) m.set(t.name, t);
     return [...m.values()];
   }, [trace]);
+  // the panel only renders on a click (gated by `whyTool` in the parent), so on
+  // (re)focus bring it into view + flash it — the click happens in the scene's
+  // rack/button (left), this lands in the inspector (right).
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof el.scrollIntoView === "function") el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("why-flash");
+    const t = setTimeout(() => { if (el) el.classList.remove("why-flash"); }, 900);
+    return () => clearTimeout(t);
+  }, [focusName]);
   if (tools.length < 2) return null;
   // score against THIS step's reasoning (what the model was thinking when it
   // chose) plus the task — that's the per-step "why", not just the overall ask.
@@ -90,8 +103,11 @@ function WhyTool({ trace, step, focusName, pickedName }) {
   const ranked = toolRelevance(query, tools);
   const focus = focusName || pickedName;
   const isProxy = ranked.some((r) => !r.provided);
+  // a skill surfaces as a tool but it's an instruction — call it what it is
+  const noun = isSkillName(focus) ? "skill" : "tool";
   return (
-    <Section label="🔍 Why this tool?">
+    <div ref={ref} className="why-wrap">
+    <Section label={"🔍 Why this " + noun + "?"}>
       <div className="why-sub">{isProxy ? "relevance — term match with the task (a proxy, not the model's own reason)" : "relevance score"}</div>
       <ul className="why-tool">
         {ranked.map((r, i) => {
@@ -113,6 +129,7 @@ function WhyTool({ trace, step, focusName, pickedName }) {
         })}
       </ul>
     </Section>
+    </div>
   );
 }
 
@@ -302,8 +319,10 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
           </Section>
         )}
 
-        {/* WHY THIS TOOL? — rack mode only; focus follows the clicked rack tool */}
-        {toolMenu === "rack" && trace && (step.tool || whyTool) && (
+        {/* WHY THIS TOOL? — rack mode, CLICK-ONLY: appears when the user clicks a
+            tool in the rack or the "Why this tool?" button (whyTool set), then
+            auto-scrolls into view. Not shown on every step → keeps the UI clean. */}
+        {toolMenu === "rack" && trace && whyTool && (
           <WhyTool trace={trace} step={step} focusName={whyTool} pickedName={step.tool} />
         )}
 

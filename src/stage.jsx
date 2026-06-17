@@ -89,6 +89,14 @@ export function ToolRack({ view, onPick }) {
         );
       })}
       {moreCount > 0 && <div className="tr-more" aria-label={moreCount + " more tools"}>+{moreCount} more</div>}
+      {/* "Why this tool?" trigger — floats BELOW the rack (absolute, so it doesn't
+          shift the rows off-centre → the arrow geometry stays accurate). Focuses
+          the picked tool in the inspector's Why panel; says "skill" for skills. */}
+      {clickable && pickedIndex >= 0 && (
+        <button type="button" className="tr-why" onClick={() => onPick(rows[pickedIndex].name)}>
+          🔍 Why this {isSkillName(rows[pickedIndex].name) ? "skill" : "tool"}?
+        </button>
+      )}
     </div>
   );
 }

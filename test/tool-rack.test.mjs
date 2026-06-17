@@ -83,4 +83,25 @@ describe("<ToolRack>", () => {
     const { container } = render(React.createElement(ToolRack, { view: rackView([], null) }));
     expect(container.querySelector(".tool-rack")).toBeNull();
   });
+
+  it("shows a 'Why this tool?' button only when clickable + a tool is picked", () => {
+    const view = rackView(mk(4), "tool_2");
+    // no onPick → no button
+    expect(render(React.createElement(ToolRack, { view })).container.querySelector(".tr-why")).toBeNull();
+    cleanup();
+    // onPick + a pick → button present
+    const onPick = (n) => { onPick.last = n; };
+    const { container } = render(React.createElement(ToolRack, { view, onPick }));
+    const btn = container.querySelector(".tr-why");
+    expect(btn).toBeTruthy();
+    expect(btn.textContent).toMatch(/why this tool\?/i);
+    btn.click();
+    expect(onPick.last).toBe("tool_2"); // focuses the picked tool
+  });
+
+  it("the Why button says 'skill' when the picked entry is a skill", () => {
+    const tools = [{ name: "search" }, { name: "load_skill" }];
+    const { container } = render(React.createElement(ToolRack, { view: rackView(tools, "load_skill"), onPick: () => {} }));
+    expect(container.querySelector(".tr-why").textContent).toMatch(/why this skill\?/i);
+  });
 });

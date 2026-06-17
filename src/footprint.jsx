@@ -39,8 +39,11 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
   const [inspOpen, setInspOpen] = useState(true);
   const [rightView, setRightView] = useState("inspector");
   const [mobileView, setMobileView] = useState("thinking");
-  // rack mode: which tool the user clicked to inspect "why?" (null = the picked one)
+  // rack mode: which tool the user clicked to inspect "why?" (null = panel hidden)
   const [whyTool, setWhyTool] = useState(null);
+  // clicking a rack tool / the "Why this tool?" button focuses it AND makes sure
+  // the inspector is open on its tab, so the Why panel is always somewhere to scroll to
+  const showWhy = (name) => { setWhyTool(name); setInspOpen(true); setRightView("inspector"); };
   const wsRef = useRef(null);
 
   const onSplitDown = (e) => {
@@ -131,7 +134,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
 
       <div className={"workspace" + (inspOpen ? "" : " insp-collapsed")} ref={wsRef}>
         <div className="ws-runtime" style={inspOpen ? { flex: `0 0 ${runtimePct}%` } : { flex: "1 1 auto" }}>
-          <Stage trace={trace} step={step} index={index} metaphor={metaphor} toolMenu={toolMenu} onToolClick={setWhyTool} />
+          <Stage trace={trace} step={step} index={index} metaphor={metaphor} toolMenu={toolMenu} onToolClick={showWhy} />
         </div>
 
         {inspOpen ? (

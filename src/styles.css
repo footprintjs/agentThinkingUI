@@ -357,7 +357,11 @@
    on it; the rest are dimmed. Rows are a fixed --tr-item-h (set inline from JS,
    matching the arrow geometry) with no gaps, so the pitch is exact. */
 :where(.atui, .atui-swarm) .tool-node.rack { z-index: 3; }
-:where(.atui, .atui-swarm) .tool-rack { display: flex; flex-direction: column; background: var(--card); border: 1.5px solid var(--call); border-radius: 14px; padding: 6px; box-shadow: 0 0 0 3px var(--call-tint), var(--shadow-md); }
+:where(.atui, .atui-swarm) .tool-rack { position: relative; display: flex; flex-direction: column; background: var(--card); border: 1.5px solid var(--call); border-radius: 14px; padding: 6px; box-shadow: 0 0 0 3px var(--call-tint), var(--shadow-md); }
+/* "Why this tool?" trigger — floats below the rack (absolute → doesn't shift rows) */
+:where(.atui, .atui-swarm) .tool-rack .tr-why { position: absolute; top: calc(100% + 8px); left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink-soft); font-family: var(--font-body); font-size: calc(11.5px * var(--af-text-scale)); font-weight: 700; cursor: pointer; box-shadow: var(--shadow-sm); transition: background .15s, color .15s, border-color .15s; }
+:where(.atui, .atui-swarm) .tool-rack .tr-why:hover { background: var(--call); border-color: var(--call-deep); color: var(--on-call, #fff); }
+:where(.atui, .atui-swarm) .tool-rack .tr-why:focus-visible { outline: 2px solid var(--call); outline-offset: 1px; }
 :where(.atui, .atui-swarm) .tool-rack .tr-item { height: var(--tr-item-h, 48px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0 12px; border-radius: 9px; opacity: .42; transition: opacity .2s ease, background .2s ease; }
 :where(.atui, .atui-swarm) .tool-rack .tr-ico { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; background: var(--paper-2); color: var(--ink-soft); }
 :where(.atui, .atui-swarm) .tool-rack .tr-ico svg { width: 15px; height: 15px; }
@@ -375,6 +379,10 @@
 :where(.atui, .atui-swarm) .tool-rack.clickable .tr-item:focus-visible { outline: 2px solid var(--call); outline-offset: 1px; }
 
 /* "Why this tool?" inspector panel — tools ranked by relevance (bars). */
+:where(.atui, .atui-swarm) .why-wrap { border-radius: 10px; }
+/* flash when the panel is (re)focused via a rack/button click, so the auto-scroll jump is obvious */
+:where(.atui, .atui-swarm) .why-wrap.why-flash { animation: whyFlash .9s ease; }
+@keyframes whyFlash { 0% { background: var(--call-tint); box-shadow: 0 0 0 6px var(--call-tint); } 100% { background: transparent; box-shadow: 0 0 0 0 transparent; } }
 :where(.atui, .atui-swarm) .why-sub { font-size: calc(11px * var(--af-text-scale)); color: var(--ink-faint); margin-bottom: 9px; line-height: 1.4; }
 :where(.atui, .atui-swarm) .why-tool { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
 :where(.atui, .atui-swarm) .why-tool .wt-row { padding: 7px 9px; border-radius: 9px; border: 1px solid transparent; }
