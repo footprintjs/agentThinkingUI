@@ -6,6 +6,20 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-06-17
+
+### Added
+- **`toolMenu="rack"` — the model's tool menu as a vertical rack.** A second
+  tool-menu layout, opt-in via `toolMenu="rack"` (default stays `"card"`).
+  Instead of one tool popping out, the toolbox becomes a vertical rack of every
+  tool the model can use (icon + name beneath), the picked one lit and the rest
+  dimmed. The brain's **"ask" connector is a STRAIGHT line that lands on the
+  picked row** (it visibly points at the chosen tool); the "reply" stays curved.
+  Stable across the run (union of all `toolsSeen`); **height-capped** ("+N more"
+  past `RACK_CAP`, always keeping the picked tool visible); skills get the doc
+  glyph. New exports: `ToolRack`, `rackView`, `RACK_CAP`; layout helpers
+  `rackPickedY`, `RACK_ITEM_H`, and `arcLayout`'s `toolY` + `straightLine` params.
+
 ## [0.12.0] - 2026-06-17
 
 ### Added
