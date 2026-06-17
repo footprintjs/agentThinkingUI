@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { iconScaleFor, arcLayout, ICON_SCALE } from "../src/layout.js";
+import { iconScaleFor, arcLayout, ICON_SCALE, rackPickedY, RACK_ITEM_H } from "../src/layout.js";
 
 /**
  * The cast (brain + toolbox + tool card) shares one scale knob. It is CAPPED at
@@ -61,5 +61,39 @@ describe("arcLayout — edge offsets track the icon scale", () => {
     // only the brain shrinks → its arrowhead moves in; the toolbox stays full size
     expect(g.up.hx).toBeCloseTo(bx + 58 * scale, 5);
     expect(g.down.hx).toBeCloseTo(tx - 62, 5);
+  });
+
+  it("aims the tool-END arrowhead at `toolY` (rack mode points it at the picked row)", () => {
+    const toolY = by + 90; // a row below centre
+    const g = arcLayout(w, h, by, false, 1, toolY);
+    expect(g.down.hy).toBeCloseTo(toolY + 10, 5); // down-arc ends at the picked row
+    // the brain end is unaffected
+    const bx = w * 0.25;
+    expect(g.up.hx).toBeCloseTo(bx + 58, 5);
+  });
+
+  it("defaults the tool-END y to centre when toolY is omitted", () => {
+    const g = arcLayout(w, h, by, false, 1);
+    expect(g.down.hy).toBeCloseTo(by + 10, 5);
+  });
+});
+
+describe("rackPickedY — arrow target for the picked rack row", () => {
+  const cy = 276;
+  it("centres the middle row on the rack centre", () => {
+    // 1 row of 1 → centre
+    expect(rackPickedY(cy, 1, 0)).toBeCloseTo(cy, 5);
+    // 3 rows, middle row (index 1) → centre
+    expect(rackPickedY(cy, 3, 1)).toBeCloseTo(cy, 5);
+  });
+  it("places the top row above and the bottom row below by half-spans", () => {
+    expect(rackPickedY(cy, 4, 0)).toBeCloseTo(cy + (0 + 0.5 - 2) * RACK_ITEM_H, 5); // top
+    expect(rackPickedY(cy, 4, 3)).toBeCloseTo(cy + (3 + 0.5 - 2) * RACK_ITEM_H, 5); // bottom
+    expect(rackPickedY(cy, 4, 0)).toBeLessThan(cy);
+    expect(rackPickedY(cy, 4, 3)).toBeGreaterThan(cy);
+  });
+  it("falls back to the centre with no count / no pick", () => {
+    expect(rackPickedY(cy, 0, -1)).toBe(cy);
+    expect(rackPickedY(cy, 4, -1)).toBe(cy);
   });
 });

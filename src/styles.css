@@ -351,6 +351,24 @@
 :where(.atui, .atui-swarm) .tool-out .tm-ico svg { width: 11px; height: 11px; }
 :where(.atui, .atui-swarm) .tool-out .tm-ico.picked { opacity: 1; background: var(--call); color: var(--on-call, #fff); }
 :where(.atui, .atui-swarm) .tool-out .tm-ico.skill.picked { background: var(--instr); color: var(--on-instr, #fff); }
+
+/* RACK mode (toolMenu="rack"): the toolbox is a vertical rack of every tool the
+   model can use (icon + name beneath). The picked tool is lit + the arrow lands
+   on it; the rest are dimmed. Rows are a fixed --tr-item-h (set inline from JS,
+   matching the arrow geometry) with no gaps, so the pitch is exact. */
+:where(.atui, .atui-swarm) .tool-node.rack { z-index: 3; }
+:where(.atui, .atui-swarm) .tool-rack { display: flex; flex-direction: column; background: var(--card); border: 1.5px solid var(--call); border-radius: 14px; padding: 6px; box-shadow: 0 0 0 3px var(--call-tint), var(--shadow-md); }
+:where(.atui, .atui-swarm) .tool-rack .tr-item { height: var(--tr-item-h, 48px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0 12px; border-radius: 9px; opacity: .42; transition: opacity .2s ease, background .2s ease; }
+:where(.atui, .atui-swarm) .tool-rack .tr-ico { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; background: var(--paper-2); color: var(--ink-soft); }
+:where(.atui, .atui-swarm) .tool-rack .tr-ico svg { width: 15px; height: 15px; }
+:where(.atui, .atui-swarm) .tool-rack .tr-name { font-family: var(--font-mono); font-size: calc(10px * var(--af-text-scale)); color: var(--ink-soft); white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+:where(.atui, .atui-swarm) .tool-rack .tr-item.on { opacity: 1; background: var(--call-tint); }
+:where(.atui, .atui-swarm) .tool-rack .tr-item.on .tr-ico { background: var(--call); color: var(--on-call, #fff); }
+:where(.atui, .atui-swarm) .tool-rack .tr-item.on .tr-name { color: var(--call-deep); font-weight: 700; }
+:where(.atui, .atui-swarm) .tool-rack .tr-item.skill.on { background: var(--instr-tint, var(--paper-2)); }
+:where(.atui, .atui-swarm) .tool-rack .tr-item.skill.on .tr-ico { background: var(--instr); color: var(--on-instr, #fff); }
+:where(.atui, .atui-swarm) .tool-rack .tr-item.skill.on .tr-name { color: var(--instr-deep); }
+:where(.atui, .atui-swarm) .tool-rack .tr-more { height: var(--tr-item-h, 48px); display: grid; place-items: center; font-family: var(--font-mono); font-size: calc(10px * var(--af-text-scale)); color: var(--ink-faint); }
 /* a tool that returns BOTH is two-tone: data (teal) shell + instruction (amber) icon */
 :where(.atui, .atui-swarm) .k-both .tool-out { border-color: var(--data); box-shadow: 0 0 0 3px var(--data-tint), var(--shadow-md); }
 :where(.atui, .atui-swarm) .k-both .tool-out .to-ico { background: var(--instr); }

@@ -26,7 +26,8 @@ const ACCENTS = {
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "accent": "teal-amber",
   "metaphor": true,
-  "loop": false
+  "loop": false,
+  "toolMenu": "card"
 }/*EDITMODE-END*/;
 
 // a tiny real OpenTelemetry GenAI (OTLP/JSON) trace — prefilled in the gear's
@@ -189,7 +190,7 @@ function App() {
           ? <MultiAgentFlow key={graphImport ? "import" : flowKey} trace={graph} live={mLive}
               theme={theme} labels={labels} icons={icons} brand={brandMark} />
           : <AgentThinkingUI key={imported ? "otel" : sceneKey} trace={trace} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
-              live={live} theme={theme} labels={labels} icons={icons} brand={brandMark} />}
+              toolMenu={t.toolMenu} live={live} theme={theme} labels={labels} icons={icons} brand={brandMark} />}
       </div>
       <DemoSettings brand={brand} setBrand={setBrand}
         labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons}
@@ -216,6 +217,9 @@ function App() {
             onChange={(v) => setTweak("metaphor", v)} />
           <TweakToggle label="Auto-loop replay" value={t.loop}
             onChange={(v) => setTweak("loop", v)} />
+          <TweakRadio label="Tool menu" value={t.toolMenu}
+            options={["card", "rack"]}
+            onChange={(v) => setTweak("toolMenu", v)} />
         </TweaksPanel>
       )}
     </>

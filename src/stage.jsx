@@ -1,6 +1,6 @@
 import React from "react";
 import { AgentThemeContext } from "./context.js";
-import { arcLayout, AF_LAYOUT, iconScaleFor } from "./layout.js";
+import { arcLayout, AF_LAYOUT, iconScaleFor, RACK_ITEM_H, rackPickedY } from "./layout.js";
 
 const { useRef: sUseRef, useState: sUseState, useLayoutEffect } = React;
 
@@ -34,6 +34,57 @@ function MenuGlyph({ name }) {
     );
   }
   return <ToolIcon name={name} />;
+}
+
+// Rack mode ("toolMenu: 'rack'") shows a max of RACK_CAP rows; past that it keeps
+// (CAP−1) tools + a "+N more" summary row. The picked tool is ALWAYS kept visible
+// (swapped into the last head slot if it fell into the overflow), so the arrow can
+// always land on it. Pure data — exported for testing.
+export const RACK_CAP = 7;
+export function rackView(tools, picked, cap = RACK_CAP) {
+  if (!tools || !tools.length) return { rows: [], moreCount: 0, pickedIndex: -1, rowCount: 0 };
+  let rows = tools, moreCount = 0;
+  if (tools.length > cap) {
+    const headN = cap - 1; // reserve one row for the "+N more" summary
+    const pickedIdx = picked ? tools.findIndex((t) => t.name === picked) : -1;
+    rows = pickedIdx >= headN
+      ? [...tools.slice(0, headN - 1), tools[pickedIdx]] // keep the picked tool visible
+      : tools.slice(0, headN);
+    moreCount = tools.length - rows.length;
+  }
+  const pickedIndex = picked ? rows.findIndex((t) => t.name === picked) : -1;
+  const rowCount = rows.length + (moreCount > 0 ? 1 : 0); // the "+N" row occupies a row too
+  return { rows, moreCount, pickedIndex, rowCount };
+}
+
+// The rack: a vertical stack of the tools the model can use (icon + name beneath),
+// the picked one lit and the rest dimmed — "the model chose this out of N", laid
+// out spatially so the connector arrow can point right at the chosen tool. Takes a
+// precomputed `view` (from rackView) so the scene can derive the arrow target from
+// the same layout. Skills get the doc glyph; tools get the tool icon.
+export function ToolRack({ view }) {
+  const { rows, moreCount, pickedIndex } = view || {};
+  if (!rows || !rows.length) return null;
+  return (
+    <div className="tool-rack" style={{ "--tr-item-h": RACK_ITEM_H + "px" }} role="list" aria-label="tools the model can use">
+      {rows.map((t, i) => {
+        const on = i === pickedIndex;
+        return (
+          <div
+            key={(t.name || "") + i}
+            role="listitem"
+            className={"tr-item" + (on ? " on" : "") + (isSkillName(t.name) ? " skill" : "")}
+            aria-current={on ? "true" : undefined}
+            title={t.name + (t.description ? " — " + t.description : "") + (on ? "  (picked)" : "")}
+          >
+            <span className="tr-ico"><MenuGlyph name={t.name} /></span>
+            <span className="tr-name">{t.name}</span>
+          </div>
+        );
+      })}
+      {moreCount > 0 && <div className="tr-more" aria-label={moreCount + " more tools"}>+{moreCount} more</div>}
+    </div>
+  );
 }
 
 // "saw N, picked 1" — under the popped tool card, a compact row of the tools the
@@ -207,7 +258,7 @@ function Toolbox({ active }) {
   );
 }
 
-function SceneInner({ step, dims, metaphor, straight }) {
+function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools }) {
   const { w, h } = dims;
   const resolved = React.useContext(AgentThemeContext);
 
@@ -226,7 +277,12 @@ function SceneInner({ step, dims, metaphor, straight }) {
   // one scale for the cast — capped + container-responsive; feeds the CSS icon
   // sizes (via --af-icon-scale on the scene) AND the arc geometry, in lockstep.
   const iconScale = iconScaleFor(w);
-  const G = arcLayout(w, h, by, straight, iconScale);
+  // rack mode: the toolbox is a vertical rack of all tools; the arrow points at
+  // the PICKED tool's row, so derive its y from the same layout the rack renders.
+  const useRack = toolMenu === "rack" && Array.isArray(rackTools) && rackTools.length > 0;
+  const rackV = useRack ? rackView(rackTools, isTool ? step.tool : null) : null;
+  const toolY = rackV && rackV.pickedIndex >= 0 ? rackPickedY(by, rackV.rowCount, rackV.pickedIndex) : by;
+  const G = arcLayout(w, h, by, straight, iconScale, toolY);
   const active = isTool ? (dir === "ask" ? G.down : G.up) : null;
 
   const cloudTag =
@@ -309,8 +365,14 @@ function SceneInner({ step, dims, metaphor, straight }) {
         <div className="brain-label">{afLabels(resolved).agent}</div>
       </div>
 
-      {/* toolbox (right) — the tool pops out the top on a call */}
-      {isTool ? (
+      {/* toolbox (right). RACK mode: a vertical rack of every tool, picked one lit
+          (the arrow points at it). CARD mode (default): the tool pops out the top
+          on a call, with the "saw N" menu beneath. */}
+      {useRack ? (
+        <div className={"tool-node rack" + (isTool ? "" : " idle")} style={{ left: G.tx, top: G.ty }}>
+          <ToolRack view={rackV} />
+        </div>
+      ) : isTool ? (
         <div className="tool-node" style={{ left: G.tx, top: G.ty }}>
           <div className="tool-out">
             <span className="to-ico"><ToolIcon name={step.tool} /></span>
@@ -328,9 +390,19 @@ function SceneInner({ step, dims, metaphor, straight }) {
   );
 }
 
-export function Stage({ trace, step, index, metaphor, straight }) {
+export function Stage({ trace, step, index, metaphor, straight, toolMenu }) {
   const sceneRef = sUseRef(null);
   const [dims, setDims] = sUseState({ w: 720, h: 460 });
+
+  // RACK mode shows a STABLE rack across the whole run (so it doesn't reshuffle as
+  // you scrub) — the union of every tool the model saw, in first-seen order. The
+  // lit row changes per step; the rack itself stays put. Cheap, but memoised.
+  const rackTools = React.useMemo(() => {
+    if (toolMenu !== "rack") return null;
+    const seen = new Map();
+    for (const s of trace.steps) for (const t of (s.toolsSeen || [])) if (!seen.has(t.name)) seen.set(t.name, t);
+    return [...seen.values()];
+  }, [trace, toolMenu]);
 
   useLayoutEffect(() => {
     const el = sceneRef.current;
@@ -352,7 +424,7 @@ export function Stage({ trace, step, index, metaphor, straight }) {
   return (
     <div className={"panel stage " + accentClass}>
       <div className="flowscene" ref={sceneRef}>
-        <SceneInner key={index} step={step} dims={dims} metaphor={metaphor} straight={straight} />
+        <SceneInner key={index} step={step} dims={dims} metaphor={metaphor} straight={straight} toolMenu={toolMenu} rackTools={rackTools} />
       </div>
     </div>
   );

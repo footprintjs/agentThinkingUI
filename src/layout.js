@@ -24,14 +24,28 @@ export function iconScaleFor(w) {
   return Math.max(ICON_SCALE.min, Math.min(ICON_SCALE.max, s));
 }
 
+// Rack ("toolMenu: 'rack'") row pitch in px — the vertical distance between tool
+// rows. Single source for BOTH the CSS row height (--tr-item-h, set inline) and
+// the arrow geometry (rackPickedY), so the arrowhead lands dead-centre on a row.
+export const RACK_ITEM_H = 48;
+// Vertical centre of the picked tool's row, for a rack centred on `cy`. Rows are
+// stacked top→bottom; the block is centred so row `index` of `count` sits at
+// cy + (index + 0.5 − count/2) × itemH.
+export function rackPickedY(cy, count, index, itemH = RACK_ITEM_H) {
+  if (!count || index < 0) return cy;
+  return cy + (index + 0.5 - count / 2) * itemH;
+}
+
 // both sweeping arcs + anchors. ask dips LOW to the toolbox; the reply
 // rises HIGH, starting from the popped tool card.
-export function arcLayout(w, h, by, straight, iconScale = 1) {
+export function arcLayout(w, h, by, straight, iconScale = 1, toolY = by) {
   const L = AF_LAYOUT;
   const bx = w * L.brainX;
   const tx = w * L.toolX, ty = by;
   // only the BRAIN shrinks (its edge offset tracks iconScale); the toolbox stays
-  // full size so the tool card + "saw N" menu remain readable → tLeft is fixed
+  // full size so the tool card + "saw N" menu remain readable → tLeft is fixed.
+  // `toolY` is the tool-END y: defaults to centre (ty), but rack mode points it
+  // at the picked tool's row so the arrowhead lands on the chosen tool.
   const bRight = bx + 58 * iconScale, tLeft = tx - 62;
   const midX = (bRight + tLeft) / 2;
   const off = Math.min(106, h * 0.2);
@@ -40,18 +54,18 @@ export function arcLayout(w, h, by, straight, iconScale = 1) {
     // two parallel horizontal lanes, clearly separated on the y-axis
     const lane = 17;
     return {
-      down: { d: `M ${bRight} ${by + lane} L ${tLeft} ${ty + lane}`, hx: tLeft, hy: ty + lane, ang: 0 },
-      up:   { d: `M ${tLeft} ${ty - lane} L ${bRight} ${by - lane}`, hx: bRight, hy: by - lane, ang: 180 },
+      down: { d: `M ${bRight} ${by + lane} L ${tLeft} ${toolY + lane}`, hx: tLeft, hy: toolY + lane, ang: 0 },
+      up:   { d: `M ${tLeft} ${toolY - lane} L ${bRight} ${by - lane}`, hx: bRight, hy: by - lane, ang: 180 },
       bx, by, tx, ty, midX, off,
     };
   }
 
   const down = {
-    d: `M ${bRight} ${by + 10} Q ${midX} ${by + off} ${tLeft} ${ty + 10}`,
-    hx: tLeft, hy: ty + 10, ang: Math.atan2((ty + 10) - (by + off), tLeft - midX) * 180 / Math.PI,
+    d: `M ${bRight} ${by + 10} Q ${midX} ${by + off} ${tLeft} ${toolY + 10}`,
+    hx: tLeft, hy: toolY + 10, ang: Math.atan2((toolY + 10) - (by + off), tLeft - midX) * 180 / Math.PI,
   };
   const up = {
-    d: `M ${tLeft} ${ty - 10} Q ${midX} ${by - off} ${bRight} ${by - 10}`,
+    d: `M ${tLeft} ${toolY - 10} Q ${midX} ${by - off} ${bRight} ${by - 10}`,
     hx: bRight, hy: by - 10, ang: Math.atan2((by - 10) - (by - off), bRight - midX) * 180 / Math.PI,
   };
   return { down, up, bx, by, tx, ty, midX, off };
