@@ -6,6 +6,17 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-06-17
+
+### Added
+- **"Copy for LLM" in the Why panel (rack mode).** The relevance bars are a
+  lexical proxy, not the model's real reason — so a "Copy for LLM" button copies
+  an LLM-ready prompt (the task + trajectory-so-far + the tool menu with scores,
+  the pick marked + the ask) to paste into Claude/ChatGPT for the real
+  explanation. Pure UI (no live call); same pattern as the Lens / explainable-ui
+  "Copy for LLM", scoped to a tool choice and size-capped. New module
+  `src/copyForLLM.js` (`buildToolWhyText`).
+
 ## [0.15.0] - 2026-06-17
 
 ### Added
