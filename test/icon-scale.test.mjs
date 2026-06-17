@@ -1,0 +1,65 @@
+import { describe, it, expect } from "vitest";
+import { iconScaleFor, arcLayout, ICON_SCALE } from "../src/layout.js";
+
+/**
+ * The cast (brain + toolbox + tool card) shares one scale knob. It is CAPPED at
+ * a max (icons never grow past it) and SHRINKS once the container drops below a
+ * reference width (responsive on small panels). The same number feeds the CSS
+ * icon sizes AND the arc edge offsets, so the connectors always meet the icons.
+ */
+describe("iconScaleFor — capped + container-responsive", () => {
+  it("caps at the max for wide containers", () => {
+    expect(iconScaleFor(ICON_SCALE.ref)).toBe(ICON_SCALE.max);
+    expect(iconScaleFor(ICON_SCALE.ref * 2)).toBe(ICON_SCALE.max);
+    expect(iconScaleFor(99999)).toBe(ICON_SCALE.max);
+  });
+
+  it("floors at the min for very narrow containers", () => {
+    expect(iconScaleFor(100)).toBe(ICON_SCALE.min);
+    expect(iconScaleFor(1)).toBe(ICON_SCALE.min);
+  });
+
+  it("shrinks proportionally between the floor and the cap", () => {
+    const w = 704; // 704/880 = 0.8, between min(0.56) and max(0.82)
+    const s = iconScaleFor(w);
+    expect(s).toBeCloseTo(0.8, 5);
+    expect(s).toBeGreaterThan(ICON_SCALE.min);
+    expect(s).toBeLessThan(ICON_SCALE.max);
+  });
+
+  it("never returns outside [min, max] for any width (invariant)", () => {
+    for (const w of [0, 1, 50, 300, 600, 880, 1200, 5000]) {
+      const s = iconScaleFor(w);
+      expect(s).toBeGreaterThanOrEqual(ICON_SCALE.min);
+      expect(s).toBeLessThanOrEqual(ICON_SCALE.max);
+    }
+  });
+
+  it("falls back to the cap when width is missing/unmeasured (0 or undefined)", () => {
+    // a transient 0 / undefined width (before the ResizeObserver fires) means
+    // "unknown" → default to the cap rather than collapsing to the floor
+    expect(iconScaleFor(undefined)).toBe(ICON_SCALE.max);
+    expect(iconScaleFor(0)).toBe(ICON_SCALE.max);
+  });
+});
+
+describe("arcLayout — edge offsets track the icon scale", () => {
+  const w = 800, h = 460, by = 276;
+
+  it("defaults to full offsets (backward compatible) when no scale is passed", () => {
+    const g = arcLayout(w, h, by, false);
+    const bx = w * 0.25, tx = w * 0.73;
+    // up-arc head lands on the brain's right edge (bx + 58), down-arc on the toolbox left (tx - 62)
+    expect(g.up.hx).toBeCloseTo(bx + 58, 5);
+    expect(g.down.hx).toBeCloseTo(tx - 62, 5);
+  });
+
+  it("pulls the BRAIN-end arrowhead inward as the brain shrinks, leaving the toolbox end fixed", () => {
+    const scale = 0.5;
+    const g = arcLayout(w, h, by, false, scale);
+    const bx = w * 0.25, tx = w * 0.73;
+    // only the brain shrinks → its arrowhead moves in; the toolbox stays full size
+    expect(g.up.hx).toBeCloseTo(bx + 58 * scale, 5);
+    expect(g.down.hx).toBeCloseTo(tx - 62, 5);
+  });
+});

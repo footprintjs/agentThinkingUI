@@ -13,13 +13,26 @@ export const AF_LAYOUT = {
   toolX:  0.73,       // toolbox centre, fraction of width
 };
 
+// One knob for the cast (brain + toolbox + tool card). It drives BOTH the CSS
+// icon sizes (via the `--af-icon-scale` custom property the scene sets) AND the
+// arc edge offsets below, so the connectors always meet the icons at any size.
+// Capped at `max` (icons never grow past it → a fixed ceiling) and shrinks once
+// the container drops below `ref` (responsive on small panels).
+export const ICON_SCALE = { max: 0.82, min: 0.56, ref: 880 };
+export function iconScaleFor(w) {
+  const s = (w || ICON_SCALE.ref) / ICON_SCALE.ref;
+  return Math.max(ICON_SCALE.min, Math.min(ICON_SCALE.max, s));
+}
+
 // both sweeping arcs + anchors. ask dips LOW to the toolbox; the reply
 // rises HIGH, starting from the popped tool card.
-export function arcLayout(w, h, by, straight) {
+export function arcLayout(w, h, by, straight, iconScale = 1) {
   const L = AF_LAYOUT;
   const bx = w * L.brainX;
   const tx = w * L.toolX, ty = by;
-  const bRight = bx + 58, tLeft = tx - 62;
+  // only the BRAIN shrinks (its edge offset tracks iconScale); the toolbox stays
+  // full size so the tool card + "saw N" menu remain readable → tLeft is fixed
+  const bRight = bx + 58 * iconScale, tLeft = tx - 62;
   const midX = (bRight + tLeft) / 2;
   const off = Math.min(106, h * 0.2);
 

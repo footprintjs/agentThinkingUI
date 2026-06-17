@@ -10,6 +10,16 @@
  * window.AGENT_TRACES holds a few relatable scenarios; the gear in the demo
  * switches between them. window.AGENT_TRACE stays as the default (back-compat).
  */
+// the tool menu this agent had on every call (name + description) — surfaces as
+// the "saw N, picked 1" row under each tool card. The picked tool differs per
+// step; the menu stays the same set the model chose from.
+const SAW = [
+  { name: "search_flights", description: "Find flights between two cities for a set of dates" },
+  { name: "search_hotels", description: "Find hotels in a city for a date range" },
+  { name: "book_hold", description: "Place a 24h hold on a flight or room" },
+  { name: "load_skill", description: "Load a steering doc (e.g. budget rules) before committing" },
+];
+
 window.AGENT_TRACES = {
   // ───────────────────────── 1 · plan a team offsite ─────────────────────────
   offsite: {
@@ -26,6 +36,7 @@ window.AGENT_TRACES = {
       { kind: "ask", tool: "search_flights", toolName: "Flight search",
         input: { from: "SFO", to: "LIS", pax: 8, dates: "Sep 12–15" },
         brain: "Pricing the weekend dates with the flight search.",
+        toolsSeen: SAW,
         cost: { ms: 280, tokens: 124 } },
       { kind: "return", tool: "search_flights", toolName: "Flight search", replyType: "data",
         output: { best: { airline: "TAP Air", price_pp: 418, stops: 1 }, cheapest_window: "midweek" },
@@ -35,6 +46,7 @@ window.AGENT_TRACES = {
 
       { kind: "ask", tool: "load_skill", input: { name: "budget_guardrail" },
         brain: "Loading the budget rules before I commit to anything.",
+        toolsSeen: SAW,
         cost: { ms: 240, tokens: 92 } },
       { kind: "return", tool: "load_skill", replyType: "instruction", skill: "budget_guardrail (stay under budget)",
         output: { steps: [
@@ -55,6 +67,7 @@ window.AGENT_TRACES = {
       { kind: "ask", tool: "search_flights", toolName: "Flight search",
         input: { from: "SFO", to: "LIS", pax: 8, dates: "Sep 16–19 (Tue–Fri)" },
         brain: "Searching again with midweek dates.",
+        toolsSeen: SAW,
         cost: { ms: 280, tokens: 120 } },
       { kind: "return", tool: "search_flights", toolName: "Flight search", replyType: "data",
         output: { best: { airline: "TAP Air", price_pp: 286, stops: 1 } },
@@ -65,6 +78,7 @@ window.AGENT_TRACES = {
       { kind: "ask", tool: "search_hotels", toolName: "Hotel search",
         input: { city: "Lisbon", checkin: "Sep 16", nights: 3, rooms: 4, max_per_night: 125 },
         brain: "Looking for a 4-star hotel under $125 a night.",
+        toolsSeen: SAW,
         cost: { ms: 300, tokens: 126 } },
       { kind: "return", tool: "search_hotels", toolName: "Hotel search", replyType: "data",
         output: { pick: { name: "Hotel Baixa", stars: 4, per_night: 118, rooms: 4 } },
@@ -75,6 +89,7 @@ window.AGENT_TRACES = {
       { kind: "ask", tool: "book_hold", toolName: "Booking hold",
         input: { flights: "TAP Sep16–19", hotel: "Hotel Baixa ×4" },
         brain: "Placing a 24-hour hold on the flights and rooms.",
+        toolsSeen: SAW,
         cost: { ms: 300, tokens: 118 } },
       { kind: "return", tool: "book_hold", toolName: "Booking hold", replyType: "both",
         output: { hold_id: "LX-9F2", expires_in: "24h", total: 3704, flag: "over_approval_limit" },

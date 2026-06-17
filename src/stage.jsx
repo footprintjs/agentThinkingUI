@@ -1,6 +1,6 @@
 import React from "react";
 import { AgentThemeContext } from "./context.js";
-import { arcLayout, AF_LAYOUT } from "./layout.js";
+import { arcLayout, AF_LAYOUT, iconScaleFor } from "./layout.js";
 
 const { useRef: sUseRef, useState: sUseState, useLayoutEffect } = React;
 
@@ -13,6 +13,55 @@ export function ToolIcon({ name }) {
     load_skill: <g><path d="M4 5a2 2 0 0 1 2-2h11v16H6a2 2 0 0 0-2 2z" /><path d="M8 7h6M8 10h6" /></g>,
   };
   return <svg {...common}>{paths[name] || <circle cx="12" cy="12" r="8" />}</svg>;
+}
+
+// A skill surfaces to the model as a tool, but it's an instruction (a steering
+// doc), not an action. We can't always tell from the trace alone, so use the
+// same naming convention the rest of the UI leans on: `load_skill`, or any tool
+// whose name reads as a skill. Used only to pick the menu glyph — purely cosmetic.
+export function isSkillName(name) {
+  return name === "load_skill" || /skill/i.test(name || "");
+}
+
+// The small glyph for one entry in the tool menu: a steering-doc mark for skills
+// (mirrors SkillDoc's paper motif), otherwise the tool's own icon.
+function MenuGlyph({ name }) {
+  if (isSkillName(name)) {
+    return (
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M4 5a2 2 0 0 1 2-2h11v16H6a2 2 0 0 0-2 2z" /><path d="M8 7h6M8 10h6" />
+      </svg>
+    );
+  }
+  return <ToolIcon name={name} />;
+}
+
+// "saw N, picked 1" — under the popped tool card, a compact row of the tools the
+// model HAD for this call (`step.toolsSeen`). The picked one is lit; the rest are
+// dimmed. Shows the prompt's tool menu at a glance: the model chose this out of N.
+// Renders nothing unless the model actually chose among ≥2 (a single tool = no
+// "choice" to show). Skills get the doc glyph; tools get the tool icon.
+export function ToolMenu({ seen, picked }) {
+  if (!seen || seen.length < 2) return null;
+  return (
+    <div className="tool-menu" aria-label={"the model saw " + seen.length + " tools and picked " + picked}>
+      <span className="tm-label">saw {seen.length}</span>
+      <span className="tm-icons">
+        {seen.map((t, i) => {
+          const isPicked = t.name === picked;
+          return (
+            <span
+              key={(t.name || "") + i}
+              className={"tm-ico" + (isPicked ? " picked" : "") + (isSkillName(t.name) ? " skill" : "")}
+              title={t.name + (t.description ? " — " + t.description : "") + (isPicked ? "  (picked)" : "")}
+            >
+              <MenuGlyph name={t.name} />
+            </span>
+          );
+        })}
+      </span>
+    </div>
+  );
 }
 
 function TypeGlyph({ data }) {
@@ -174,7 +223,10 @@ function SceneInner({ step, dims, metaphor, straight }) {
   // line. No per-step measurement → no movement.
   const L = AF_LAYOUT || {};
   const by = h * (straight ? (L.brainYMobile || 0.72) : (L.brainY || 0.6));
-  const G = arcLayout(w, h, by, straight);
+  // one scale for the cast — capped + container-responsive; feeds the CSS icon
+  // sizes (via --af-icon-scale on the scene) AND the arc geometry, in lockstep.
+  const iconScale = iconScaleFor(w);
+  const G = arcLayout(w, h, by, straight, iconScale);
   const active = isTool ? (dir === "ask" ? G.down : G.up) : null;
 
   const cloudTag =
@@ -206,7 +258,7 @@ function SceneInner({ step, dims, metaphor, straight }) {
   const brainMode = isAct ? "act" : "reason";
 
   return (
-    <div className="scene-inner">
+    <div className="scene-inner" style={{ "--af-icon-scale": iconScale }}>
       {dualThoughts}
       {/* fixed flowchart connectors (brain ⇄ toolbox). only the packet flows through them. */}
       <svg className="arc-svg" width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
@@ -263,6 +315,7 @@ function SceneInner({ step, dims, metaphor, straight }) {
           <div className="tool-out">
             <span className="to-ico"><ToolIcon name={step.tool} /></span>
             <span className="to-name">{step.toolName || step.tool}</span>
+            <ToolMenu seen={step.toolsSeen} picked={step.tool} />
           </div>
           <Toolbox active />
         </div>

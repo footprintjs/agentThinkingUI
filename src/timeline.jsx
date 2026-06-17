@@ -118,11 +118,11 @@ export function Timeline({ trace, index, setIndex, playing, setPlaying, speed, s
 
       <div className="tl-controls">
         <div className="tl-btns">
-          <button className="tl-btn" onClick={() => setIndex(Math.max(0, index - 1))} title="Previous step" aria-label="Previous step"><Icon type="prev" /></button>
+          <button className="tl-btn nav" onClick={() => setIndex(Math.max(0, index - 1))} title="Previous step" aria-label="Previous step"><Icon type="prev" /></button>
           <button className="tl-btn play" onClick={() => { if (index === steps.length - 1 && !playing) setIndex(0); setPlaying(!playing); }} title={playing ? "Pause" : "Play"} aria-label={playing ? "Pause" : "Play"} aria-pressed={playing}>
             <Icon type={playing ? "pause" : "play"} />
           </button>
-          <button className="tl-btn" onClick={() => setIndex(Math.min(steps.length - 1, index + 1))} title="Next step" aria-label="Next step"><Icon type="next" /></button>
+          <button className="tl-btn nav" onClick={() => setIndex(Math.min(steps.length - 1, index + 1))} title="Next step" aria-label="Next step"><Icon type="next" /></button>
           <button className="tl-btn" onClick={() => { setIndex(0); setPlaying(false); }} title="Restart" aria-label="Restart from the beginning"><Icon type="restart" /></button>
         </div>
 
@@ -137,11 +137,24 @@ export function Timeline({ trace, index, setIndex, playing, setPlaying, speed, s
 
         <div className="tl-spacer" />
 
-        <div className="legend">
-          <span className="lg"><span className="sw" style={{ background: "var(--call)" }} />Call</span>
-          <span className="lg"><span className="sw" style={{ background: "var(--data)" }} />Data → reason</span>
-          <span className="lg"><span className="sw" style={{ background: "var(--instr)" }} />Instruction → act</span>
-          <span className="lg"><span className="sw" style={{ background: "var(--answer)" }} />Answer</span>
+        {/* the colour key is a compact chip; the full legend reveals on hover/focus
+            (tooltip) so it doesn't eat toolbar width when you don't need it */}
+        <div className="legend" tabIndex={0} role="group" aria-label="Colour key — what the timeline colours mean">
+          <span className="legend-trigger">
+            <span className="lk-dots" aria-hidden="true">
+              <i style={{ background: "var(--call)" }} />
+              <i style={{ background: "var(--data)" }} />
+              <i style={{ background: "var(--instr)" }} />
+              <i style={{ background: "var(--answer)" }} />
+            </span>
+            key
+          </span>
+          <div className="legend-pop" role="tooltip">
+            <span className="lg"><span className="sw" style={{ background: "var(--call)" }} />Call</span>
+            <span className="lg"><span className="sw" style={{ background: "var(--data)" }} />Data → reason</span>
+            <span className="lg"><span className="sw" style={{ background: "var(--instr)" }} />Instruction → act</span>
+            <span className="lg"><span className="sw" style={{ background: "var(--answer)" }} />Answer</span>
+          </div>
         </div>
 
         <div className="speed-group" role="group" aria-label="Playback speed">

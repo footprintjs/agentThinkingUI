@@ -69,6 +69,9 @@
 
   /* one knob to match the host app's type scale/density (theme.fonts.scale) */
   --af-text-scale: 1;
+  /* cast (brain + toolbox + tool card) scale — the single-agent scene sets this
+     per-render from the container width (capped + responsive); 1 everywhere else */
+  --af-icon-scale: 1;
 }
 
 .atui, .atui-swarm, :where(.atui, .atui-swarm) * { box-sizing: border-box; }
@@ -241,7 +244,7 @@
 :where(.atui, .atui-swarm) .thinking-callout .tc-chev { margin-left: auto; color: var(--ink-faint); }
 :where(.atui, .atui-swarm) .thinking-callout .tc-text { margin-top: 5px; font-size: calc(12px * var(--af-text-scale)); line-height: 1.5; color: var(--ink); white-space: pre-wrap; word-break: break-word; }
 :where(.atui, .atui-swarm) .thinking-callout.open .tc-text { max-height: 220px; overflow: auto; }
-:where(.atui, .atui-swarm, .atui-backtrack) .brain-label { position: absolute; top: 100%; margin-top: 10px; left: 50%; transform: translateX(-50%); white-space: normal;
+:where(.atui, .atui-swarm, .atui-backtrack) .brain-label { position: absolute; top: 50%; margin-top: calc(49px * var(--af-icon-scale) + 10px); left: 50%; transform: translateX(-50%); white-space: normal;
   max-width: 100px; text-align: center; line-height: 1.2; font-size: calc(11.5px * var(--af-text-scale)); font-weight: 700; color: var(--ink-soft); letter-spacing: .01em; }
 :where(.atui, .atui-swarm) .io-tag { position: absolute; right: 100%; margin-right: 16px; top: 50%; transform: translateY(-50%); white-space: nowrap;
   font-family: var(--font-display); font-weight: 700; font-size: calc(11px * var(--af-text-scale)); letter-spacing: .03em; padding: 5px 11px; border-radius: 999px;
@@ -286,6 +289,9 @@
 :where(.atui, .atui-swarm, .atui-backtrack) .brain {
   width: 112px; height: 98px; position: relative;
   filter: drop-shadow(0 8px 16px rgba(150,70,30,.18));
+  /* shrink the whole mascot uniformly (face + folds + gradients) — one knob,
+     defaults to 1 so swarm/backtrack are unchanged */
+  transform: scale(var(--af-icon-scale)); transform-origin: center center;
 }
 :where(.atui, .atui-swarm, .atui-backtrack) .brain-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
@@ -336,6 +342,15 @@
 @keyframes toolPop { from { opacity: 0; transform: translate(-50%, 22px) scale(.78); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
 :where(.atui, .atui-swarm) .tool-out .to-ico { width: 32px; height: 32px; border-radius: 9px; background: var(--call); color: var(--on-call, #fff); display: grid; place-items: center; }
 :where(.atui, .atui-swarm) .tool-out .to-name { font-family: var(--font-mono); font-size: calc(12px * var(--af-text-scale)); font-weight: 700; color: var(--call-deep); }
+/* "saw N, picked 1": the tool menu the model chose from, under the picked card.
+   picked = lit; the rest dimmed. tools get the tool icon, skills the doc glyph. */
+:where(.atui, .atui-swarm) .tool-out .tool-menu { display: flex; align-items: center; gap: 6px; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); max-width: 168px; flex-wrap: wrap; justify-content: center; }
+:where(.atui, .atui-swarm) .tool-out .tm-label { font-family: var(--font-mono); font-size: calc(9px * var(--af-text-scale)); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-faint); }
+:where(.atui, .atui-swarm) .tool-out .tm-icons { display: flex; align-items: center; gap: 4px; }
+:where(.atui, .atui-swarm) .tool-out .tm-ico { width: 18px; height: 18px; border-radius: 5px; display: grid; place-items: center; background: var(--paper-2); color: var(--ink-faint); opacity: .5; }
+:where(.atui, .atui-swarm) .tool-out .tm-ico svg { width: 11px; height: 11px; }
+:where(.atui, .atui-swarm) .tool-out .tm-ico.picked { opacity: 1; background: var(--call); color: var(--on-call, #fff); }
+:where(.atui, .atui-swarm) .tool-out .tm-ico.skill.picked { background: var(--instr); color: var(--on-instr, #fff); }
 /* a tool that returns BOTH is two-tone: data (teal) shell + instruction (amber) icon */
 :where(.atui, .atui-swarm) .k-both .tool-out { border-color: var(--data); box-shadow: 0 0 0 3px var(--data-tint), var(--shadow-md); }
 :where(.atui, .atui-swarm) .k-both .tool-out .to-ico { background: var(--instr); }
@@ -463,7 +478,9 @@
 :where(.atui, .atui-swarm) .answer-cta { width: 100%; background: var(--answer); color: var(--on-answer, #fff); border: 0; border-radius: 11px; padding: 11px; font-family: var(--font-display); font-weight: 700; font-size: calc(14px * var(--af-text-scale)); box-shadow: var(--shadow-sm); }
 
 /* ======================= TIMELINE ======================= */
-:where(.atui, .atui-swarm) .timeline { padding: 13px 22px 20px; margin-bottom: 16px; }
+/* overflow visible (overriding .panel) so the legend hover-popover can escape
+   the card; the track is inset by padding so it never relied on the clip */
+:where(.atui, .atui-swarm) .timeline { padding: 13px 22px 20px; margin-bottom: 16px; overflow: visible; }
 :where(.atui, .atui-swarm) .tl-track-wrap { position: relative; padding: 26px 4px 6px; }
 :where(.atui, .atui-swarm) .tl-track { position: relative; height: 12px; border-radius: 999px; background: var(--paper-3); border: 1px solid var(--line);
   display: flex; overflow: visible; }
@@ -538,13 +555,17 @@
 
 :where(.atui, .atui-swarm) .tl-controls { display: flex; align-items: center; gap: 14px; margin-top: 16px; }
 :where(.atui, .atui-swarm) .tl-btns { display: flex; align-items: center; gap: 8px; }
-:where(.atui, .atui-swarm) .tl-btn { width: 38px; height: 38px; border-radius: 11px; border: 1px solid var(--line); background: var(--card); color: var(--ink);
-  display: grid; place-items: center; box-shadow: var(--shadow-sm); transition: all .15s; }
-:where(.atui, .atui-swarm) .tl-btn:hover { background: var(--paper-2); transform: translateY(-1px); }
-:where(.atui, .atui-swarm) .tl-btn.play { width: 46px; height: 46px; border-radius: 14px; background: var(--rust); border-color: var(--rust-deep); color: var(--on-rust, #fff); box-shadow: var(--shadow-md); }
-:where(.atui, .atui-swarm) .tl-btn.play:hover { background: var(--rust-deep); }
+:where(.atui, .atui-swarm) .tl-btn { width: 38px; height: 38px; border-radius: 11px; border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+  display: grid; place-items: center; transition: background .15s, border-color .15s, color .15s; }
+/* stable hover — tint only, NO vertical lift (the jump read as a height change) */
+:where(.atui, .atui-swarm) .tl-btn:hover { background: var(--paper-2); color: var(--ink); }
+/* Back / Next are how you actually step the trace → the prominent, filled pair. */
+:where(.atui, .atui-swarm) .tl-btn.nav { background: var(--rust); border-color: var(--rust-deep); color: var(--on-rust, #fff); box-shadow: var(--shadow-sm); }
+:where(.atui, .atui-swarm) .tl-btn.nav:hover { background: var(--rust-deep); color: var(--on-rust, #fff); }
+/* Play / Restart are secondary → calm ghost buttons, same size, no fill. */
+:where(.atui, .atui-swarm) .tl-btn.play { background: transparent; color: var(--ink-soft); }
+:where(.atui, .atui-swarm) .tl-btn.play:hover { background: var(--paper-2); color: var(--ink); }
 :where(.atui, .atui-swarm) .tl-btn svg { width: 18px; height: 18px; }
-:where(.atui, .atui-swarm) .tl-btn.play svg { width: 20px; height: 20px; }
 
 :where(.atui, .atui-swarm) .tl-readout { display: flex; align-items: center; gap: 8px; }
 :where(.atui, .atui-swarm) .tl-readout .step-n { font-family: var(--font-display); font-weight: 700; font-size: calc(15px * var(--af-text-scale)); }
@@ -556,7 +577,15 @@
 :where(.atui, .atui-swarm) .speed-group button { border: 0; background: transparent; color: var(--ink-soft); font-family: var(--font-mono); font-size: calc(12px * var(--af-text-scale)); font-weight: 700; padding: 5px 9px; border-radius: 7px; }
 :where(.atui, .atui-swarm) .speed-group button.on { background: var(--card); color: var(--rust); box-shadow: var(--shadow-sm); }
 
-:where(.atui, .atui-swarm) .legend { display: flex; align-items: center; gap: 14px; }
+:where(.atui, .atui-swarm) .legend { position: relative; display: flex; align-items: center; cursor: default; outline: none; }
+/* compact trigger: 4 tiny swatches + "key" — the full legend is a hover tooltip */
+:where(.atui, .atui-swarm) .legend-trigger { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--paper-2); border-radius: 8px; padding: 4px 9px; color: var(--ink-soft); font-family: var(--font-mono); font-size: calc(10px * var(--af-text-scale)); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+:where(.atui, .atui-swarm) .legend:hover .legend-trigger, :where(.atui, .atui-swarm) .legend:focus-within .legend-trigger { border-color: var(--ink-faint); color: var(--ink); }
+:where(.atui, .atui-swarm) .legend .lk-dots { display: flex; gap: 2px; }
+:where(.atui, .atui-swarm) .legend .lk-dots i { width: 8px; height: 8px; border-radius: 2px; display: block; }
+/* the revealed legend — above the chip, right-aligned so it stays on-screen */
+:where(.atui, .atui-swarm) .legend-pop { position: absolute; right: 0; bottom: calc(100% + 8px); display: flex; flex-direction: column; gap: 7px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; box-shadow: var(--shadow-md); white-space: nowrap; opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity .15s ease, transform .15s ease, visibility .15s; z-index: 20; }
+:where(.atui, .atui-swarm) .legend:hover .legend-pop, :where(.atui, .atui-swarm) .legend:focus-within .legend-pop { opacity: 1; visibility: visible; transform: none; }
 :where(.atui, .atui-swarm) .legend .lg { display: flex; align-items: center; gap: 6px; font-size: calc(11.5px * var(--af-text-scale)); color: var(--ink-soft); font-weight: 600; }
 :where(.atui, .atui-swarm) .legend .sw { width: 11px; height: 11px; border-radius: 4px; }
 
