@@ -30,6 +30,21 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "toolMenu": "rack"
 }/*EDITMODE-END*/;
 
+// Demo `onExplain` — wires the rack's "✨ Explain (live)" button so visitors can
+// SEE the explain flow on this static site. A real app passes its OWN LLM here
+// (e.g. neo's Live mode calls provider.complete); this canned stub stands in
+// because GitHub Pages has no model. Clearly labelled as a demo response.
+async function demoExplain({ step, tool }) {
+  await new Promise((r) => setTimeout(r, 650)); // pretend a model is thinking
+  const name = tool || (step && step.tool) || "this tool";
+  const doing = step && step.brain ? ` while ${step.brain.replace(/[.\s]+$/, "").toLowerCase()}` : "";
+  return (
+    `The agent reached for ${name}${doing}. Of the tools it could see, ${name} is the ` +
+    `closest fit for what the task needs at this step. \n\n(Demo response — on a real ` +
+    `app this text comes from YOUR LLM via the onExplain prop; the static demo has no model.)`
+  );
+}
+
 // a tiny real OpenTelemetry GenAI (OTLP/JSON) trace — prefilled in the gear's
 // "Import an OTel trace" box so anyone can see the adapter convert + play it.
 const A = (o) => Object.entries(o).map(([key, v]) => ({ key, value: typeof v === "number" ? { intValue: String(v) } : { stringValue: String(v) } }));
@@ -190,7 +205,7 @@ function App() {
           ? <MultiAgentFlow key={graphImport ? "import" : flowKey} trace={graph} live={mLive}
               theme={theme} labels={labels} icons={icons} brand={brandMark} />
           : <AgentThinkingUI key={imported ? "otel" : sceneKey} trace={trace} mobile={isMobile} metaphor={t.metaphor} loop={t.loop}
-              toolMenu={t.toolMenu} live={live} theme={theme} labels={labels} icons={icons} brand={brandMark} />}
+              toolMenu={t.toolMenu} onExplain={demoExplain} live={live} theme={theme} labels={labels} icons={icons} brand={brandMark} />}
       </div>
       <DemoSettings brand={brand} setBrand={setBrand}
         labels={labels} setLabels={setLabels} icons={icons} setIcons={setIcons}
