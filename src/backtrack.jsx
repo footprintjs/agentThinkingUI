@@ -280,9 +280,15 @@ export function BacktrackView({ trace, theme, labels, icons, brand, autoPlay = t
     (beat >= last ? " final" : "");
 
   const decKind = (trace.decidedAt && trace.decidedAt.kind) || "llm";
+  // Honesty-aware: never claim slice-completeness ("nothing else did") when the
+  // trace's own markers say the slice is incomplete (untracked reads / truncation).
+  const sliceIncomplete = Array.isArray(trace.honesty)
+    && trace.honesty.some((h) => typeof h === "string" && /incomplete|untracked|truncat/i.test(h));
   const decNote = (trace.decidedAt && trace.decidedAt.note) || (decKind === "rule"
     ? <>the rule decided from <b>what it read</b> — every operand below is recorded fact</>
-    : <>the brain answered from <b>what it was given</b> — everything below provably reached this call, and nothing else did</>);
+    : sliceIncomplete
+      ? <>the brain answered from <b>what it was given</b> — everything below reached this call (the slice may be incomplete — see ⚠ below)</>
+      : <>the brain answered from <b>what it was given</b> — everything below provably reached this call, and nothing else did</>);
 
   return (
     <AgentThemeContext.Provider value={resolved}>

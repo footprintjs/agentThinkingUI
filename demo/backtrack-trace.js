@@ -11,8 +11,63 @@
  *   rule   — a deterministic decide() rule, exact recorded chain (control edge)
  */
 window.BACKTRACK_TRACES = {
-  /* ── 1 · the wrong answer (LLM decision · causal) ─────────────────────── */
+  /* ── 1 · backtrack RANKING ONLY (correlational) — step 1, the SAME case.
+     The slice + the proxy ranking, recorded data only, NO ablation. The two
+     facts are ~tied (0.01 apart), so ranking alone cannot separate them —
+     which is exactly the setup for step 2 (answer, + ablation). ──────────── */
+  rank: {
+    pick: "1 · backtrack — ranking only",
+    order: 1,
+    claim: "The agent approved a refund 47 days past the 30-day window — why?",
+    agent: "refunds-assistant",
+    model: "mock-1",
+    mode: "correlational",
+    answer: {
+      label: "the wrong answer",
+      text: "Refund APPROVED: Dana Reyes holds VIP tier override status, so the 47-day-old order qualifies for a refund beyond the 30-day window.",
+    },
+    decidedAt: { id: "call-llm#40", label: "CallLLM", kind: "llm", note: "the brain answered from what it was given — everything below reached this call. Step 1: a proxy ranks the suspects — but ranking can't prove one, and here the top two sit 0.01 apart (tied)." },
+    suspects: [
+      {
+        kind: "injection", flavor: "fact", name: "vip-override-fact", rank: 5,
+        text: "Customer Dana Reyes holds VIP tier override status: refunds are approved beyond the 30-day window.",
+        score: 0.85,
+        edge: { key: "systemPromptInjections", weight: 0.92, kind: "data" },
+        bornAt: { id: "context#6", label: "Context", via: "injection engine · trigger: always" },
+        custody: [
+          { step: "born", detail: "defineFact('vip-override-fact') — a fact injection, trigger: always (who wrote it)", at: "defineFact()", content: "defineFact({ id: 'vip-override-fact',\n  data: 'Customer Dana Reyes holds VIP tier override status: refunds are approved beyond the 30-day window.' })", highlight: "Customer Dana Reyes holds VIP tier override status: refunds are approved beyond the 30-day window." },
+          { step: "landed", detail: "context#6 “Context” WROTE systemPromptInjections (who mutated state)", at: "context#6", variable: "systemPromptInjections", content: "commit context#6 → systemPromptInjections includes\n  { source: 'fact', sourceId: 'vip-override-fact',\n    rawContent: 'Customer Dana Reyes holds VIP tier override status…' }", highlight: "vip-override-fact" },
+          { step: "read", detail: "call-llm#40 READ it into the system prompt — exactly what the model saw", at: "call-llm#40", variable: "systemPrompt", content: "You are a refunds assistant. Policy: refunds only within 30 days of purchase.\n\nCustomer Dana Reyes holds VIP tier override status: refunds are approved beyond the 30-day window.", highlight: "Customer Dana Reyes holds VIP tier override status: refunds are approved beyond the 30-day window." },
+        ],
+      },
+      {
+        kind: "injection", flavor: "fact", name: "style-fact", rank: 6,
+        text: "Style rule #12: limit replies to two (2) sentences / 40 words max.",
+        score: 0.84,
+        edge: { key: "systemPromptInjections", weight: 0.92, kind: "data" },
+        bornAt: { id: "context#6", label: "Context", via: "injection engine · trigger: always" },
+      },
+      {
+        kind: "tool", name: "lookup_order", rank: 7,
+        text: "Order A-1001: purchased 47 days ago, price $480, category electronics.",
+        score: 0.71,
+        edge: { key: "history", weight: 0.80, kind: "data" },
+        bornAt: { id: "tool-calls#22", label: "ToolCalls", via: "tool result" },
+      },
+    ],
+    scoreNote: "the two facts sit 0.01 apart — the proxy ranks them but cannot separate them. Step 2 (+ ablation) decides: remove each, re-run, and see which one flips the answer.",
+    folded: "ranks 1–4 are structural hops (path-only upper bounds) — folded here; every id drillable with the trace toolpack",
+    honesty: [
+      "⚠ untracked-sources: 1 slice node also consumed untracked inputs (args/env/silent reads) — the slice through it is incomplete.",
+      "verdict: (none — correlational ranking only; supply an AblationRunner to test causally).",
+      "scores/weights are deterministic embedding-geometry proxies — semantic alignment, not model internals.",
+    ],
+  },
+
+  /* ── 2 · the wrong answer (LLM decision · causal) — step 2, + ablation ──── */
   answer: {
+    pick: "2 · + ablation — the proof",
+    order: 2,
     claim: "The agent approved a refund 47 days past the 30-day window — why?",
     agent: "refunds-assistant",
     model: "mock-1",
@@ -21,7 +76,7 @@ window.BACKTRACK_TRACES = {
       label: "the wrong answer",
       text: "Refund APPROVED: Dana Reyes holds VIP tier override status, so the 47-day-old order qualifies for a refund beyond the 30-day window.",
     },
-    decidedAt: { id: "call-llm#40", label: "CallLLM", kind: "llm" },
+    decidedAt: { id: "call-llm#40", label: "CallLLM", kind: "llm", note: "the brain answered from what it was given — everything below reached this call. Step 2: ablation tests each suspect — remove it, re-run. The flip (3/3 vs 0/3) is the proof the ranking couldn't give." },
     suspects: [
       {
         kind: "injection", flavor: "fact", name: "vip-override-fact", rank: 5,
@@ -103,6 +158,8 @@ window.BACKTRACK_TRACES = {
      chose lookup_order. No rerun supplied → the report stops at the ranking
      and says so. Backtracking works at ANY decision point, not just the end. */
   tool: {
+    pick: "tool choice — mid-loop",
+    order: 3,
     claim: "Iteration 1 — the brain chose lookup_order. What was it given?",
     agent: "refunds-assistant",
     model: "mock-1",
@@ -158,6 +215,8 @@ window.BACKTRACK_TRACES = {
      edges back to the stage that computed the wrong number. Deterministic
      predicates are decision points too — same board, no proxies needed. */
   rule: {
+    pick: "rule decision — decide()",
+    order: 4,
     claim: "The pipeline approved an unaffordable loan — why?",
     agent: "loan-pipeline",
     mode: "correlational",

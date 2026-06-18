@@ -36,14 +36,14 @@
   <script src="../dist/agentthinkingui.umd.js"></script>
   <script src="backtrack-trace.js"></script>
   <script>
-    const SCENARIOS = [
-      ["answer", "wrong answer — LLM · causal"],
-      ["tool", "tool choice — LLM · mid-loop"],
-      ["rule", "rule decision — decide() · exact"],
-    ];
+    // data-driven picker — labels + order come from each trace (trace.pick / trace.order),
+    // never hard-coded here, so the demo text always matches the data.
+    const SCENARIOS = Object.entries(window.BACKTRACK_TRACES)
+      .sort((a, b) => (a[1].order ?? 99) - (b[1].order ?? 99))
+      .map(([key, t]) => [key, t.pick || key]);
     const params = new URLSearchParams(location.search);
     const play = params.has("play");
-    let current = SCENARIOS.some(([k]) => k === params.get("trace")) ? params.get("trace") : "answer";
+    let current = SCENARIOS.some(([k]) => k === params.get("trace")) ? params.get("trace") : SCENARIOS[0][0];
     const root = ReactDOM.createRoot(document.getElementById("root"));
     const pick = document.getElementById("pick");
 

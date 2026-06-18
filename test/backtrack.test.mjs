@@ -260,3 +260,28 @@ describe("BacktrackOverlay", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 });
+
+describe("honesty-aware subtitle (never overclaims slice-completeness)", () => {
+  it("drops 'nothing else did' when a trace honesty marker flags the slice incomplete", () => {
+    const { container } = render(view({ trace: causalTrace({
+      honesty: ["⚠ untracked-sources: 1 slice node also consumed untracked inputs — the slice through it is incomplete."],
+    }) }));
+    const txt = container.textContent;
+    expect(txt).not.toMatch(/nothing else did/);
+    expect(txt).toMatch(/may be incomplete/);
+  });
+
+  it("keeps the completeness phrasing only when no incompleteness marker is present", () => {
+    const { container } = render(view({ trace: causalTrace({ honesty: ["only ablation verdicts make causal claims."] }) }));
+    expect(container.textContent).toMatch(/provably reached this call, and nothing else did/);
+  });
+
+  it("defers to trace.decidedAt.note when the data supplies its own subtitle", () => {
+    const { container } = render(view({ trace: causalTrace({
+      decidedAt: { id: "call-llm#40", kind: "llm", note: "DATA-DRIVEN SUBTITLE" },
+      honesty: ["⚠ untracked-sources: incomplete."],
+    }) }));
+    expect(container.textContent).toMatch(/DATA-DRIVEN SUBTITLE/);
+    expect(container.textContent).not.toMatch(/nothing else did/);
+  });
+});

@@ -6,6 +6,25 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-06-18
+
+### Added
+- **Two-step backtrack demo — the claim ladder, made clickable.** The `backtrack`
+  demo now walks the SAME case in two incremental steps: **`1 · backtrack — ranking
+  only`** (correlational — the slice + the proxy ranking, where the top-two facts sit
+  0.01 apart and ranking *cannot* separate them) → **`2 · + ablation — the proof`**
+  (causal — remove each, re-run, 3/3 vs 0/3 decides). New `rank` correlational twin in
+  `demo/backtrack-trace.js`. The picker is now **data-driven**: labels + order come
+  from each trace's `pick`/`order`, with no scenario text hard-coded in the demo HTML.
+
+### Fixed
+- **BacktrackView subtitle no longer overclaims slice-completeness.** The default LLM
+  subtitle asserted *"everything below provably reached this call, and nothing else
+  did"* unconditionally — contradicting the trace's own honesty markers when the slice
+  is incomplete (untracked reads / truncation). It is now **honesty-aware**: when
+  `trace.honesty` flags incompleteness, it reads *"the slice may be incomplete — see ⚠
+  below"* instead; a supplied `trace.decidedAt.note` still takes precedence. (+3 tests.)
+
 ## [0.17.0] - 2026-06-17
 
 ### Added
