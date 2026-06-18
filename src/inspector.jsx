@@ -1,7 +1,8 @@
 import React from "react";
 import { toolRelevance } from "./relevance.js";
 import { isSkillName } from "./stage.jsx";
-import { buildToolWhyText } from "./copyForLLM.js";
+import { buildToolWhyText, buildDescribeText } from "./copyForLLM.js";
+import { diffWords } from "./descdiff.js";
 
 const { useState: inspUseState } = React;
 
@@ -84,6 +85,10 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
   const [copied, setCopied] = React.useState(false);
   const [explaining, setExplaining] = React.useState(false);
   const [explanation, setExplanation] = React.useState(null);
+  // Description Doctor — a suggested clearer description for the focused tool/skill.
+  const [suggesting, setSuggesting] = React.useState(false);
+  const [suggestion, setSuggestion] = React.useState(null);
+  const [descCopied, setDescCopied] = React.useState(false);
   const tools = React.useMemo(() => {
     const m = new Map();
     for (const s of trace.steps) for (const t of (s.toolsSeen || [])) if (!m.has(t.name)) m.set(t.name, t);
@@ -96,6 +101,9 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
     setCopied(false);
     setExplanation(null);
     setExplaining(false);
+    setSuggestion(null);
+    setSuggesting(false);
+    setDescCopied(false);
     const el = ref.current;
     if (!el) return;
     if (typeof el.scrollIntoView === "function") el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -137,6 +145,30 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
       setExplaining(false);
     }
   };
+  // Description Doctor — when descriptions overlap (ambiguous routing), ask the LLM
+  // (via onExplain, kind:'improve-description') for a sharper, more DISTINCT
+  // description for the focused tool/skill, and render it as a red/green diff.
+  const focusDesc = (ranked.find((r) => r.name === focus) || {}).description || "";
+  const improveDescription = async () => {
+    if (!onExplain || suggesting) return;
+    setSuggesting(true);
+    setSuggestion(null);
+    try {
+      const prompt = buildDescribeText({ trace, ranked, focusName: focus });
+      const res = await onExplain({ trace, step, tool: focus, kind: "improve-description", description: focusDesc, prompt });
+      const next = typeof res === "string" ? res : (res && res.reason) || "";
+      setSuggestion(next.trim() || "(the explainer returned nothing)");
+    } catch (e) {
+      setSuggestion("⚠ Couldn't get a suggestion: " + (e && e.message ? e.message : String(e)));
+    } finally {
+      setSuggesting(false);
+    }
+  };
+  const copySuggestion = async () => {
+    try { await navigator.clipboard.writeText(suggestion || ""); } catch { /* clipboard unavailable */ }
+    setDescCopied(true);
+    setTimeout(() => setDescCopied(false), 1800);
+  };
   return (
     <div ref={ref} className="why-wrap">
     <Section label={"🔍 Why this " + noun + "?"}>
@@ -154,9 +186,33 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
             {explaining ? "✨ Explaining…" : "✨ Explain (live)"}
           </button>
         )}
+        {onExplain && (
+          <button type="button" className="why-doctor" onClick={improveDescription} disabled={suggesting}
+            title={"Descriptions overlap? Ask the live LLM for a sharper, more distinct description for this " + noun}>
+            {suggesting ? "📝 Suggesting…" : "📝 Improve description"}
+          </button>
+        )}
       </div>
       {explanation && (
         <div className="why-explanation"><span className="we-tag">✨ live</span>{explanation}</div>
+      )}
+      {suggestion && (
+        <div className="desc-doctor">
+          <div className="dd-label">Current description</div>
+          <div className="dd-old">{focusDesc || "(none)"}</div>
+          <div className="dd-label">Suggested ✦</div>
+          <div className="dd-new">{suggestion}</div>
+          <div className="dd-label">Changes</div>
+          <div className="dd-diff">
+            {diffWords(focusDesc, suggestion).map((seg, i) => (
+              <span key={i} className={"dd-" + seg.type}>{seg.text}</span>
+            ))}
+          </div>
+          <button type="button" className="dd-copy" onClick={copySuggestion}
+            title={"Copy the suggested description to paste into your defineSkill / defineTool"}>
+            {descCopied ? "✓ Copied — paste into your code" : "📋 Copy new description"}
+          </button>
+        </div>
       )}
       <ul className="why-tool">
         {ranked.map((r, i) => {

@@ -69,3 +69,38 @@ export function buildToolWhyText({ trace, step, ranked, focusName }) {
   if (text.length > CAP) text = text.slice(0, CAP) + "\n\n…(truncated for the clipboard)";
   return text;
 }
+
+/** Build the LLM prompt for the Description Doctor — ask for a CLEARER, more
+ *  DISTINCT description for one tool/skill (its current one overlaps its siblings).
+ *  The LLM should reply with ONLY the improved one-line description. */
+export function buildDescribeText({ trace, ranked, focusName }) {
+  const focus = focusName;
+  const noun = isSkill(focus) ? "skill" : "tool";
+  const me = (ranked || []).find((r) => r.name === focus);
+  const others = (ranked || []).filter((r) => r.name !== focus);
+
+  const L = [];
+  L.push(`# Suggest a clearer description for the ${noun} \`${focus}\``);
+  L.push("");
+  L.push(
+    `This ${noun}'s description overlaps with its siblings, which makes an agent's routing ` +
+      `ambiguous. Rewrite ONLY \`${focus}\`'s description so it is SHARPER and DISTINCT from the ` +
+      `others — one sentence, concrete about WHEN to reach for it and what sets it apart. ` +
+      `Reply with ONLY the new description: no quotes, no preamble.`,
+  );
+  L.push("");
+  if (trace && trace.task) {
+    L.push("## The kind of task it serves");
+    L.push(trace.task);
+    L.push("");
+  }
+  L.push(`## Current description of \`${focus}\``);
+  L.push((me && me.description) || "(none)");
+  L.push("");
+  L.push(`## Sibling ${noun}s — keep it distinct from these`);
+  others.forEach((r) => L.push(`- \`${r.name}\` — ${r.description || "(none)"}`));
+
+  let text = L.join("\n");
+  if (text.length > CAP) text = text.slice(0, CAP) + "\n\n…(truncated)";
+  return text;
+}

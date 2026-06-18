@@ -34,9 +34,16 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 // SEE the explain flow on this static site. A real app passes its OWN LLM here
 // (e.g. neo's Live mode calls provider.complete); this canned stub stands in
 // because GitHub Pages has no model. Clearly labelled as a demo response.
-async function demoExplain({ step, tool }) {
+async function demoExplain({ step, tool, kind, description }) {
   await new Promise((r) => setTimeout(r, 650)); // pretend a model is thinking
   const name = tool || (step && step.tool) || "this tool";
+  // Description Doctor: return a sharper, more DISTINCT description (a real app
+  // returns its own LLM's rewrite — this canned one just shows the diff flow).
+  if (kind === "improve-description") {
+    const subject = name.replace(/^(search_|book_|load_|get_|read_)/, "").replace(/_/g, " ");
+    const verb = /search|find|get/.test(name) ? "Search for" : /book|hold|reserve/.test(name) ? "Reserve" : /skill|load/.test(name) ? "Load the steering doc for" : "Use";
+    return `${verb} ${subject} — reach for this ONLY when the task explicitly needs ${subject}, not the adjacent step a sibling tool covers. (Demo suggestion — a real app returns its own LLM's rewrite.)`;
+  }
   const doing = step && step.brain ? ` while ${step.brain.replace(/[.\s]+$/, "").toLowerCase()}` : "";
   return (
     `The agent reached for ${name}${doing}. Of the tools it could see, ${name} is the ` +

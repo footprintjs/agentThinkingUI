@@ -45,7 +45,14 @@ export interface AgentThinkingUIProps {
    *  the tool-choice context + a ready-made prompt, return the explanation text
    *  (or `{ reason }`); the panel renders it in place. The library makes no LLM
    *  calls itself — you own the call and the key. */
-  onExplain?: (ctx: { trace: Trace; step: Step; tool: string; prompt: string }) => Promise<string | { reason?: string; score?: number }>;
+  /**
+   * Rack mode — wire the Why panel's live LLM calls to YOUR model. Called for the
+   * "✨ Explain (live)" button (`kind` absent/"why") AND the Description Doctor's
+   * "📝 Improve description" button (`kind: "improve-description"`, with the tool's
+   * current `description`) — return the improved one-line description. The library
+   * makes no LLM calls itself.
+   */
+  onExplain?: (ctx: { trace: Trace; step: Step; tool: string; prompt: string; kind?: "why" | "improve-description"; description?: string }) => Promise<string | { reason?: string; score?: number }>;
   /** auto-loop playback */
   loop?: boolean;
   /** live monitoring: tail the newest step as the trace grows */
