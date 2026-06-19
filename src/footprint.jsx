@@ -5,6 +5,7 @@ import { Timeline } from "./timeline.jsx";
 import { usePlayback } from "./playback.js";
 import { AgentThemeContext } from "./context.js";
 import * as AgentTheme from "./theme.js";
+import { buildRunSummaryText } from "./copyForLLM.js";
 
 /* ============================================================
    AgentThinkingUI — default container.
@@ -41,6 +42,15 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
   const [mobileView, setMobileView] = useState("thinking");
   // rack mode: which tool the user clicked to inspect "why?" (null = panel hidden)
   const [whyTool, setWhyTool] = useState(null);
+  // run-level "Copy for LLM" — a clean, human-readable triage summary (no ids/repetition)
+  const [copiedRun, setCopiedRun] = useState(false);
+  const copyRunForLLM = async () => {
+    try {
+      await navigator.clipboard.writeText(buildRunSummaryText({ trace }));
+      setCopiedRun(true);
+      setTimeout(() => setCopiedRun(false), 1500);
+    } catch { /* clipboard unavailable (insecure ctx) */ }
+  };
   // clicking a rack tool / the "Why this tool?" button focuses it AND makes sure
   // the inspector is open on its tab, so the Why panel is always somewhere to scroll to
   const showWhy = (name) => { setWhyTool(name); setInspOpen(true); setRightView("inspector"); };
@@ -127,6 +137,15 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
           <span className="txt" title={trace.task}>{trace.title || trace.task}</span>
         </div>
         <div className="spacer" />
+        <button
+          type="button"
+          className="atui-copy-run"
+          onClick={copyRunForLLM}
+          title="Copy a plain-English run summary (no ids, no repetition) to paste into an LLM for triage"
+          style={{ font: "inherit", fontSize: 12, padding: "4px 10px", borderRadius: 8, cursor: "pointer", border: "1px solid var(--atui-border, #ffffff22)", background: "transparent", color: "inherit", opacity: 0.85, whiteSpace: "nowrap" }}
+        >
+          {copiedRun ? "Copied ✓" : "📋 Copy for LLM"}
+        </button>
       </div>
 
       <Timeline trace={trace} index={index} setIndex={seek}
