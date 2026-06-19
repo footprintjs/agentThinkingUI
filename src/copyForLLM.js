@@ -71,11 +71,17 @@ export function buildToolWhyText({ trace, step, ranked, focusName }) {
 }
 
 /** Build an LLM-ready, HUMAN-READABLE summary of the WHOLE run — for triaging the
- *  trajectory (and any failure) to another LLM. Semantic step names, NO runtimeStageIds,
- *  ONE line per step (no slot/injection repetition), with the error surfaced. This is the
- *  agentThinkingUI counterpart to Lens's detailed dump: Lens keeps the ids + event trace
- *  for deep debugging; this is the clean, paste-into-Claude triage version. */
-export function buildRunSummaryText({ trace }) {
+ *  trajectory (and any failure) to ANOTHER LLM. Semantic step names, NO runtimeStageIds,
+ *  no slot/injection repetition, with the error surfaced.
+ *
+ *    mode: "short"    — minimal: task + outcome/error + the tool path on one line + the
+ *                       ask. Cheapest to paste into a small/fast model. (default)
+ *    mode: "detailed" — adds per-step reasoning, inputs, and returns.
+ *
+ *  This is the agentThinkingUI counterpart to Lens's detailed dump: Lens keeps the ids +
+ *  event trace for deep debugging; this is the clean, paste-into-an-LLM triage version. */
+export function buildRunSummaryText({ trace, mode = "short" }) {
+  const detailed = mode === "detailed";
   const steps = (trace && trace.steps) || [];
   const errStep = steps.find((s) => s && s.error);
   const errMsg = (errStep && errStep.error) || (trace && trace.error);
@@ -85,10 +91,10 @@ export function buildRunSummaryText({ trace }) {
   L.push(`# Agent run — ${failed ? "FAILED" : "completed"}`);
   L.push("");
   L.push(
-    "I'm triaging an AI agent run. Below is what it did, in order, in plain terms — " +
+    "I'm triaging an AI agent run. " +
       (failed
-        ? "it FAILED (the error is shown). Give me the likely root cause and the concrete fix."
-        : "tell me whether the path and the answer look right, and anything to improve."),
+        ? "It FAILED (the error is below). Give me the likely root cause and the concrete fix."
+        : "Tell me whether the path and the answer look right, and anything to improve."),
   );
   L.push("");
   L.push("## Task");
@@ -97,28 +103,42 @@ export function buildRunSummaryText({ trace }) {
   if (failed && errMsg) {
     L.push("## Failure");
     L.push("```");
-    L.push(String(errMsg).slice(0, 800).trim());
+    L.push(String(errMsg).slice(0, detailed ? 800 : 400).trim());
     L.push("```");
     L.push("");
   }
-  L.push("## What it did");
-  let n = 0;
-  for (const s of steps) {
-    if (!s) continue;
-    if (s.kind === "prompt") {
-      L.push(`- **User asked:** ${compact(s.brain)}`);
-    } else if (s.kind === "ask") {
-      n += 1;
-      const verb = isSkill(s.tool) ? "activated skill" : "called tool";
-      const withInput = s.input != null && compact(s.input) ? ` with ${compact(s.input)}` : "";
-      L.push(`- **Step ${n} — ${verb} \`${s.tool}\`**${withInput}`);
-      if (s.brain) L.push(`    - reasoning: ${compact(s.brain)}`);
-    } else if (s.kind === "return") {
-      L.push(`    - ↳ returned: ${s.error ? `⚠ ERROR — ${compact(s.error)}` : compact(s.output)}`);
-    } else if (s.kind === "answer") {
-      L.push(`- **${failed ? "Ended (failed)" : "Final answer"}:** ${compact(s.brain)}`);
+
+  if (detailed) {
+    L.push("## What it did");
+    let n = 0;
+    for (const s of steps) {
+      if (!s) continue;
+      if (s.kind === "prompt") {
+        L.push(`- **User asked:** ${compact(s.brain)}`);
+      } else if (s.kind === "ask") {
+        n += 1;
+        const verb = isSkill(s.tool) ? "activated skill" : "called tool";
+        const withInput = s.input != null && compact(s.input) ? ` with ${compact(s.input)}` : "";
+        L.push(`- **Step ${n} — ${verb} \`${s.tool}\`**${withInput}`);
+        if (s.brain) L.push(`    - reasoning: ${compact(s.brain)}`);
+      } else if (s.kind === "return") {
+        L.push(`    - ↳ returned: ${s.error ? `⚠ ERROR — ${compact(s.error)}` : compact(s.output)}`);
+      } else if (s.kind === "answer") {
+        L.push(`- **${failed ? "Ended (failed)" : "Final answer"}:** ${compact(s.brain)}`);
+      }
+    }
+  } else {
+    // SHORT: the tool path on one line + the final outcome — no per-step reasoning/io.
+    const path = steps.filter((s) => s && s.kind === "ask").map((s) => `\`${s.tool}\``);
+    L.push("## Path");
+    L.push(path.length ? path.join(" → ") : "(no tool calls)");
+    const answer = steps.find((s) => s && s.kind === "answer");
+    if (answer && compact(answer.brain)) {
+      L.push("");
+      L.push(`**${failed ? "Ended (failed)" : "Answer"}:** ${compact(answer.brain)}`);
     }
   }
+
   L.push("");
   L.push("## Please answer");
   if (failed) {

@@ -42,13 +42,14 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
   const [mobileView, setMobileView] = useState("thinking");
   // rack mode: which tool the user clicked to inspect "why?" (null = panel hidden)
   const [whyTool, setWhyTool] = useState(null);
-  // run-level "Copy for LLM" — a clean, human-readable triage summary (no ids/repetition)
-  const [copiedRun, setCopiedRun] = useState(false);
-  const copyRunForLLM = async () => {
+  // run-level "Triage with your LLM" — a clean, human-readable summary for pasting into
+  // another LLM. Two modes: short (cheapest) + detailed. `copiedTriage` tracks which copied.
+  const [copiedTriage, setCopiedTriage] = useState(null); // "short" | "detailed" | null
+  const copyTriage = async (mode) => {
     try {
-      await navigator.clipboard.writeText(buildRunSummaryText({ trace }));
-      setCopiedRun(true);
-      setTimeout(() => setCopiedRun(false), 1500);
+      await navigator.clipboard.writeText(buildRunSummaryText({ trace, mode }));
+      setCopiedTriage(mode);
+      setTimeout(() => setCopiedTriage(null), 1500);
     } catch { /* clipboard unavailable (insecure ctx) */ }
   };
   // clicking a rack tool / the "Why this tool?" button focuses it AND makes sure
@@ -137,15 +138,29 @@ export function AgentThinkingUI({ trace, theme, labels, icons, brand, metaphor =
           <span className="txt" title={trace.task}>{trace.title || trace.task}</span>
         </div>
         <div className="spacer" />
-        <button
-          type="button"
-          className="atui-copy-run"
-          onClick={copyRunForLLM}
-          title="Copy a plain-English run summary (no ids, no repetition) to paste into an LLM for triage"
-          style={{ font: "inherit", fontSize: 12, padding: "4px 10px", borderRadius: 8, cursor: "pointer", border: "1px solid var(--atui-border, #ffffff22)", background: "transparent", color: "inherit", opacity: 0.85, whiteSpace: "nowrap" }}
-        >
-          {copiedRun ? "Copied ✓" : "📋 Copy for LLM"}
-        </button>
+        <div className="atui-triage" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span
+            style={{ fontSize: 11, opacity: 0.6, whiteSpace: "nowrap" }}
+            title="Copy a plain-English run summary (no ids, no repetition) to paste into another LLM"
+          >
+            🩺 Triage with your LLM
+          </span>
+          {[
+            { mode: "short", hint: "Short — task + outcome + tool path (cheapest to paste)" },
+            { mode: "detailed", hint: "Detailed — adds per-step reasoning + inputs/returns" },
+          ].map(({ mode, hint }) => (
+            <button
+              key={mode}
+              type="button"
+              className={"atui-triage-btn atui-triage-" + mode}
+              onClick={() => copyTriage(mode)}
+              title={hint}
+              style={{ font: "inherit", fontSize: 12, padding: "3px 9px", borderRadius: 8, cursor: "pointer", border: "1px solid var(--atui-border, #ffffff22)", background: "transparent", color: "inherit", opacity: 0.85, whiteSpace: "nowrap" }}
+            >
+              {copiedTriage === mode ? "Copied ✓" : mode}
+            </button>
+          ))}
+        </div>
       </div>
 
       <Timeline trace={trace} index={index} setIndex={seek}
