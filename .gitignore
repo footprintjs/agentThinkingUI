@@ -10,3 +10,7 @@ scraps/
 uploads/
 .thumbnail
 *.napkin
+
+# Published library: lockfile is dev-only (stripped on publish) and a committed cross-OS
+# lock can break CI; resolve fresh.
+package-lock.json

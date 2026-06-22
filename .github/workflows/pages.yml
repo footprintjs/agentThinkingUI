@@ -29,11 +29,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - name: Build the library bundle (dist/)
+        # Library policy: no committed lockfile → fresh install, no lock-keyed cache.
         run: |
-          npm ci
+          npm install
           npm run build
 
       - name: Configure Pages
