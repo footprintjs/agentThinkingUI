@@ -28,6 +28,8 @@ jobs:
       # `prepublishOnly` build hook will NOT fire there — it must happen at pack time.
       - run: npm run build
       - run: npm test
+      # Packaging-correctness gate — block a publish that would ship broken types.
+      - run: npm run check:package
       - name: Pack the publishable tarball
         run: |
           npm pack

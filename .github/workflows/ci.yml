@@ -18,6 +18,11 @@ jobs:
       # Library policy: no committed lockfile → fresh install, no lock-keyed cache.
       - run: npm install
       - run: npm run lint
+      - run: npm run build
+      # Packaging-correctness gate (publint + attw). ESM-only package: the cjs-resolves-to-esm
+      # rule is intentionally ignored, and the ./umd (CDN script artifact) + ./styles.css
+      # exports are excluded (not typed-import targets).
+      - run: npm run check:package
       - run: npm run coverage   # also regenerates docs/assets/coverage.svg (token-free badge)
       # commit the badge back when it changed (push to main only). Uses the
       # auto-provided GITHUB_TOKEN — no Codecov account or secret required.

@@ -1,7 +1,7 @@
 import type { FC, ReactNode } from "react";
-import type { Trace } from "./trace";
+import type { Trace } from "./trace.js";
 
-export * from "./trace";
+export * from "./trace.js";
 
 export interface IconConfig {
   kind: "default" | "emoji" | "image";
