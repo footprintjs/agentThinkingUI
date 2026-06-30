@@ -11,6 +11,8 @@
   <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square"></a>
 </p>
 
+<p align="center"><sub>Part of the <a href="https://footprintjs.github.io/"><b>footprintjs ecosystem</b></a> &mdash; the self-explaining stack.</sub></p>
+
 <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="docs/assets/hero-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/hero-light.svg">
@@ -553,6 +555,20 @@ Building on top of this with a coding agent? Two guides are kept for that:
   trace contract to emit) for an agent wiring it into another app.
 - [`CLAUDE.md`](./CLAUDE.md) — how to **work on this repo** (the module/build
   constraint, globals, theming, how to run/verify).
+
+## The footprintjs ecosystem
+
+The self-explaining stack — from backend pipelines to AI agents. → **[overview](https://footprintjs.github.io/)**
+
+| Project | Role |
+|---|---|
+| [footprintjs](https://footprintjs.github.io/footPrint/) | the flowchart pattern (core engine) |
+| [agentfootprint](https://footprintjs.github.io/agentfootprint/) | build self-explaining AI agents |
+| [Explainable UI](https://footprintjs.github.io/explainable-ui/) | visualize a footprintjs run |
+| [Lens](https://github.com/footprintjs/agentfootprint-lens) | debug an agentfootprint run |
+| **Thinking UI** ← you are here | replay an agent run for non-devs |
+
+---
 
 ## License
 
