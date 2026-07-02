@@ -46,6 +46,7 @@ playback in a resizable split.
 | `onSelect` | `(step: Step, index: number) => void` | — | fires on every beat; the step carries `spanId`/`traceId` (analytics / deep-link / sync) |
 | `linkResolver` | `(step: Step) => string \| null` | — | return a URL → renders an "open ↗" deep-link for the current step |
 | `renderDetail` | `(step: Step, index) => ReactNode` | — | render extra content for the step in the inspector (raw logs / custom widgets / data OTel didn't capture) |
+| `onBacktrack` | `(variable: string, step: Step) => void` | — | the triage seam: when a step carries `variables` (the state keys it produced — an agentfootprint host fills them from its commit log), the inspector renders them as "Where did this come from?" chips; clicking hands the variable to YOU — compute the slice (`sliceToBacktrackTrace` from `agentfootprint/debug`) and open `<BacktrackOverlay>`. No handler or no `variables` → nothing renders |
 
 `AgentFootprint` is a **deprecated alias** of `AgentThinkingUI`. The player also
 dispatches a DOM `CustomEvent("agentthinkingui:select", { detail: { step, index,

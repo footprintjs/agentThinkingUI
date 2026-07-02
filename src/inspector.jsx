@@ -305,7 +305,7 @@ export function Notepad({ trace, index, onCollapse, view, setView }) {
   );
 }
 
-export function Inspector({ step, index, total, onCollapse, view, setView, link, detail, trace, toolMenu, whyTool, onExplain }) {
+export function Inspector({ step, index, total, onCollapse, view, setView, link, detail, trace, toolMenu, whyTool, onExplain, onBacktrack }) {
   const accentClass = step.error ? "k-error" :
     step.kind === "answer" ? "k-answer" :
     step.kind === "prompt" ? "k-prompt" :
@@ -453,6 +453,25 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
         </Section>
 
         {/* host-supplied detail (raw logs / custom widgets / content OTel didn't capture) */}
+        {/* Where did this come from? — variable chips (the backtrack seam).
+            Same host-owns-data contract as onExplain: atui renders chips from
+            the OPTIONAL step.variables field (the state keys this step
+            produced — an agentfootprint host fills it from its commit log);
+            clicking hands (variable, step) to the host, which computes the
+            slice (sliceToBacktrackTrace) and opens <BacktrackOverlay>. No
+            variables or no handler → nothing renders. */}
+        {onBacktrack && Array.isArray(step.variables) && step.variables.length > 0 && (
+          <Section label="Where did this come from?">
+            <div className="var-chips">
+              {step.variables.map((v) => (
+                <button key={v} type="button" className="var-chip" title={"backtrack '" + v + "'"}
+                  onClick={() => onBacktrack(v, step)}>
+                  {v}
+                </button>
+              ))}
+            </div>
+          </Section>
+        )}
         {detail != null && <div className="insp-extra">{detail}</div>}
       </div>
     </div>

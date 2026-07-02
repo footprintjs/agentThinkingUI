@@ -1,3 +1,16 @@
+## 0.22.0 - 2026-07-02
+
+### Added
+
+- **`onBacktrack` — the triage seam** (mirrors `onExplain`: host owns data,
+  atui owns UI). When a step carries the new OPTIONAL `variables` field (the
+  state keys it produced — an agentfootprint host fills them from its commit
+  log), the inspector renders "Where did this come from?" chips; clicking
+  hands `(variable, step)` to the host, which computes the slice
+  (`sliceToBacktrackTrace` from `agentfootprint/debug`) and opens
+  `<BacktrackOverlay>`. No handler or no `variables` → nothing renders —
+  older traces are untouched.
+
 # Changelog
 
 All notable changes to **AgentThinkingUI** are documented here. The format

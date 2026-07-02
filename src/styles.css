@@ -970,3 +970,16 @@
   .atui-backtrack-overlay { padding: 0; }
   :where(.atui-backtrack-overlay) .bto-sheet { width: 100%; height: 100dvh; max-height: none; border-radius: 0; }
 }
+
+/* Where did this come from? — variable chips (the onBacktrack seam) */
+:where(.atui, .atui-swarm) .var-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+:where(.atui, .atui-swarm) .var-chip {
+  font-family: var(--font-mono); font-size: calc(11px * var(--af-text-scale));
+  padding: 3px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+  transition: border-color 120ms, color 120ms, background 120ms;
+}
+:where(.atui, .atui-swarm) .var-chip:hover {
+  border-color: var(--accent); color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
