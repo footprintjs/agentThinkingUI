@@ -89,6 +89,8 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
   const [suggesting, setSuggesting] = React.useState(false);
   const [suggestion, setSuggestion] = React.useState(null);
   const [descCopied, setDescCopied] = React.useState(false);
+  // Which scoring strategy the user picked (null = auto → the best available).
+  const [chosenStrategy, setChosenStrategy] = React.useState(null);
   const tools = React.useMemo(() => {
     const m = new Map();
     for (const s of trace.steps) for (const t of (s.toolsSeen || [])) if (!m.has(t.name)) m.set(t.name, t);
@@ -120,6 +122,27 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
   const isProxy = ranked.some((r) => !r.provided);
   // a skill surfaces as a tool but it's an instruction — call it what it is
   const noun = isSkillName(focus) ? "skill" : "tool";
+
+  // ── Scoring strategies the library knows, and whether each can RUN here ──
+  // lexical: always (built-in term overlap). semantic: needs real per-tool
+  // `relevance` (an embedding model upstream). llm: needs a live `onExplain`
+  // call. Unavailable ones are shown greyed with a tooltip — never hidden,
+  // never faked — so the consumer sees the strategy exists + how to enable it.
+  const semanticAvailable = ranked.length > 0 && ranked.every((r) => r.provided);
+  const llmAvailable = !!onExplain;
+  const strategyAvail = { lexical: true, semantic: semanticAvailable, llm: llmAvailable };
+  const defaultStrategy = semanticAvailable ? "semantic" : "lexical"; // never LLM by default (it costs a call)
+  const active = chosenStrategy && strategyAvail[chosenStrategy] ? chosenStrategy : defaultStrategy;
+  const STRATEGY_WHY = {
+    lexical: "keyword overlap with the ask — always on, but a hint, not the model's own reason.",
+    semantic: semanticAvailable
+      ? "embedding cosine vs the choice context — real ranked scores."
+      : "needs an embedding model — supply a numeric `relevance` per " + noun + " upstream (e.g. agentfootprint's toolChoiceRecorder + an embedder).",
+    llm: llmAvailable
+      ? "ask the live model for its own reason for choosing this " + noun + "."
+      : "needs a live LLM call — wire the host's `onExplain` to enable.",
+  };
+  const STRATEGY_LABEL = { lexical: "Lexical", semantic: "Semantic", llm: "LLM" };
   // the bars are a proxy; the REAL why = hand the trajectory to an LLM. Copy it.
   const copyForLlm = async () => {
     const text = buildToolWhyText({ trace, step, ranked, focusName: focus });
@@ -172,31 +195,51 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
   return (
     <div ref={ref} className="why-wrap">
     <Section label={"🔍 Why this " + noun + "?"}>
-      <div className="why-sub">{isProxy ? "these share wording with your ask — a hint, not why the model chose. Use “Copy for LLM” or “Explain (live)” for the real reason." : "relevance score"}</div>
-      <div className="why-actions">
-        {isProxy && (
-          <button type="button" className="why-copy" onClick={copyForLlm}
-            title={"Copy the task + trajectory + " + noun + " menu as an LLM-ready prompt — paste into Claude/ChatGPT for the real why"}>
-            {copied ? "✓ Copied — paste into your LLM" : "📋 Copy for LLM"}
-          </button>
-        )}
-        {onExplain && (
-          <button type="button" className="why-explain" onClick={explainLive} disabled={explaining}
-            title={"Ask the live LLM why the agent picked this " + noun}>
-            {explaining ? "✨ Explaining…" : "✨ Explain (live)"}
-          </button>
-        )}
-        {onExplain && (
-          <button type="button" className="why-doctor" onClick={improveDescription} disabled={suggesting}
-            title={"Descriptions overlap? Ask the live LLM for a sharper, more distinct description for this " + noun}>
-            {suggesting ? "📝 Suggesting…" : "📝 Improve description"}
-          </button>
-        )}
+      {/* Strategy selector — every scorer the library knows, greyed + tooltipped
+          when its dependency is missing, so the consumer sees it EXISTS and how
+          to turn it on (lexical = always; semantic = an embedding model;
+          llm = a live call). Never hidden, never faked. */}
+      <div className="why-strats" role="tablist" aria-label="scoring strategy">
+        {["lexical", "semantic", "llm"].map((id) => {
+          const avail = strategyAvail[id];
+          return (
+            <button key={id} type="button" role="tab" aria-selected={active === id}
+              className={"why-strat" + (active === id ? " on" : "") + (avail ? "" : " off")}
+              disabled={!avail} aria-disabled={!avail} title={STRATEGY_WHY[id]}
+              onClick={avail ? () => setChosenStrategy(id) : undefined}>
+              {STRATEGY_LABEL[id]}{avail ? "" : " 🔒"}
+            </button>
+          );
+        })}
       </div>
-      {explanation && (
+      <div className="why-sub">{STRATEGY_WHY[active]}</div>
+
+      {(active === "lexical" || active === "llm") && (
+        <div className="why-actions">
+          {active === "lexical" && (
+            <button type="button" className="why-copy" onClick={copyForLlm}
+              title={"Copy the task + trajectory + " + noun + " menu as an LLM-ready prompt — paste into Claude/ChatGPT for the real why"}>
+              {copied ? "✓ Copied — paste into your LLM" : "📋 Copy for LLM"}
+            </button>
+          )}
+          {active === "llm" && onExplain && (
+            <button type="button" className="why-explain" onClick={explainLive} disabled={explaining}
+              title={"Ask the live LLM why the agent picked this " + noun}>
+              {explaining ? "✨ Explaining…" : "✨ Explain (live)"}
+            </button>
+          )}
+          {active === "llm" && onExplain && (
+            <button type="button" className="why-doctor" onClick={improveDescription} disabled={suggesting}
+              title={"Descriptions overlap? Ask the live LLM for a sharper, more distinct description for this " + noun}>
+              {suggesting ? "📝 Suggesting…" : "📝 Improve description"}
+            </button>
+          )}
+        </div>
+      )}
+      {active === "llm" && explanation && (
         <div className="why-explanation"><span className="we-tag">✨ live</span>{explanation}</div>
       )}
-      {suggestion && (
+      {active === "llm" && suggestion && (
         <div className="desc-doctor">
           <div className="dd-label">Current description</div>
           <div className="dd-old">{focusDesc || "(none)"}</div>
@@ -214,35 +257,38 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
           </button>
         </div>
       )}
-      <ul className="why-tool">
-        {/* Proxy: don't RANK by a lexical score (that misreads a system-prompt /
-            procedure-driven pick as "worst") — surface the picked tool first and
-            show only the shared wording, no numeric bar. Real upstream attribution
-            (provided relevance) keeps the ranked bars. */}
-        {(isProxy ? [...ranked].sort((a, b) => (b.name === pickedName ? 1 : 0) - (a.name === pickedName ? 1 : 0)) : ranked).map((r, i) => {
-          const isFocus = r.name === focus;
-          const isPicked = r.name === pickedName;
-          return (
-            <li key={r.name + i} className={"wt-row" + (isFocus ? " focus" : "") + (isPicked ? " picked" : "")}>
-              <div className="wt-head">
-                <code className="wt-name">{r.name}</code>
-                {isPicked && <span className="wt-tag">picked</span>}
-                {!isProxy && <span className="wt-val">{r.score.toFixed(2)}</span>}
-              </div>
-              {!isProxy && (
-                <span className="wt-meter"><span className="wt-fill" style={{ width: Math.round(r.score * 100) + "%" }} /></span>
-              )}
-              {isProxy ? (
-                <div className={"wt-matched" + (r.matched && r.matched.length ? "" : " wt-none")}>
-                  {r.matched && r.matched.length ? "shares: " + r.matched.join(", ") : "no shared wording with the ask"}
+
+      {active !== "llm" && (
+        <ul className="why-tool">
+          {/* Semantic: ranked bars from real relevance. Lexical: surface the
+              picked one FIRST + a shared-wording hint, NO numeric bar (a lexical
+              score misreads a system-prompt / procedure-driven pick as "worst"). */}
+          {(active === "semantic" ? ranked : [...ranked].sort((a, b) => (b.name === pickedName ? 1 : 0) - (a.name === pickedName ? 1 : 0))).map((r, i) => {
+            const isFocus = r.name === focus;
+            const isPicked = r.name === pickedName;
+            const bars = active === "semantic";
+            return (
+              <li key={r.name + i} className={"wt-row" + (isFocus ? " focus" : "") + (isPicked ? " picked" : "")}>
+                <div className="wt-head">
+                  <code className="wt-name">{r.name}</code>
+                  {isPicked && <span className="wt-tag">picked</span>}
+                  {bars && <span className="wt-val">{r.score.toFixed(2)}</span>}
                 </div>
-              ) : (
-                isFocus && r.matched && r.matched.length > 0 && <div className="wt-matched">matched: {r.matched.join(", ")}</div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+                {bars && (
+                  <span className="wt-meter"><span className="wt-fill" style={{ width: Math.round(r.score * 100) + "%" }} /></span>
+                )}
+                {bars ? (
+                  isFocus && r.matched && r.matched.length > 0 && <div className="wt-matched">matched: {r.matched.join(", ")}</div>
+                ) : (
+                  <div className={"wt-matched" + (r.matched && r.matched.length ? "" : " wt-none")}>
+                    {r.matched && r.matched.length ? "shares: " + r.matched.join(", ") : "no shared wording with the ask"}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </Section>
     </div>
   );

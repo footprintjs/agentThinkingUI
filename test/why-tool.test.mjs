@@ -74,16 +74,29 @@ describe("<Inspector> — Why this tool? (rack mode, click-only)", () => {
     expect(renderInsp({ toolMenu: "card", whyTool: "get_interface_status" }).container.querySelector(".why-tool")).toBeNull();
   });
 
-  it("offers 'Explain (live)' only when onExplain is wired", () => {
-    expect(renderInsp({ toolMenu: "rack", whyTool: "get_interface_status" }).container.querySelector(".why-explain")).toBeNull();
-    const onExplain = vi.fn().mockResolvedValue("because…");
-    expect(renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", onExplain }).container.querySelector(".why-explain")).toBeTruthy();
+  const strat = (container, name) => [...container.querySelectorAll(".why-strat")].find((b) => new RegExp(name).test(b.textContent));
+
+  it("lists all three scoring strategies (lexical / semantic / llm)", () => {
+    const { container } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status" });
+    expect(strat(container, "Lexical")).toBeTruthy();
+    expect(strat(container, "Semantic")).toBeTruthy();
+    expect(strat(container, "LLM")).toBeTruthy();
   });
 
-  it("calls onExplain with the tool-choice context + prompt and renders the reason in place", async () => {
+  it("greys the LLM strategy tab (disabled) unless onExplain is wired", () => {
+    const off = strat(renderInsp({ toolMenu: "rack", whyTool: "get_interface_status" }).container, "LLM");
+    expect(off.disabled).toBe(true);
+    expect(off.classList.contains("off")).toBe(true);
+    const on = strat(renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", onExplain: vi.fn() }).container, "LLM");
+    expect(on.disabled).toBe(false);
+  });
+
+  it("Explain (live) is under the LLM tab: switch to it, then it calls onExplain and renders the reason", async () => {
     const onExplain = vi.fn().mockResolvedValue("It picked it because the step was about the interface flap.");
     const { container, findByText } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", onExplain });
-    fireEvent.click(container.querySelector(".why-explain")); // target the button, not the subtitle that names it
+    expect(container.querySelector(".why-explain")).toBeNull(); // hidden until the LLM strategy is active
+    fireEvent.click(strat(container, "LLM"));
+    fireEvent.click(container.querySelector(".why-explain"));
     await findByText(/because the step was about the interface flap/);
     const ctx = onExplain.mock.calls[0][0];
     expect(ctx.tool).toBe("get_interface_status");
@@ -94,7 +107,27 @@ describe("<Inspector> — Why this tool? (rack mode, click-only)", () => {
   it("renders an error message if onExplain rejects", async () => {
     const onExplain = vi.fn().mockRejectedValue(new Error("no API key"));
     const { container, findByText } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", onExplain });
-    fireEvent.click(container.querySelector(".why-explain")); // target the button, not the subtitle that names it
+    fireEvent.click(strat(container, "LLM"));
+    fireEvent.click(container.querySelector(".why-explain"));
     await findByText(/Couldn't get the explanation: no API key/);
+  });
+
+  it("greys the Semantic tab (tooltip) with no real relevance — default view is lexical, no numeric bars", () => {
+    const { container } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status" });
+    const sem = strat(container, "Semantic");
+    expect(sem.disabled).toBe(true);
+    expect(sem.classList.contains("off")).toBe(true);
+    expect(sem.getAttribute("title")).toMatch(/embedding model/i);
+    expect(container.querySelector(".why-tool .wt-meter")).toBeNull();
+  });
+
+  it("enables Semantic + shows real ranked bars when upstream relevance is provided", () => {
+    const scored = { ...askStep, toolsSeen: SEEN.map((t, i) => ({ ...t, relevance: [0.92, 0.41, 0.18][i] })) };
+    const { container } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", step: scored, trace: { task: "fc1/3 interface is flapping", steps: [scored] } });
+    const sem = strat(container, "Semantic");
+    expect(sem.disabled).toBe(false);
+    expect(sem.classList.contains("on")).toBe(true); // best available → default active
+    expect(container.querySelector(".why-tool .wt-meter")).toBeTruthy();
+    expect(container.querySelector(".why-tool .wt-val")).toBeTruthy();
   });
 });
