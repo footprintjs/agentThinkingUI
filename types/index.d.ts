@@ -53,6 +53,13 @@ export interface AgentThinkingUIProps {
    * makes no LLM calls itself.
    */
   onExplain?: (ctx: { trace: Trace; step: Step; tool: string; prompt: string; kind?: "why" | "improve-description"; description?: string }) => Promise<string | { reason?: string; score?: number }>;
+  /**
+   * LLM-as-judge scorer — powers the "LLM" strategy's ranked bars. Given the
+   * step's tools + choice context, return a 0..1 relevance/influence score per
+   * tool (the model's own read of fit). Fetched lazily when the LLM tab opens.
+   * Unlike lexical/embedding scores, this can rank a procedural pick correctly.
+   */
+  onScore?: (ctx: { trace: Trace; step: Step; tools: { name: string; description?: string }[] }) => Promise<{ scores: { name: string; score: number; rationale?: string }[] } | { name: string; score: number; rationale?: string }[]>;
   /** auto-loop playback */
   loop?: boolean;
   /** live monitoring: tail the newest step as the trace grows */

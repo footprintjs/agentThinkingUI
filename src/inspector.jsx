@@ -80,7 +80,7 @@ function ToolsSeen({ tools }) {
 // picked one tagged and the focused one's matched terms shown. The score is a
 // lexical PROXY today (honestly labelled) — the panel swaps in real attribution
 // the day a tool carries a numeric `relevance`.
-function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
+function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore }) {
   const ref = React.useRef(null);
   const [copied, setCopied] = React.useState(false);
   const [explaining, setExplaining] = React.useState(false);
@@ -91,6 +91,10 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
   const [descCopied, setDescCopied] = React.useState(false);
   // Which scoring strategy the user picked (null = auto → the best available).
   const [chosenStrategy, setChosenStrategy] = React.useState(null);
+  // LLM-judge scores (onScore): Map<name,{score,rationale}> once fetched.
+  const [judgeScores, setJudgeScores] = React.useState(null);
+  const [judging, setJudging] = React.useState(false);
+  const [judgeError, setJudgeError] = React.useState(null);
   const tools = React.useMemo(() => {
     const m = new Map();
     for (const s of trace.steps) for (const t of (s.toolsSeen || [])) if (!m.has(t.name)) m.set(t.name, t);
@@ -129,18 +133,47 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
   // call. Unavailable ones are shown greyed with a tooltip — never hidden,
   // never faked — so the consumer sees the strategy exists + how to enable it.
   const semanticAvailable = ranked.length > 0 && ranked.every((r) => r.provided);
-  const llmAvailable = !!onExplain;
+  const llmAvailable = !!onScore || !!onExplain; // the model scores (onScore) and/or explains (onExplain)
   const strategyAvail = { lexical: true, semantic: semanticAvailable, llm: llmAvailable };
   const defaultStrategy = semanticAvailable ? "semantic" : "lexical"; // never LLM by default (it costs a call)
   const active = chosenStrategy && strategyAvail[chosenStrategy] ? chosenStrategy : defaultStrategy;
+
+  // LLM-judge: ask the host (onScore) to rate each tool 0..1 for THIS choice.
+  // Lazy — fired only when the user opens the LLM tab, memoized per panel.
+  const runJudge = () => {
+    if (!onScore || judging || judgeScores) return;
+    setJudging(true);
+    setJudgeError(null);
+    Promise.resolve(onScore({ trace, step, tools }))
+      .then((res) => {
+        const arr = Array.isArray(res) ? res : (res && res.scores) || [];
+        const m = new Map();
+        for (const s of arr) {
+          if (s && typeof s.name === "string" && typeof s.score === "number") {
+            m.set(s.name, { score: Math.min(1, Math.max(0, s.score)), rationale: s.rationale });
+          }
+        }
+        setJudgeScores(m);
+      })
+      .catch((e) => setJudgeError("Couldn't score: " + (e && e.message ? e.message : String(e))))
+      .then(() => setJudging(false));
+  };
+  const judgeRanked = judgeScores
+    ? tools
+        .map((t) => ({ name: t.name, description: t.description, score: judgeScores.get(t.name) ? judgeScores.get(t.name).score : 0, rationale: judgeScores.get(t.name) ? judgeScores.get(t.name).rationale : undefined }))
+        .sort((a, b) => b.score - a.score)
+    : null;
+
   const STRATEGY_WHY = {
     lexical: "keyword overlap with the ask — always on, but a hint, not the model's own reason.",
     semantic: semanticAvailable
       ? "embedding cosine vs the choice context — real ranked scores."
       : "needs an embedding model — supply a numeric `relevance` per " + noun + " upstream (e.g. agentfootprint's toolChoiceRecorder + an embedder).",
     llm: llmAvailable
-      ? "ask the live model for its own reason for choosing this " + noun + "."
-      : "needs a live LLM call — wire the host's `onExplain` to enable.",
+      ? (onScore
+          ? "the model rates each " + noun + "'s fit 0–1 from the same context it chose with" + (onExplain ? " — and can explain in words." : ".")
+          : "ask the live model for its own reason for choosing this " + noun + ".")
+      : "needs a live LLM call — wire the host's onScore / onExplain to enable.",
   };
   const STRATEGY_LABEL = { lexical: "Lexical", semantic: "Semantic", llm: "LLM" };
   // the bars are a proxy; the REAL why = hand the trajectory to an LLM. Copy it.
@@ -206,7 +239,7 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
             <button key={id} type="button" role="tab" aria-selected={active === id}
               className={"why-strat" + (active === id ? " on" : "") + (avail ? "" : " off")}
               disabled={!avail} aria-disabled={!avail} title={STRATEGY_WHY[id]}
-              onClick={avail ? () => setChosenStrategy(id) : undefined}>
+              onClick={avail ? () => { setChosenStrategy(id); if (id === "llm") runJudge(); } : undefined}>
               {STRATEGY_LABEL[id]}{avail ? "" : " 🔒"}
             </button>
           );
@@ -214,7 +247,38 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
       </div>
       <div className="why-sub">{STRATEGY_WHY[active]}</div>
 
-      {(active === "lexical" || active === "llm") && (
+      {/* LLM strategy: the model's own 0..1 rating per tool (onScore), lazily
+          fetched on tab-open. Bars are real (provided) — the picked tool can
+          rank first even with no lexical/embedding overlap (procedural picks). */}
+      {active === "llm" && onScore && (
+        judging ? (
+          <div className="why-sub">✨ scoring the {noun}s with the model…</div>
+        ) : judgeError ? (
+          <div className="why-explanation">⚠ {judgeError}</div>
+        ) : judgeRanked ? (
+          <ul className="why-tool">
+            {judgeRanked.map((r, i) => {
+              const isFocus = r.name === focus;
+              const isPicked = r.name === pickedName;
+              return (
+                <li key={r.name + i} className={"wt-row" + (isFocus ? " focus" : "") + (isPicked ? " picked" : "")}>
+                  <div className="wt-head">
+                    <code className="wt-name">{r.name}</code>
+                    {isPicked && <span className="wt-tag">picked</span>}
+                    <span className="wt-val">{r.score.toFixed(2)}</span>
+                  </div>
+                  <span className="wt-meter"><span className="wt-fill" style={{ width: Math.round(r.score * 100) + "%" }} /></span>
+                  {isFocus && r.rationale && <div className="wt-matched">{r.rationale}</div>}
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <div className="why-sub">open this tab to score the {noun}s with the model.</div>
+        )
+      )}
+
+      {(active === "lexical" || (active === "llm" && onExplain)) && (
         <div className="why-actions">
           {active === "lexical" && (
             <button type="button" className="why-copy" onClick={copyForLlm}
@@ -361,7 +425,7 @@ export function Notepad({ trace, index, onCollapse, view, setView }) {
   );
 }
 
-export function Inspector({ step, index, total, onCollapse, view, setView, link, detail, trace, toolMenu, whyTool, onExplain, onBacktrack }) {
+export function Inspector({ step, index, total, onCollapse, view, setView, link, detail, trace, toolMenu, whyTool, onExplain, onScore, onBacktrack }) {
   const accentClass = step.error ? "k-error" :
     step.kind === "answer" ? "k-answer" :
     step.kind === "prompt" ? "k-prompt" :
@@ -484,7 +548,7 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
             tool in the rack or the "Why this tool?" button (whyTool set), then
             auto-scrolls into view. Not shown on every step → keeps the UI clean. */}
         {toolMenu === "rack" && trace && whyTool && (
-          <WhyTool trace={trace} step={step} focusName={whyTool} pickedName={step.tool} onExplain={onExplain} />
+          <WhyTool trace={trace} step={step} focusName={whyTool} pickedName={step.tool} onExplain={onExplain} onScore={onScore} />
         )}
 
         {/* COST */}

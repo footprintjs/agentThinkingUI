@@ -130,4 +130,25 @@ describe("<Inspector> — Why this tool? (rack mode, click-only)", () => {
     expect(container.querySelector(".why-tool .wt-meter")).toBeTruthy();
     expect(container.querySelector(".why-tool .wt-val")).toBeTruthy();
   });
+
+  it("LLM strategy runs the onScore judge on tab-open and renders ranked bars (procedural pick can rank first)", async () => {
+    const onScore = vi.fn().mockResolvedValue({ scores: [
+      { name: "get_interface_status", score: 0.91, rationale: "the reasoning is about the interface flap" },
+      { name: "search_hotels", score: 0.08 },
+      { name: "load_skill", score: 0.2 },
+    ] });
+    const { container, findByText } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", onScore });
+    const llm = [...container.querySelectorAll(".why-strat")].find((b) => /LLM/.test(b.textContent));
+    expect(llm.disabled).toBe(false);           // onScore alone enables the LLM strategy
+    fireEvent.click(llm);
+    await findByText(/0\.91/);                    // the judge's bar value rendered
+    expect(onScore).toHaveBeenCalledTimes(1);
+    const ctx = onScore.mock.calls[0][0];
+    expect(ctx.step).toBe(askStep);
+    expect(ctx.tools.map((t) => t.name)).toContain("get_interface_status");
+    expect(container.querySelector(".why-tool .wt-meter")).toBeTruthy(); // real bars
+    expect(container.querySelector(".why-explain")).toBeNull();          // no onExplain → no explain button
+    // the top-scored tool is first even though lexical would rank it elsewhere
+    expect(container.querySelector(".why-tool .wt-row .wt-name").textContent).toBe("get_interface_status");
+  });
 });
