@@ -172,7 +172,7 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
   return (
     <div ref={ref} className="why-wrap">
     <Section label={"🔍 Why this " + noun + "?"}>
-      <div className="why-sub">{isProxy ? "relevance — term match with the task (a proxy, not the model's own reason)" : "relevance score"}</div>
+      <div className="why-sub">{isProxy ? "these share wording with your ask — a hint, not why the model chose. Use “Copy for LLM” or “Explain (live)” for the real reason." : "relevance score"}</div>
       <div className="why-actions">
         {isProxy && (
           <button type="button" className="why-copy" onClick={copyForLlm}
@@ -215,7 +215,11 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
         </div>
       )}
       <ul className="why-tool">
-        {ranked.map((r, i) => {
+        {/* Proxy: don't RANK by a lexical score (that misreads a system-prompt /
+            procedure-driven pick as "worst") — surface the picked tool first and
+            show only the shared wording, no numeric bar. Real upstream attribution
+            (provided relevance) keeps the ranked bars. */}
+        {(isProxy ? [...ranked].sort((a, b) => (b.name === pickedName ? 1 : 0) - (a.name === pickedName ? 1 : 0)) : ranked).map((r, i) => {
           const isFocus = r.name === focus;
           const isPicked = r.name === pickedName;
           return (
@@ -223,11 +227,17 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain }) {
               <div className="wt-head">
                 <code className="wt-name">{r.name}</code>
                 {isPicked && <span className="wt-tag">picked</span>}
-                <span className="wt-val">{r.score.toFixed(2)}</span>
+                {!isProxy && <span className="wt-val">{r.score.toFixed(2)}</span>}
               </div>
-              <span className="wt-meter"><span className="wt-fill" style={{ width: Math.round(r.score * 100) + "%" }} /></span>
-              {isFocus && r.matched && r.matched.length > 0 && (
-                <div className="wt-matched">matched: {r.matched.join(", ")}</div>
+              {!isProxy && (
+                <span className="wt-meter"><span className="wt-fill" style={{ width: Math.round(r.score * 100) + "%" }} /></span>
+              )}
+              {isProxy ? (
+                <div className={"wt-matched" + (r.matched && r.matched.length ? "" : " wt-none")}>
+                  {r.matched && r.matched.length ? "shares: " + r.matched.join(", ") : "no shared wording with the ask"}
+                </div>
+              ) : (
+                isFocus && r.matched && r.matched.length > 0 && <div className="wt-matched">matched: {r.matched.join(", ")}</div>
               )}
             </li>
           );

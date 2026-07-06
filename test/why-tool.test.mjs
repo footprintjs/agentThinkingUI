@@ -44,13 +44,18 @@ describe("<Inspector> — Why this tool? (rack mode, click-only)", () => {
     expect(btn.textContent).toMatch(/copy for llm/i);
   });
 
-  it("ranks the tools with bars and tags the picked one", () => {
+  it("surfaces the seen tools with the picked one first and NO numeric bars (proxy)", () => {
     const { container, getByText } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status" });
     expect(getByText(/Why this tool\?/)).toBeTruthy();
     expect(container.querySelectorAll(".why-tool .wt-row")).toHaveLength(3);
     const picked = container.querySelector(".wt-row.picked");
     expect(picked.querySelector(".wt-tag")?.textContent).toMatch(/picked/i);
-    expect(container.querySelector(".wt-row").classList.contains("picked")).toBe(true); // on-topic pick ranks first
+    expect(container.querySelector(".wt-row").classList.contains("picked")).toBe(true); // picked ranks first
+    // The lexical proxy must NOT show a numeric score/bar — it misreads a
+    // system-prompt / procedure-driven pick. Only a shared-wording hint.
+    expect(container.querySelector(".why-tool .wt-val")).toBeNull();
+    expect(container.querySelector(".why-tool .wt-meter")).toBeNull();
+    expect(container.querySelectorAll(".why-tool .wt-matched").length).toBeGreaterThan(0);
   });
 
   it("focuses the clicked tool and shows its matched terms", () => {
@@ -77,8 +82,8 @@ describe("<Inspector> — Why this tool? (rack mode, click-only)", () => {
 
   it("calls onExplain with the tool-choice context + prompt and renders the reason in place", async () => {
     const onExplain = vi.fn().mockResolvedValue("It picked it because the step was about the interface flap.");
-    const { getByText, findByText } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", onExplain });
-    fireEvent.click(getByText(/Explain \(live\)/));
+    const { container, findByText } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", onExplain });
+    fireEvent.click(container.querySelector(".why-explain")); // target the button, not the subtitle that names it
     await findByText(/because the step was about the interface flap/);
     const ctx = onExplain.mock.calls[0][0];
     expect(ctx.tool).toBe("get_interface_status");
@@ -88,8 +93,8 @@ describe("<Inspector> — Why this tool? (rack mode, click-only)", () => {
 
   it("renders an error message if onExplain rejects", async () => {
     const onExplain = vi.fn().mockRejectedValue(new Error("no API key"));
-    const { getByText, findByText } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", onExplain });
-    fireEvent.click(getByText(/Explain \(live\)/));
+    const { container, findByText } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", onExplain });
+    fireEvent.click(container.querySelector(".why-explain")); // target the button, not the subtitle that names it
     await findByText(/Couldn't get the explanation: no API key/);
   });
 });

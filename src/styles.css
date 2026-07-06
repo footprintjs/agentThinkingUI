@@ -423,6 +423,7 @@
 :where(.atui, .atui-swarm) .why-tool .wt-fill { display: block; height: 100%; border-radius: 999px; background: var(--ink-faint); transition: width .3s ease; }
 :where(.atui, .atui-swarm) .why-tool .wt-row.picked .wt-fill { background: var(--call); }
 :where(.atui, .atui-swarm) .why-tool .wt-matched { margin-top: 6px; font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-soft); }
+:where(.atui, .atui-swarm) .why-tool .wt-matched.wt-none { color: var(--ink-faint); font-style: italic; }
 /* a tool that returns BOTH is two-tone: data (teal) shell + instruction (amber) icon */
 :where(.atui, .atui-swarm) .k-both .tool-out { border-color: var(--data); box-shadow: 0 0 0 3px var(--data-tint), var(--shadow-md); }
 :where(.atui, .atui-swarm) .k-both .tool-out .to-ico { background: var(--instr); }
