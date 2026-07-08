@@ -1,3 +1,44 @@
+## 0.23.0 - 2026-07-08
+
+### Added
+
+- **Scoring-strategy selector in the "Why this tool?" panel.** Replaces the
+  single proxy view with a selector exposing every scorer the library
+  knows, availability introspected from the inputs: lexical is always on
+  (built-in term overlap), semantic only when tools carry real `relevance`
+  (an embedding model upstream), llm only when a live call is wired.
+  Unavailable strategies show greyed + disabled with a tooltip saying what
+  turns them on — never hidden, never faked.
+- **LLM-judge scoring strategy (`onScore`).** The model rates each offered
+  tool 0..1 from the same context it chose with (lazy, on tab-open).
+  Unlike lexical/embedding scores it ranks a system-prompt / procedure-
+  driven pick correctly — the chosen tool can top the bars with zero
+  surface overlap.
+- **"What drove it" — a 4th tool-choice strategy.** Per-rule attribution
+  sourced by a stamped `step.attribution` (free, like semantic's
+  `relevance`) or a lazy `onAttribute` callback (like `onScore`); greyed +
+  tooltip + lock when neither is present. New `WhyAttribution` type on
+  `AskStep`. Strategy labels renamed off developer jargon: Keyword match /
+  Meaning match / What drove it / Ask the model.
+- **Answer-first verdict card.** `WhyAttribution` gains optional `channels`
+  + `note` (+ per-row `channel`): the "What drove it" tab now leads with a
+  verdict card — one meter per context channel (The rules / Your request /
+  Earlier results), the winning channel's citation quoted, and a plain-
+  language note ("similarity estimate — not a mind-read") — with the
+  ranked evidence rows beneath. The other strategies now read as "second
+  opinions." Channels absent → today's rendering, byte-identical. 185
+  tests (7 new).
+
+### Fixed
+
+- **Dropped the misleading lexical score when there's no real attribution.**
+  The "Why this tool?" proxy showed authoritative-looking 0.00–1.00 ranked
+  bars from lexical term-overlap, which mis-ranked a system-prompt /
+  procedure-driven pick (the chosen tool could land last, score 0). With
+  no upstream `relevance` it now shows a shared-wording hint, surfaces the
+  picked tool first, and points to Copy-for-LLM / Explain (live) for the
+  real reason.
+
 ## 0.22.0 - 2026-07-02
 
 ### Added
