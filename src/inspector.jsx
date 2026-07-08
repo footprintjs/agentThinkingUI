@@ -75,12 +75,32 @@ function ToolsSeen({ tools }) {
   );
 }
 
+// Normalize a per-rule attribution — a stamped `step.attribution` OR an
+// `onAttribute` result — into ranked rows for the "By the rules" strategy.
+// Clamps scores to [0,1], drops malformed rows, null when nothing usable.
+// Honest: these are similarity proxies (which rule the pick ALIGNS with),
+// never causal claims (ablation lives in the backtrack view, not here).
+function normalizeAttribution(res) {
+  if (!res) return null;
+  const rowsIn = Array.isArray(res.rows) ? res.rows : Array.isArray(res) ? res : [];
+  const rows = rowsIn
+    .filter((r) => r && typeof r.label === "string" && typeof r.score === "number" && isFinite(r.score))
+    .map((r) => ({
+      label: r.label,
+      score: Math.min(1, Math.max(0, r.score)),
+      quote: typeof r.quote === "string" ? r.quote : undefined,
+      picked: !!r.picked,
+    }));
+  if (!rows.length) return null;
+  return { rows, headline: res && typeof res.headline === "string" ? res.headline : undefined };
+}
+
 // "Why this tool?" — rack mode. Clicking a tool in the rack focuses it here:
 // the tools the model saw, ranked by relevance to the task (bars), with the
 // picked one tagged and the focused one's matched terms shown. The score is a
 // lexical PROXY today (honestly labelled) — the panel swaps in real attribution
 // the day a tool carries a numeric `relevance`.
-function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore }) {
+function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore, onAttribute }) {
   const ref = React.useRef(null);
   const [copied, setCopied] = React.useState(false);
   const [explaining, setExplaining] = React.useState(false);
@@ -95,6 +115,11 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore }) {
   const [judgeScores, setJudgeScores] = React.useState(null);
   const [judging, setJudging] = React.useState(false);
   const [judgeError, setJudgeError] = React.useState(null);
+  // "By the rules" attribution via onAttribute (lazy compute), when the pick
+  // is not already stamped on the step. Mirrors the judge's lazy pattern.
+  const [attrData, setAttrData] = React.useState(null);
+  const [attributing, setAttributing] = React.useState(false);
+  const [attrError, setAttrError] = React.useState(null);
   const tools = React.useMemo(() => {
     const m = new Map();
     for (const s of trace.steps) for (const t of (s.toolsSeen || [])) if (!m.has(t.name)) m.set(t.name, t);
@@ -134,8 +159,17 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore }) {
   // never faked — so the consumer sees the strategy exists + how to enable it.
   const semanticAvailable = ranked.length > 0 && ranked.every((r) => r.provided);
   const llmAvailable = !!onScore || !!onExplain; // the model scores (onScore) and/or explains (onExplain)
-  const strategyAvail = { lexical: true, semantic: semanticAvailable, llm: llmAvailable };
-  const defaultStrategy = semanticAvailable ? "semantic" : "lexical"; // never LLM by default (it costs a call)
+  // "By the rules": per-rule attribution for THIS step's pick — either already
+  // stamped on the step (free, no call) or computed lazily via onAttribute.
+  const stampedAttr = React.useMemo(() => normalizeAttribution(step && step.attribution), [step]);
+  const rulesData = attrData || stampedAttr;
+  const attributionAvailable = !!stampedAttr || !!onAttribute;
+  const strategyAvail = { lexical: true, semantic: semanticAvailable, rules: attributionAvailable, llm: llmAvailable };
+  // Default = the best AVAILABLE strategy that is FREE to run on open. Stamped
+  // attribution is free (and the most direct "why" for a procedural pick), so it
+  // leads; onAttribute-only rules and the LLM judge each cost a call → never the
+  // default (opening the panel must never spend).
+  const defaultStrategy = stampedAttr ? "rules" : semanticAvailable ? "semantic" : "lexical";
   const active = chosenStrategy && strategyAvail[chosenStrategy] ? chosenStrategy : defaultStrategy;
 
   // LLM-judge: ask the host (onScore) to rate each tool 0..1 for THIS choice.
@@ -164,18 +198,40 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore }) {
         .sort((a, b) => b.score - a.score)
     : null;
 
+  // "By the rules": ask the host (onAttribute) to attribute THIS pick to the
+  // system-prompt rules. Lazy — only when the pick isn't already stamped and the
+  // user opens the tab. Memoized per panel, like the judge.
+  const runAttribute = () => {
+    if (!onAttribute || stampedAttr || attributing || attrData) return;
+    setAttributing(true);
+    setAttrError(null);
+    Promise.resolve(onAttribute({ trace, step, tools }))
+      .then((res) => {
+        const n = normalizeAttribution(res);
+        if (n) setAttrData(n);
+        else setAttrError("The attributor returned nothing.");
+      })
+      .catch((e) => setAttrError("Couldn't attribute: " + (e && e.message ? e.message : String(e))))
+      .then(() => setAttributing(false));
+  };
+
   const STRATEGY_WHY = {
     lexical: "keyword overlap with the ask — always on, but a hint, not the model's own reason.",
     semantic: semanticAvailable
       ? "embedding cosine vs the choice context — real ranked scores."
       : "needs an embedding model — supply a numeric `relevance` per " + noun + " upstream (e.g. agentfootprint's toolChoiceRecorder + an embedder).",
+    rules: attributionAvailable
+      ? "which system-prompt rule best explains this pick — a similarity proxy, not a causal claim."
+      : "needs per-pick rule attribution — stamp `step.attribution` or wire onAttribute (agentfootprint's attributeChoice).",
     llm: llmAvailable
       ? (onScore
           ? "the model rates each " + noun + "'s fit 0–1 from the same context it chose with" + (onExplain ? " — and can explain in words." : ".")
           : "ask the live model for its own reason for choosing this " + noun + ".")
       : "needs a live LLM call — wire the host's onScore / onExplain to enable.",
   };
-  const STRATEGY_LABEL = { lexical: "Lexical", semantic: "Semantic", llm: "LLM" };
+  // Plain, end-user labels (not developer jargon) — the panel is read by whoever
+  // is debugging, not only engineers.
+  const STRATEGY_LABEL = { lexical: "Keyword match", semantic: "Meaning match", rules: "By the rules", llm: "Ask the model" };
   // the bars are a proxy; the REAL why = hand the trajectory to an LLM. Copy it.
   const copyForLlm = async () => {
     const text = buildToolWhyText({ trace, step, ranked, focusName: focus });
@@ -233,13 +289,13 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore }) {
           to turn it on (lexical = always; semantic = an embedding model;
           llm = a live call). Never hidden, never faked. */}
       <div className="why-strats" role="tablist" aria-label="scoring strategy">
-        {["lexical", "semantic", "llm"].map((id) => {
+        {["lexical", "semantic", "rules", "llm"].map((id) => {
           const avail = strategyAvail[id];
           return (
             <button key={id} type="button" role="tab" aria-selected={active === id}
               className={"why-strat" + (active === id ? " on" : "") + (avail ? "" : " off")}
               disabled={!avail} aria-disabled={!avail} title={STRATEGY_WHY[id]}
-              onClick={avail ? () => { setChosenStrategy(id); if (id === "llm") runJudge(); } : undefined}>
+              onClick={avail ? () => { setChosenStrategy(id); if (id === "llm") runJudge(); if (id === "rules") runAttribute(); } : undefined}>
               {STRATEGY_LABEL[id]}{avail ? "" : " 🔒"}
             </button>
           );
@@ -322,7 +378,38 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore }) {
         </div>
       )}
 
-      {active !== "llm" && (
+      {/* "By the rules": per-rule attribution for the pick. Ranks the system-prompt
+          rules (and the task) by similarity to the chosen tool, top one cited,
+          with a prominent "% procedural" headline. Rules are NOT tools, so the
+          picked row is the winning RULE, not a tool. */}
+      {active === "rules" && (
+        rulesData ? (
+          <>
+            {rulesData.headline && <div className="why-headline">{rulesData.headline}</div>}
+            <ul className="why-tool">
+              {rulesData.rows.map((r, i) => (
+                <li key={r.label + i} className={"wt-row" + (r.picked ? " picked" : "")}>
+                  <div className="wt-head">
+                    <code className="wt-name">{r.label}</code>
+                    {r.picked && <span className="wt-tag">top</span>}
+                    <span className="wt-val">{r.score.toFixed(2)}</span>
+                  </div>
+                  <span className="wt-meter"><span className="wt-fill" style={{ width: Math.round(r.score * 100) + "%" }} /></span>
+                  {r.quote && <div className="wt-matched">{r.quote}</div>}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : attributing ? (
+          <div className="why-sub">✨ attributing the pick to the rules…</div>
+        ) : attrError ? (
+          <div className="why-explanation">⚠ {attrError}</div>
+        ) : (
+          <div className="why-sub">open this tab to attribute the pick to the rules.</div>
+        )
+      )}
+
+      {(active === "lexical" || active === "semantic") && (
         <ul className="why-tool">
           {/* Semantic: ranked bars from real relevance. Lexical: surface the
               picked one FIRST + a shared-wording hint, NO numeric bar (a lexical
@@ -425,7 +512,7 @@ export function Notepad({ trace, index, onCollapse, view, setView }) {
   );
 }
 
-export function Inspector({ step, index, total, onCollapse, view, setView, link, detail, trace, toolMenu, whyTool, onExplain, onScore, onBacktrack }) {
+export function Inspector({ step, index, total, onCollapse, view, setView, link, detail, trace, toolMenu, whyTool, onExplain, onScore, onAttribute, onBacktrack }) {
   const accentClass = step.error ? "k-error" :
     step.kind === "answer" ? "k-answer" :
     step.kind === "prompt" ? "k-prompt" :
@@ -548,7 +635,7 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
             tool in the rack or the "Why this tool?" button (whyTool set), then
             auto-scrolls into view. Not shown on every step → keeps the UI clean. */}
         {toolMenu === "rack" && trace && whyTool && (
-          <WhyTool trace={trace} step={step} focusName={whyTool} pickedName={step.tool} onExplain={onExplain} onScore={onScore} />
+          <WhyTool trace={trace} step={step} focusName={whyTool} pickedName={step.tool} onExplain={onExplain} onScore={onScore} onAttribute={onAttribute} />
         )}
 
         {/* COST */}

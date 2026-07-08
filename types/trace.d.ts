@@ -72,6 +72,19 @@ export interface ToolSeen {
   description?: string;
 }
 
+/** Per-rule attribution for a step's chosen tool — which system-prompt rule (or
+ *  the task) best explains the pick. Powers the Why panel's "By the rules"
+ *  strategy. Stamp it on an ask step upstream (e.g. from agentfootprint's
+ *  `attributeChoice`) and the panel renders it for free. A similarity PROXY, not
+ *  a causal claim (counterfactual ablation lives in the backtrack view). */
+export interface WhyAttribution {
+  /** Ranked context units (rules / the task) by similarity to the chosen tool,
+   *  descending. `picked` marks the top / cited unit; `quote` is its text. */
+  rows: { label: string; score: number; quote?: string; picked?: boolean }[];
+  /** One-line verdict shown prominently above the rows, e.g. "93% procedural". */
+  headline?: string;
+}
+
 /** The brain reaches for a tool. */
 export interface AskStep {
   kind: "ask";
@@ -85,6 +98,9 @@ export interface AskStep {
   /** The tools the model saw (name + description) for this call — expandable in
    *  the inspector to debug tool selection. On the iteration's first ask. */
   toolsSeen?: ToolSeen[];
+  /** Optional per-rule attribution for THIS pick — powers the "By the rules"
+   *  strategy in the Why panel (rendered for free when present). */
+  attribution?: WhyAttribution;
   spanId?: string;
   traceId?: string;
 }

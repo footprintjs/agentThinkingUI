@@ -424,7 +424,7 @@
 :where(.atui, .atui-swarm) .why-tool .wt-row.picked .wt-fill { background: var(--call); }
 :where(.atui, .atui-swarm) .why-tool .wt-matched { margin-top: 6px; font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-soft); }
 :where(.atui, .atui-swarm) .why-tool .wt-matched.wt-none { color: var(--ink-faint); font-style: italic; }
-:where(.atui, .atui-swarm) .why-strats { display: flex; gap: 5px; margin: 4px 0 8px; }
+:where(.atui, .atui-swarm) .why-strats { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 8px; }
 :where(.atui, .atui-swarm) .why-strat {
   font-family: var(--font-body); font-size: calc(11.5px * var(--af-text-scale)); font-weight: 700;
   color: var(--ink-soft); background: var(--paper-2); border: 1px solid var(--line);
@@ -432,6 +432,12 @@
 }
 :where(.atui, .atui-swarm) .why-strat.on { background: var(--card); color: var(--rust); border-color: var(--rust); box-shadow: var(--shadow-sm); }
 :where(.atui, .atui-swarm) .why-strat.off { color: var(--ink-faint); background: transparent; border-style: dashed; cursor: not-allowed; opacity: .75; }
+/* "By the rules": the "% procedural" verdict leads — it IS the answer for a
+   procedural pick, so it gets prominence above the ranked rules. */
+:where(.atui, .atui-swarm) .why-headline {
+  font-family: var(--font-body); font-size: calc(13px * var(--af-text-scale)); font-weight: 800;
+  color: var(--rust); margin: 2px 0 9px; letter-spacing: .01em;
+}
 /* a tool that returns BOTH is two-tone: data (teal) shell + instruction (amber) icon */
 :where(.atui, .atui-swarm) .k-both .tool-out { border-color: var(--data); box-shadow: 0 0 0 3px var(--data-tint), var(--shadow-md); }
 :where(.atui, .atui-swarm) .k-both .tool-out .to-ico { background: var(--instr); }

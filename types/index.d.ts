@@ -60,6 +60,15 @@ export interface AgentThinkingUIProps {
    * Unlike lexical/embedding scores, this can rank a procedural pick correctly.
    */
   onScore?: (ctx: { trace: Trace; step: Step; tools: { name: string; description?: string }[] }) => Promise<{ scores: { name: string; score: number; rationale?: string }[] } | { name: string; score: number; rationale?: string }[]>;
+  /**
+   * Powers the "By the rules" strategy — per-rule attribution for a step's pick.
+   * OPTIONAL and lazy: if a step already carries `attribution` (stamped upstream,
+   * e.g. from agentfootprint's `attributeChoice`), the panel renders it for free
+   * and never calls this. Wire it only to compute attribution on demand. Return
+   * ranked context units (system-prompt rules / the task) by similarity to the
+   * chosen tool. A similarity PROXY, not a causal claim.
+   */
+  onAttribute?: (ctx: { trace: Trace; step: Step; tools: { name: string; description?: string }[] }) => Promise<WhyAttribution | { label: string; score: number; quote?: string; picked?: boolean }[]>;
   /** auto-loop playback */
   loop?: boolean;
   /** live monitoring: tail the newest step as the trace grows */
