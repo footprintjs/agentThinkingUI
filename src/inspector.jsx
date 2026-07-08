@@ -75,11 +75,12 @@ function ToolsSeen({ tools }) {
   );
 }
 
-// Normalize a per-rule attribution — a stamped `step.attribution` OR an
-// `onAttribute` result — into ranked rows for the "By the rules" strategy.
-// Clamps scores to [0,1], drops malformed rows, null when nothing usable.
-// Honest: these are similarity proxies (which rule the pick ALIGNS with),
-// never causal claims (ablation lives in the backtrack view, not here).
+// Normalize a per-pick attribution — a stamped `step.attribution` OR an
+// `onAttribute` result — into ranked rows (+ the optional multi-channel
+// verdict) for the "What drove it" strategy. Clamps scores to [0,1], drops
+// malformed rows/channels, null when nothing usable. Honest: these are
+// similarity proxies (which context the pick ALIGNS with), never causal
+// claims (ablation lives in the backtrack view, not here).
 function normalizeAttribution(res) {
   if (!res) return null;
   const rowsIn = Array.isArray(res.rows) ? res.rows : Array.isArray(res) ? res : [];
@@ -90,9 +91,35 @@ function normalizeAttribution(res) {
       score: Math.min(1, Math.max(0, r.score)),
       quote: typeof r.quote === "string" ? r.quote : undefined,
       picked: !!r.picked,
+      channel: typeof r.channel === "string" ? r.channel : undefined,
     }));
-  if (!rows.length) return null;
-  return { rows, headline: res && typeof res.headline === "string" ? res.headline : undefined };
+  // Multi-channel verdict (the answer-first card): which context channel drove
+  // the pick — the agent's rules ('system'), the user's request ('task'), or
+  // earlier tool data ('data'). Ids are free-form; the label falls back to the
+  // id. Order is preserved — upstream sorts the winner first, we trust it.
+  const channelsIn = Array.isArray(res.channels) ? res.channels : [];
+  const channels = channelsIn
+    .filter((c) => c && typeof c.id === "string" && typeof c.share === "number" && isFinite(c.share))
+    .map((c) => ({
+      id: c.id,
+      label: typeof c.label === "string" && c.label ? c.label : c.id,
+      share: c.share,
+      quote: typeof c.quote === "string" ? c.quote : undefined,
+      citeLabel: typeof c.citeLabel === "string" ? c.citeLabel : undefined,
+    }));
+  if (!rows.length && !channels.length) return null;
+  return {
+    rows,
+    headline: typeof res.headline === "string" ? res.headline : undefined,
+    channels: channels.length ? channels : undefined,
+    note: typeof res.note === "string" ? res.note : undefined,
+  };
+}
+
+// Cap the verdict card's citation — quotes come from arbitrary agent context.
+const MAX_VERDICT_QUOTE = 110;
+function clipQuote(q) {
+  return q.length > MAX_VERDICT_QUOTE ? q.slice(0, MAX_VERDICT_QUOTE).trimEnd() + "…" : q;
 }
 
 // "Why this tool?" — rack mode. Clicking a tool in the rack focuses it here:
@@ -115,7 +142,7 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore, onAtt
   const [judgeScores, setJudgeScores] = React.useState(null);
   const [judging, setJudging] = React.useState(false);
   const [judgeError, setJudgeError] = React.useState(null);
-  // "By the rules" attribution via onAttribute (lazy compute), when the pick
+  // "What drove it" attribution via onAttribute (lazy compute), when the pick
   // is not already stamped on the step. Mirrors the judge's lazy pattern.
   const [attrData, setAttrData] = React.useState(null);
   const [attributing, setAttributing] = React.useState(false);
@@ -159,18 +186,23 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore, onAtt
   // never faked — so the consumer sees the strategy exists + how to enable it.
   const semanticAvailable = ranked.length > 0 && ranked.every((r) => r.provided);
   const llmAvailable = !!onScore || !!onExplain; // the model scores (onScore) and/or explains (onExplain)
-  // "By the rules": per-rule attribution for THIS step's pick — either already
+  // "What drove it": per-pick attribution for THIS step — either already
   // stamped on the step (free, no call) or computed lazily via onAttribute.
   const stampedAttr = React.useMemo(() => normalizeAttribution(step && step.attribution), [step]);
   const rulesData = attrData || stampedAttr;
   const attributionAvailable = !!stampedAttr || !!onAttribute;
   const strategyAvail = { lexical: true, semantic: semanticAvailable, rules: attributionAvailable, llm: llmAvailable };
   // Default = the best AVAILABLE strategy that is FREE to run on open. Stamped
-  // attribution is free (and the most direct "why" for a procedural pick), so it
-  // leads; onAttribute-only rules and the LLM judge each cost a call → never the
-  // default (opening the panel must never spend).
+  // attribution is free (and the most direct "why" — pre-computed upstream), so
+  // it leads; then stamped semantic, else lexical. onAttribute-only attribution
+  // and the LLM judge each cost a call → NEVER the default (opening the panel
+  // must never spend).
   const defaultStrategy = stampedAttr ? "rules" : semanticAvailable ? "semantic" : "lexical";
   const active = chosenStrategy && strategyAvail[chosenStrategy] ? chosenStrategy : defaultStrategy;
+  // Answer-first framing: when the stamped multi-channel VERDICT is the default
+  // view, its tab leads the picker and the rest read as "second opinions".
+  const verdictDefault = defaultStrategy === "rules" && !!(stampedAttr && stampedAttr.channels);
+  const strategyIds = verdictDefault ? ["rules", "lexical", "semantic", "llm"] : ["lexical", "semantic", "rules", "llm"];
 
   // LLM-judge: ask the host (onScore) to rate each tool 0..1 for THIS choice.
   // Lazy — fired only when the user opens the LLM tab, memoized per panel.
@@ -198,8 +230,8 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore, onAtt
         .sort((a, b) => b.score - a.score)
     : null;
 
-  // "By the rules": ask the host (onAttribute) to attribute THIS pick to the
-  // system-prompt rules. Lazy — only when the pick isn't already stamped and the
+  // "What drove it": ask the host (onAttribute) to attribute THIS pick to its
+  // context. Lazy — only when the pick isn't already stamped and the
   // user opens the tab. Memoized per panel, like the judge.
   const runAttribute = () => {
     if (!onAttribute || stampedAttr || attributing || attrData) return;
@@ -221,8 +253,8 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore, onAtt
       ? "embedding cosine vs the choice context — real ranked scores."
       : "needs an embedding model — supply a numeric `relevance` per " + noun + " upstream (e.g. agentfootprint's toolChoiceRecorder + an embedder).",
     rules: attributionAvailable
-      ? "which system-prompt rule best explains this pick — a similarity proxy, not a causal claim."
-      : "needs per-pick rule attribution — stamp `step.attribution` or wire onAttribute (agentfootprint's attributeChoice).",
+      ? "which context — the agent's rules, your request, or earlier data — best explains this pick. A similarity proxy, not a causal claim."
+      : "needs per-pick attribution — stamp `step.attribution` (agentfootprint's explainChoice) or wire onAttribute.",
     llm: llmAvailable
       ? (onScore
           ? "the model rates each " + noun + "'s fit 0–1 from the same context it chose with" + (onExplain ? " — and can explain in words." : ".")
@@ -231,7 +263,7 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore, onAtt
   };
   // Plain, end-user labels (not developer jargon) — the panel is read by whoever
   // is debugging, not only engineers.
-  const STRATEGY_LABEL = { lexical: "Keyword match", semantic: "Meaning match", rules: "By the rules", llm: "Ask the model" };
+  const STRATEGY_LABEL = { lexical: "Keyword match", semantic: "Meaning match", rules: "What drove it", llm: "Ask the model" };
   // the bars are a proxy; the REAL why = hand the trajectory to an LLM. Copy it.
   const copyForLlm = async () => {
     const text = buildToolWhyText({ trace, step, ranked, focusName: focus });
@@ -289,9 +321,9 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore, onAtt
           to turn it on (lexical = always; semantic = an embedding model;
           llm = a live call). Never hidden, never faked. */}
       <div className="why-strats" role="tablist" aria-label="scoring strategy">
-        {["lexical", "semantic", "rules", "llm"].map((id) => {
+        {strategyIds.map((id, idx) => {
           const avail = strategyAvail[id];
-          return (
+          const btn = (
             <button key={id} type="button" role="tab" aria-selected={active === id}
               className={"why-strat" + (active === id ? " on" : "") + (avail ? "" : " off")}
               disabled={!avail} aria-disabled={!avail} title={STRATEGY_WHY[id]}
@@ -299,6 +331,18 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore, onAtt
               {STRATEGY_LABEL[id]}{avail ? "" : " 🔒"}
             </button>
           );
+          // Verdict-first framing: the stamped verdict IS the answer; the other
+          // strategies are second opinions. A subdued caption, nothing more —
+          // tab behavior (grey/tooltip/lock) is untouched.
+          if (verdictDefault && idx === 1) {
+            return (
+              <React.Fragment key={id}>
+                <span className="why-second">second opinions:</span>
+                {btn}
+              </React.Fragment>
+            );
+          }
+          return btn;
         })}
       </div>
       <div className="why-sub">{STRATEGY_WHY[active]}</div>
@@ -378,34 +422,63 @@ function WhyTool({ trace, step, focusName, pickedName, onExplain, onScore, onAtt
         </div>
       )}
 
-      {/* "By the rules": per-rule attribution for the pick. Ranks the system-prompt
-          rules (and the task) by similarity to the chosen tool, top one cited,
-          with a prominent "% procedural" headline. Rules are NOT tools, so the
-          picked row is the winning RULE, not a tool. */}
+      {/* "What drove it": per-pick attribution. Leads with the VERDICT CARD when
+          channels are stamped — which context channel drove the pick (the
+          agent's rules / the user's request / earlier tool data), the winner
+          cited. Below it, the ranked context units (rules / the task / data)
+          by similarity to the chosen tool, top one cited, with the "% procedural"
+          headline. Context units are NOT tools, so the picked row is the
+          winning UNIT, not a tool. */}
       {active === "rules" && (
         rulesData ? (
           <>
+            {rulesData.channels && (
+              <div className="why-verdict">
+                {/* One meter per channel, upstream's order (winner first). Quotes
+                    are untrusted agent context → React text nodes only. */}
+                {rulesData.channels.map((c, i) => {
+                  // clamp 0..100 (shares are 0..1 by contract) + round off float dust
+                  const pct = Math.round(Math.min(100, Math.max(0, c.share * 100)));
+                  return (
+                    <div key={c.id + i} className={"wv-row" + (i === 0 ? " win" : "")}>
+                      <span className="wv-label">{c.label}</span>
+                      <span className="wv-meter"><span className="wv-fill" style={{ width: pct + "%" }} /></span>
+                      <span className="wv-pct">{pct + "%"}</span>
+                      {i === 0 && c.quote && (
+                        <div className="wv-cite">
+                          {c.citeLabel && <span className="wv-cite-label">{c.citeLabel}</span>}
+                          {"“" + clipQuote(c.quote) + "”"}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {rulesData.note && <div className="wv-note">{rulesData.note}</div>}
             {rulesData.headline && <div className="why-headline">{rulesData.headline}</div>}
-            <ul className="why-tool">
-              {rulesData.rows.map((r, i) => (
-                <li key={r.label + i} className={"wt-row" + (r.picked ? " picked" : "")}>
-                  <div className="wt-head">
-                    <code className="wt-name">{r.label}</code>
-                    {r.picked && <span className="wt-tag">top</span>}
-                    <span className="wt-val">{r.score.toFixed(2)}</span>
-                  </div>
-                  <span className="wt-meter"><span className="wt-fill" style={{ width: Math.round(r.score * 100) + "%" }} /></span>
-                  {r.quote && <div className="wt-matched">{r.quote}</div>}
-                </li>
-              ))}
-            </ul>
+            {rulesData.rows.length > 0 && (
+              <ul className="why-tool">
+                {rulesData.rows.map((r, i) => (
+                  <li key={r.label + i} className={"wt-row" + (r.picked ? " picked" : "")}>
+                    <div className="wt-head">
+                      <code className="wt-name">{r.label}</code>
+                      {r.picked && <span className="wt-tag">top</span>}
+                      <span className="wt-val">{r.score.toFixed(2)}</span>
+                    </div>
+                    <span className="wt-meter"><span className="wt-fill" style={{ width: Math.round(r.score * 100) + "%" }} /></span>
+                    {r.quote && <div className="wt-matched">{r.quote}</div>}
+                  </li>
+                ))}
+              </ul>
+            )}
           </>
         ) : attributing ? (
-          <div className="why-sub">✨ attributing the pick to the rules…</div>
+          <div className="why-sub">✨ attributing the pick to its context…</div>
         ) : attrError ? (
           <div className="why-explanation">⚠ {attrError}</div>
         ) : (
-          <div className="why-sub">open this tab to attribute the pick to the rules.</div>
+          <div className="why-sub">open this tab to attribute the pick to its context.</div>
         )
       )}
 

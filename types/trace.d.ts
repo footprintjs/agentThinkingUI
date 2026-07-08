@@ -72,17 +72,44 @@ export interface ToolSeen {
   description?: string;
 }
 
-/** Per-rule attribution for a step's chosen tool — which system-prompt rule (or
- *  the task) best explains the pick. Powers the Why panel's "By the rules"
- *  strategy. Stamp it on an ask step upstream (e.g. from agentfootprint's
- *  `attributeChoice`) and the panel renders it for free. A similarity PROXY, not
- *  a causal claim (counterfactual ablation lives in the backtrack view). */
+/** One context CHANNEL's slice of a pick — the unit of the Why panel's verdict
+ *  card. Channels group the ranked context units by WHERE they came from: the
+ *  agent's own rules ('system'), the user's request ('task'), or data returned
+ *  by earlier tools ('data'). Stamped upstream (e.g. from agentfootprint's
+ *  `explainChoice`); shares are similarity mass, never causal proof. */
+export interface WhyChannel {
+  /** Channel id, e.g. 'system' | 'task' | 'data' (free-form). */
+  id: string;
+  /** Plain display label, e.g. "The rules" / "Your request" / "Earlier results". */
+  label: string;
+  /** 0..1 share of the pick's (positive) similarity mass; shares sum to ~1. */
+  share: number;
+  /** Top citation text inside this channel (quoted verbatim in the card). */
+  quote?: string;
+  /** Short citation label, e.g. "Rule 1" / "search result". */
+  citeLabel?: string;
+}
+
+/** Per-unit attribution for a step's chosen tool — which piece of context (a
+ *  system-prompt rule, the task, or earlier tool data) best explains the pick.
+ *  Powers the Why panel's "What drove it" strategy. Stamp it on an ask step
+ *  upstream (e.g. from agentfootprint's `explainChoice`) and the panel renders
+ *  it for free — when `channels` is present it leads with an answer-first
+ *  verdict card above the ranked rows. A similarity PROXY, not a causal claim
+ *  (counterfactual ablation lives in the backtrack view). */
 export interface WhyAttribution {
-  /** Ranked context units (rules / the task) by similarity to the chosen tool,
-   *  descending. `picked` marks the top / cited unit; `quote` is its text. */
-  rows: { label: string; score: number; quote?: string; picked?: boolean }[];
+  /** Ranked context units (rules / the task / earlier data) by similarity to
+   *  the chosen tool, descending. `picked` marks the top / cited unit; `quote`
+   *  is its text; `channel` ties the unit to a verdict channel id. */
+  rows: { label: string; score: number; quote?: string; picked?: boolean; channel?: string }[];
   /** One-line verdict shown prominently above the rows, e.g. "93% procedural". */
   headline?: string;
+  /** NEW — when present, the Why panel leads with the verdict card: one meter
+   *  per channel, in the given order (winner first — trust upstream's sort). */
+  channels?: WhyChannel[];
+  /** NEW — one plain-language sentence under the card, e.g.
+   *  "Best explanation: the agent's own rules. (similarity estimate — not a mind-read)" */
+  note?: string;
 }
 
 /** The brain reaches for a tool. */
@@ -98,8 +125,9 @@ export interface AskStep {
   /** The tools the model saw (name + description) for this call — expandable in
    *  the inspector to debug tool selection. On the iteration's first ask. */
   toolsSeen?: ToolSeen[];
-  /** Optional per-rule attribution for THIS pick — powers the "By the rules"
-   *  strategy in the Why panel (rendered for free when present). */
+  /** Optional per-pick attribution — powers the "What drove it" strategy in
+   *  the Why panel (rendered for free when present; with `channels` stamped it
+   *  leads with the answer-first verdict card). */
   attribution?: WhyAttribution;
   spanId?: string;
   traceId?: string;

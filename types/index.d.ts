@@ -61,12 +61,15 @@ export interface AgentThinkingUIProps {
    */
   onScore?: (ctx: { trace: Trace; step: Step; tools: { name: string; description?: string }[] }) => Promise<{ scores: { name: string; score: number; rationale?: string }[] } | { name: string; score: number; rationale?: string }[]>;
   /**
-   * Powers the "By the rules" strategy — per-rule attribution for a step's pick.
-   * OPTIONAL and lazy: if a step already carries `attribution` (stamped upstream,
-   * e.g. from agentfootprint's `attributeChoice`), the panel renders it for free
-   * and never calls this. Wire it only to compute attribution on demand. Return
-   * ranked context units (system-prompt rules / the task) by similarity to the
-   * chosen tool. A similarity PROXY, not a causal claim.
+   * Powers the "What drove it" strategy — per-pick attribution: which context
+   * (system-prompt rules / the user's request / earlier tool data) best explains
+   * a step's pick. OPTIONAL and lazy: if a step already carries `attribution`
+   * (stamped upstream, e.g. from agentfootprint's `explainChoice`), the panel
+   * renders it for free — leading with the multi-channel verdict card when
+   * `channels` is stamped — and never calls this. Wire it only to compute
+   * attribution on demand. Return ranked context units by similarity to the
+   * chosen tool (optionally with `channels` for the verdict card). A similarity
+   * PROXY, not a causal claim.
    */
   onAttribute?: (ctx: { trace: Trace; step: Step; tools: { name: string; description?: string }[] }) => Promise<WhyAttribution | { label: string; score: number; quote?: string; picked?: boolean }[]>;
   /** auto-loop playback */

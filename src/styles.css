@@ -432,12 +432,34 @@
 }
 :where(.atui, .atui-swarm) .why-strat.on { background: var(--card); color: var(--rust); border-color: var(--rust); box-shadow: var(--shadow-sm); }
 :where(.atui, .atui-swarm) .why-strat.off { color: var(--ink-faint); background: transparent; border-style: dashed; cursor: not-allowed; opacity: .75; }
-/* "By the rules": the "% procedural" verdict leads — it IS the answer for a
+/* "What drove it": the "% procedural" verdict leads — it IS the answer for a
    procedural pick, so it gets prominence above the ranked rules. */
 :where(.atui, .atui-swarm) .why-headline {
   font-family: var(--font-body); font-size: calc(13px * var(--af-text-scale)); font-weight: 800;
   color: var(--rust); margin: 2px 0 9px; letter-spacing: .01em;
 }
+/* Verdict card — the answer-first, multi-channel "what drove it" card. Same
+   visual language as the wt rows below it, but the share meters are slightly
+   TALLER (10px vs 7px) so the card reads as the lead and the rows as detail. */
+:where(.atui, .atui-swarm) .why-verdict {
+  margin: 2px 0 9px; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--paper-2);
+  display: flex; flex-direction: column; gap: 8px;
+}
+:where(.atui, .atui-swarm) .why-verdict .wv-row { display: grid; grid-template-columns: minmax(84px, auto) 1fr auto; align-items: center; gap: 9px; }
+:where(.atui, .atui-swarm) .why-verdict .wv-label { font-family: var(--font-body); font-size: calc(12px * var(--af-text-scale)); font-weight: 700; color: var(--ink-soft); }
+:where(.atui, .atui-swarm) .why-verdict .wv-row.win .wv-label { color: var(--call-deep); }
+:where(.atui, .atui-swarm) .why-verdict .wv-meter { display: block; height: 10px; border-radius: 999px; background: var(--paper-3, var(--card)); overflow: hidden; }
+:where(.atui, .atui-swarm) .why-verdict .wv-fill { display: block; height: 100%; border-radius: 999px; background: var(--ink-faint); transition: width .3s ease; }
+:where(.atui, .atui-swarm) .why-verdict .wv-row.win .wv-fill { background: var(--call); }
+:where(.atui, .atui-swarm) .why-verdict .wv-pct { font-family: var(--font-mono); font-size: calc(11px * var(--af-text-scale)); font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; min-width: 4ch; text-align: right; }
+/* the winning channel's citation spans the full card width under its meter */
+:where(.atui, .atui-swarm) .why-verdict .wv-cite { grid-column: 1 / -1; font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-soft); line-height: 1.45; }
+:where(.atui, .atui-swarm) .why-verdict .wv-cite-label { display: inline-block; margin-right: 7px; font-size: calc(9px * var(--af-text-scale)); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--call-deep); background: var(--call-tint, var(--card)); border-radius: 5px; padding: 1px 6px; }
+/* the plain-language sentence under the card — subdued, like .why-sub */
+:where(.atui, .atui-swarm) .wv-note { font-size: calc(11px * var(--af-text-scale)); color: var(--ink-faint); margin: 0 0 9px; line-height: 1.4; }
+/* "second opinions:" — the subdued caption before the non-default tabs when the verdict leads */
+:where(.atui, .atui-swarm) .why-second { align-self: center; font-family: var(--font-mono); font-size: calc(9.5px * var(--af-text-scale)); color: var(--ink-faint); letter-spacing: .04em; margin: 0 2px 0 4px; white-space: nowrap; }
 /* a tool that returns BOTH is two-tone: data (teal) shell + instruction (amber) icon */
 :where(.atui, .atui-swarm) .k-both .tool-out { border-color: var(--data); box-shadow: 0 0 0 3px var(--data-tint), var(--shadow-md); }
 :where(.atui, .atui-swarm) .k-both .tool-out .to-ico { background: var(--instr); }

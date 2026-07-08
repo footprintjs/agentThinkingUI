@@ -76,11 +76,11 @@ describe("<Inspector> — Why this tool? (rack mode, click-only)", () => {
 
   const strat = (container, name) => [...container.querySelectorAll(".why-strat")].find((b) => new RegExp(name).test(b.textContent));
 
-  it("lists all four scoring strategies (keyword / meaning / by the rules / ask the model)", () => {
+  it("lists all four scoring strategies (keyword / meaning / what drove it / ask the model)", () => {
     const { container } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status" });
     expect(strat(container, "Keyword")).toBeTruthy();
     expect(strat(container, "Meaning")).toBeTruthy();
-    expect(strat(container, "By the rules")).toBeTruthy();
+    expect(strat(container, "What drove it")).toBeTruthy();
     expect(strat(container, "Ask the model")).toBeTruthy();
   });
 
@@ -153,7 +153,7 @@ describe("<Inspector> — Why this tool? (rack mode, click-only)", () => {
     expect(container.querySelector(".why-tool .wt-row .wt-name").textContent).toBe("get_interface_status");
   });
 
-  // ── "By the rules" — the 4th strategy (per-rule attribution) ──
+  // ── "What drove it" — the 4th strategy (per-pick attribution) ──
   const attributed = {
     ...askStep,
     attribution: {
@@ -167,15 +167,15 @@ describe("<Inspector> — Why this tool? (rack mode, click-only)", () => {
   };
   const attrTrace = { task: "fc1/3 interface is flapping on the switch port", steps: [attributed] };
 
-  it('greys "By the rules" when the pick has no stamped attribution and no onAttribute', () => {
-    const r = strat(renderInsp({ toolMenu: "rack", whyTool: "get_interface_status" }).container, "By the rules");
+  it('greys "What drove it" when the pick has no stamped attribution and no onAttribute', () => {
+    const r = strat(renderInsp({ toolMenu: "rack", whyTool: "get_interface_status" }).container, "What drove it");
     expect(r.disabled).toBe(true);
     expect(r.classList.contains("off")).toBe(true);
   });
 
-  it("stamped step.attribution powers 'By the rules' — it is the default, renders ranked rule bars + the % headline + the cited rule", () => {
+  it("stamped step.attribution powers 'What drove it' — it is the default, renders ranked rule bars + the % headline + the cited rule", () => {
     const { container } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", step: attributed, trace: attrTrace });
-    const r = strat(container, "By the rules");
+    const r = strat(container, "What drove it");
     expect(r.disabled).toBe(false);
     expect(r.classList.contains("on")).toBe(true); // stamped attribution is FREE → the default view
     expect(container.querySelector(".why-headline").textContent).toMatch(/93% procedural/);
@@ -190,7 +190,7 @@ describe("<Inspector> — Why this tool? (rack mode, click-only)", () => {
     expect(top.querySelector(".wt-matched").textContent).toMatch(/Call whats_here first/);
   });
 
-  it("'By the rules' computes lazily via onAttribute on tab-open (a call, so NOT the default)", async () => {
+  it("'What drove it' computes lazily via onAttribute on tab-open (a call, so NOT the default)", async () => {
     const onAttribute = vi.fn().mockResolvedValue({
       headline: "88% procedural",
       rows: [
@@ -199,12 +199,138 @@ describe("<Inspector> — Why this tool? (rack mode, click-only)", () => {
       ],
     });
     const { container, findByText } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", onAttribute });
-    const r = strat(container, "By the rules");
+    const r = strat(container, "What drove it");
     expect(r.disabled).toBe(false);                 // onAttribute enables it
     expect(r.classList.contains("on")).toBe(false); // but it costs a call → keyword stays the default
     fireEvent.click(r);
     await findByText(/88% procedural/);
     expect(onAttribute).toHaveBeenCalledTimes(1);
     expect(container.querySelector(".why-headline")).toBeTruthy();
+  });
+
+  // ── The VERDICT CARD — multi-channel "what drove it" (answer-first) ──
+  // Real numbers from agentfootprint's explainChoice on the dress-shop runs.
+  const VERDICT_SEEN = [
+    { name: "whats_here", description: "list what is in the current place" },
+    { name: "skill_purchase", description: "the purchase steering doc" },
+    { name: "search_products", description: "search the catalog" },
+  ];
+  // Procedural pick: whats_here — the agent's own rules drove it (88%).
+  const proceduralStep = {
+    kind: "ask", tool: "whats_here", toolName: "What's here",
+    input: {}, brain: "orienting first, per the rules", cost: { ms: 10, tokens: 5 }, toolsSeen: VERDICT_SEEN,
+    attribution: {
+      headline: "88% procedural",
+      note: "Best explanation: the agent's own rules. (similarity estimate — not a mind-read)",
+      channels: [
+        { id: "system", share: 0.88, quote: "Call whats_here first — orient before acting.", citeLabel: "Rule 1" },
+        { id: "task", share: 0.10 },
+        { id: "data", share: 0.03 },
+      ],
+      rows: [
+        { label: "Rule 1", score: 0.75, quote: "Call whats_here first — orient before acting.", picked: true, channel: "system" },
+        { label: "the task", score: 0.12, channel: "task" },
+      ],
+    },
+  };
+  const proceduralTrace = { task: "buy the red floral dress", steps: [proceduralStep] };
+  // Data-driven pick: skill_purchase — an earlier tool's data drove it (41%).
+  const dataStep = {
+    ...proceduralStep,
+    tool: "skill_purchase", toolName: "Purchase skill",
+    attribution: {
+      note: "Best explanation: data returned by an earlier tool.",
+      channels: [
+        { id: "data", share: 0.41, quote: "id: d42, name: red floral dress, price: 89", citeLabel: "search result" },
+        { id: "system", share: 0.36, quote: "When a step returns a data field, READ it as data…", citeLabel: "Rule 3" },
+        { id: "task", share: 0.22 },
+      ],
+      rows: [
+        { label: "search result", score: 0.41, quote: "id: d42, name: red floral dress, price: 89", picked: true, channel: "data" },
+      ],
+    },
+  };
+  const dataTrace = { task: "buy the red floral dress", steps: [dataStep] };
+
+  it("channels stamped → the verdict card leads: one .wv-row per channel, tabular %s, only the winning channel cited", () => {
+    const { container } = renderInsp({ toolMenu: "rack", whyTool: "whats_here", step: proceduralStep, trace: proceduralTrace });
+    const card = container.querySelector(".why-verdict");
+    expect(card).toBeTruthy();
+    const rows = card.querySelectorAll(".wv-row");
+    expect(rows).toHaveLength(3);
+    // upstream's order is trusted: the winner (system) leads
+    expect([...rows].map((r) => r.querySelector(".wv-label").textContent)).toEqual(["system", "task", "data"]);
+    expect([...rows].map((r) => r.querySelector(".wv-pct").textContent)).toEqual(["88%", "10%", "3%"]);
+    expect(rows[0].querySelector(".wv-fill").style.width).toBe("88%");
+    // the WINNING channel carries its citation (citeLabel + quote); the others don't
+    const cite = rows[0].querySelector(".wv-cite");
+    expect(cite).toBeTruthy();
+    expect(cite.textContent).toContain("Rule 1");
+    expect(cite.textContent).toContain("Call whats_here first");
+    expect(card.querySelectorAll(".wv-cite")).toHaveLength(1);
+    // the ranked rows still render below the card as the detailed evidence
+    expect(container.querySelectorAll(".why-tool .wt-row")).toHaveLength(2);
+    expect(container.querySelector(".why-headline").textContent).toMatch(/88% procedural/);
+  });
+
+  it("channels stamped → 'What drove it' is the DEFAULT tab on open; no onScore/onAttribute call fired; other tabs read as second opinions", () => {
+    const onScore = vi.fn();
+    const onAttribute = vi.fn();
+    const { container } = renderInsp({ toolMenu: "rack", whyTool: "whats_here", step: proceduralStep, trace: proceduralTrace, onScore, onAttribute });
+    const r = strat(container, "What drove it");
+    expect(r.classList.contains("on")).toBe(true);   // the verdict is the default view
+    expect(container.querySelector(".why-verdict")).toBeTruthy();
+    expect(onScore).not.toHaveBeenCalled();          // opening the panel never spends
+    expect(onAttribute).not.toHaveBeenCalled();      // stamped → free, no lazy call
+    const second = container.querySelector(".why-second");
+    expect(second).toBeTruthy();
+    expect(second.textContent).toMatch(/second opinions:/);
+  });
+
+  it("data-driven pick: the data channel wins in upstream's order and quotes the search result", () => {
+    const { container } = renderInsp({ toolMenu: "rack", whyTool: "skill_purchase", step: dataStep, trace: dataTrace });
+    const rows = container.querySelectorAll(".why-verdict .wv-row");
+    expect([...rows].map((r) => r.querySelector(".wv-label").textContent)).toEqual(["data", "system", "task"]);
+    expect([...rows].map((r) => r.querySelector(".wv-pct").textContent)).toEqual(["41%", "36%", "22%"]);
+    const cite = rows[0].querySelector(".wv-cite");
+    expect(cite.textContent).toContain("search result");
+    expect(cite.textContent).toContain("red floral dress");
+    expect(container.querySelectorAll(".why-verdict .wv-cite")).toHaveLength(1);
+  });
+
+  it("channels absent + rows present → NO .why-verdict; today's headline + rows rendering intact (back-compat)", () => {
+    const { container } = renderInsp({ toolMenu: "rack", whyTool: "get_interface_status", step: attributed, trace: attrTrace });
+    expect(container.querySelector(".why-verdict")).toBeNull();
+    expect(container.querySelector(".wv-note")).toBeNull();
+    expect(container.querySelector(".why-second")).toBeNull();
+    expect(container.querySelector(".why-headline").textContent).toMatch(/93% procedural/);
+    expect(container.querySelectorAll(".why-tool .wt-row")).toHaveLength(3);
+  });
+
+  it("the plain-language note renders under the card in .wv-note", () => {
+    const { container } = renderInsp({ toolMenu: "rack", whyTool: "whats_here", step: proceduralStep, trace: proceduralTrace });
+    expect(container.querySelector(".wv-note").textContent).toBe(
+      "Best explanation: the agent's own rules. (similarity estimate — not a mind-read)",
+    );
+  });
+
+  it("out-of-range shares are clamped in the meter width (0..100%)", () => {
+    const wild = { ...proceduralStep, attribution: { channels: [{ id: "system", share: 1.5 }, { id: "data", share: -0.2 }], rows: [] } };
+    const { container } = renderInsp({ toolMenu: "rack", whyTool: "whats_here", step: wild, trace: { ...proceduralTrace, steps: [wild] } });
+    const fills = container.querySelectorAll(".why-verdict .wv-fill");
+    expect(fills).toHaveLength(2);
+    expect(fills[0].style.width).toBe("100%");
+    expect(fills[1].style.width).toBe("0%");
+  });
+
+  it("the winning quote is truncated to ~110 chars, rendered as text (never HTML)", () => {
+    const long = "<img src=x onerror=alert(1)>" + "x".repeat(200);
+    const step = { ...proceduralStep, attribution: { channels: [{ id: "system", share: 0.9, quote: long, citeLabel: "Rule 1" }, { id: "task", share: 0.1 }], rows: [] } };
+    const { container } = renderInsp({ toolMenu: "rack", whyTool: "whats_here", step, trace: { ...proceduralTrace, steps: [step] } });
+    const cite = container.querySelector(".wv-cite");
+    expect(cite.textContent).toContain("…");                    // clipped
+    expect(cite.textContent.length).toBeLessThan(140);
+    expect(cite.querySelector("img")).toBeNull();               // text node, not markup
+    expect(cite.textContent).toContain("<img");                 // the raw text survives AS text
   });
 });
