@@ -54,8 +54,9 @@ jobs:
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org
-      # Trusted publishing requires npm >= 11.5.1 (newer than node 20's bundled npm).
-      - run: npm install -g npm@latest
+      # Pinned to the 11.x line: npm 12.0.0 went `latest` on 2026-07-08 with a broken
+      # provenance path (MODULE_NOT_FOUND: sigstore) that fails `npm publish --provenance`.
+      - run: npm install -g npm@11
       # Publish the pre-packed tarball directly — no node_modules, no dep resolution, and
       # prepublishOnly does NOT re-run (the build already happened at pack time above).
       # No NODE_AUTH_TOKEN: npm authenticates via the GitHub OIDC token.
