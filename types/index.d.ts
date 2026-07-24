@@ -373,6 +373,16 @@ export interface InfluenceCopy {
 export interface InfluenceMapProps {
   /** the whole map — ONE plain serialized object, like `trace` */
   map: InfluenceMapData;
+  /** presentation of the sources (default `"map"`, fully non-breaking):
+   *  `"map"` is the radial graph; `"bars"` is a vertical list sorted by score
+   *  DESC — each row a labelled score bar with the kind chip, provenance dot,
+   *  and inline ignore toggle; the answer becomes a plain header card. Tapping a
+   *  row opens the same detail; honesty chips and the re-run seam are identical. */
+  view?: "map" | "bars";
+  /** how the strategy selector renders (default `"tabs"`): `"tabs"` is the
+   *  button row; `"dropdown"` is a native `<select>` with the same greyed +
+   *  🔒 + tooltip handling and the chosen strategy's description underneath. */
+  strategyControl?: "tabs" | "dropdown";
   /** fired ONLY on the explicit Re-run click (never on mount); the host runs
    *  af's `rerunWithoutSources` and resolves the serialized result. Returning
    *  `undefined` simply shows no result panel. */

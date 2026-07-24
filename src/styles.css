@@ -1056,6 +1056,16 @@
 :where(.atui-influence) .inf-strat.on { background: var(--card); color: var(--rust); border-color: var(--rust); box-shadow: var(--shadow-sm); }
 :where(.atui-influence) .inf-strat.off { color: var(--ink-faint); background: transparent; border-style: dashed; cursor: not-allowed; opacity: .75; }
 :where(.atui-influence) .inf-sub { font-size: calc(11px * var(--af-text-scale)); color: var(--ink-faint); margin-bottom: 4px; line-height: 1.4; }
+/* strategy selector as a native dropdown (strategyControl="dropdown") */
+:where(.atui-influence) .inf-strat-select {
+  font-family: var(--font-body); font-size: calc(12px * var(--af-text-scale)); font-weight: 700;
+  color: var(--rust); background: var(--card); border: 1px solid var(--rust);
+  border-radius: 8px; padding: 5px 30px 5px 12px; margin: 0 0 6px; max-width: 100%;
+  cursor: pointer; box-shadow: var(--shadow-sm);
+  -webkit-appearance: none; appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--rust) 50%), linear-gradient(135deg, var(--rust) 50%, transparent 50%);
+  background-position: right 14px center, right 9px center; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+}
 
 /* the radial map */
 :where(.atui-influence) .inf-stage { padding: 10px 16px 4px; }
@@ -1083,6 +1093,43 @@
 /* the answer under the centre node */
 :where(.atui-influence) .inf-answer-text { padding: 4px 16px 12px; font-size: calc(13.5px * var(--af-text-scale)); line-height: 1.5; color: var(--ink); }
 :where(.atui-influence) .inf-answer-cap { display: inline-block; margin-right: 8px; font-family: var(--font-mono); font-size: calc(9px * var(--af-text-scale)); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--rust-deep); background: var(--rust-tint); border-radius: 5px; padding: 1px 6px; vertical-align: 1px; }
+
+/* the bars view (view="bars") — a score-sorted vertical list, no centre-node */
+:where(.atui-influence) .inf-bars-wrap { padding: 12px 16px 4px; }
+:where(.atui-influence) .inf-answer-card { padding: 11px 14px; margin-bottom: 12px; border: 1px solid var(--line); border-radius: var(--r-md, 12px); background: var(--rust-tint); }
+:where(.atui-influence) .inf-answer-card .inf-answer-cap { margin-bottom: 6px; }
+:where(.atui-influence) .inf-answer-body { font-size: calc(13.5px * var(--af-text-scale)); line-height: 1.5; color: var(--ink); }
+:where(.atui-influence) .inf-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+:where(.atui-influence) .inf-bar-row { display: flex; align-items: stretch; gap: 8px; }
+:where(.atui-influence) .inf-bar-main {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; text-align: left;
+  padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--r-md, 11px);
+  background: var(--paper-2); color: var(--ink);
+}
+:where(.atui-influence) .inf-bar-main:hover { border-color: var(--rust); }
+:where(.atui-influence) .inf-bar-row.sel .inf-bar-main { border-color: var(--rust); box-shadow: var(--shadow-sm); }
+:where(.atui-influence) .inf-bar-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+:where(.atui-influence) .inf-bar-label { font-family: var(--font-mono); font-weight: 700; font-size: calc(12px * var(--af-text-scale)); color: var(--ink); }
+:where(.atui-influence) .inf-prov { display: inline-flex; align-items: center; gap: 4px; font-size: calc(9.5px * var(--af-text-scale)); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint); }
+:where(.atui-influence) .inf-prov-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--ink-faint); }
+:where(.atui-influence) .inf-prov-dot.live { background: var(--answer, #3f9d5a); }
+:where(.atui-influence) .inf-prov.live { color: var(--answer-deep, var(--ink-soft)); }
+:where(.atui-influence) .inf-prov-dot.fallback { background: var(--instr, #c98a1e); }
+:where(.atui-influence) .inf-prov.fallback { color: var(--instr-deep, var(--ink-soft)); }
+:where(.atui-influence) .inf-bar-meter { display: flex; align-items: center; gap: 9px; }
+:where(.atui-influence) .inf-bar-track { flex: 1; display: block; height: 9px; border-radius: 999px; background: var(--paper-3, var(--card)); overflow: hidden; }
+:where(.atui-influence) .inf-bar-fill { display: block; height: 100%; border-radius: 999px; background: var(--call); }
+:where(.atui-influence) .inf-bar-val { font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); font-weight: 700; color: var(--ink-soft); white-space: nowrap; min-width: 34px; text-align: right; }
+:where(.atui-influence) .inf-bar-ignore {
+  flex: 0 0 auto; width: 34px; border: 1px solid var(--line); border-radius: var(--r-md, 11px);
+  background: var(--card); color: var(--ink-soft); font-weight: 800; font-size: 15px; line-height: 1;
+}
+:where(.atui-influence) .inf-bar-ignore:hover { border-color: var(--rust); color: var(--rust); }
+:where(.atui-influence) .inf-bar-ignore.on { border-color: var(--rust); background: var(--rust-tint); color: var(--rust-deep); }
+/* an ignored row reads as struck-out, like an ignored node */
+:where(.atui-influence) .inf-bar-row.ignored .inf-bar-main { opacity: .6; }
+:where(.atui-influence) .inf-bar-row.ignored .inf-bar-label { text-decoration: line-through; }
+:where(.atui-influence) .inf-bar-row.ignored .inf-bar-fill { background: var(--ink-faint); }
 
 /* honesty chips */
 :where(.atui-influence) .inf-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; }

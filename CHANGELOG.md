@@ -1,3 +1,25 @@
+## [0.25.0] - 2026-07-24
+
+### Added
+
+- **`InfluenceMap` — a simple `view="bars"` presentation.** A new
+  opt-in prop (default `"map"`, fully non-breaking) swaps the radial
+  graph for a stage-legible vertical list of sources SORTED BY SCORE
+  DESC. Each row shows the source name + kind chip, a horizontal score
+  BAR metered by the clamped score (the same tokens/theming as the map),
+  the score number, its provenance inline (a live/fallback dot when the
+  snippet carries a `[source: …]` marker — omitted otherwise), and the
+  ignore toggle inline. Tapping a row opens the SAME detail card; the
+  answer sits above the list as a plain header card (no centre-node). The
+  honesty chips, the ignore/re-run seam, and the old-vs-new comparison
+  are IDENTICAL to the map view (shared components, not forked).
+- **`InfluenceMap` — a `strategyControl="dropdown"` selector.** A new
+  opt-in prop (default `"tabs"`) renders the strategy picker as a native
+  `<select>` instead of the button row, with the same greyed/unavailable
+  handling (a disabled `<option>` + 🔒 + a `title` tooltip listing the
+  requirements) and the chosen strategy's description shown under the
+  select. Both new props are typed in `types/index.d.ts`.
+
 ## [0.24.0] - 2026-07-24
 
 ### Added

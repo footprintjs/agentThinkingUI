@@ -87,6 +87,17 @@ function truncLabel(s, max = 16) {
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }
 
+// a snippet may carry a "[source: live]" / "[source: fallback]" provenance
+// marker (as agentfootprint stamps on recorded content) — surface it in the
+// bars row as a small live/fallback dot; omitted entirely when absent.
+function provenanceOf(snippet) {
+  if (!snippet) return null;
+  const m = /\[source:\s*([^\]]+)\]/i.exec(String(snippet));
+  if (!m) return null;
+  const label = m[1].trim();
+  return { kind: /live/i.test(label) ? "live" : "fallback", label };
+}
+
 // one path hop in plain words — a data hop passed a value, a control hop steered
 // a decision; the state key (or decide() rule label) is quoted when present.
 function hopText(h) {
@@ -144,6 +155,42 @@ function StrategyTabs({ strategies, active, onStrategyChange }) {
           );
         })}
       </div>
+      {activeStrat && activeStrat.description && (
+        <div className="inf-sub">{activeStrat.description}</div>
+      )}
+    </div>
+  );
+}
+
+/* the strategy selector as a native <select> — same greyed/tooltip/lock
+   handling as StrategyTabs but as a dropdown (the `strategyControl="dropdown"`
+   option). Unavailable strategies become disabled <option>s with a "🔒" suffix
+   and a `title` tooltip; the active strategy's description shows under the
+   select. onChange only fires onStrategyChange for an AVAILABLE pick — a
+   disabled option can't be chosen, and with no handler the select snaps back. */
+function StrategySelect({ strategies, active, onStrategyChange }) {
+  if (!strategies || !strategies.length) return null;
+  const activeStrat = strategies.find((s) => s.name === active);
+  const value = active != null && strategies.some((s) => s.name === active) ? active : "";
+  const onChange = (ev) => {
+    const opt = strategies.find((s) => s.name === ev.target.value);
+    if (opt && opt.available && onStrategyChange) onStrategyChange(opt.name);
+  };
+  return (
+    <div className="inf-strat-wrap">
+      <select className="inf-strat-select" aria-label="influence strategy" value={value} onChange={onChange}>
+        {strategies.map((s) => {
+          const avail = !!s.available;
+          const tip = (s.description || "") + (!avail && s.requirements && s.requirements.length
+            ? " Needs: " + s.requirements.join(", ") + "."
+            : "");
+          return (
+            <option key={s.name} value={s.name} disabled={!avail} title={tip}>
+              {deKebab(s.name)}{avail ? "" : " 🔒"}
+            </option>
+          );
+        })}
+      </select>
       {activeStrat && activeStrat.description && (
         <div className="inf-sub">{activeStrat.description}</div>
       )}
@@ -233,6 +280,8 @@ function RerunPanel({ map, result, ignoredCount, copy }) {
 
 export function InfluenceMap({
   map,
+  view = "map",
+  strategyControl = "tabs",
   onRerun,
   strategies,
   onStrategyChange,
@@ -247,6 +296,16 @@ export function InfluenceMap({
 
   const sources = (map && map.sources) || [];
   const layout = useMemo(() => influenceLayout(sources), [sources]);
+  const isBars = view === "bars";
+  // bars view: the same sources, sorted by clamped score DESC (a stable
+  // sort — an explicit index tiebreak keeps equal scores in map.sources order).
+  const sortedSources = useMemo(
+    () => sources
+      .map((s, i) => [s, i])
+      .sort((a, b) => (clamp01(b[0].score) - clamp01(a[0].score)) || (a[1] - b[1]))
+      .map((pair) => pair[0]),
+    [sources],
+  );
 
   const [selectedId, setSelectedId] = useState(null);
   const [ignored, setIgnored] = useState(() => new Set());
@@ -309,8 +368,57 @@ export function InfluenceMap({
           {map && map.question && <span className="inf-question">{map.question}</span>}
         </div>
 
-        <StrategyTabs strategies={strategies} active={active} onStrategyChange={onStrategyChange} />
+        {strategyControl === "dropdown"
+          ? <StrategySelect strategies={strategies} active={active} onStrategyChange={onStrategyChange} />
+          : <StrategyTabs strategies={strategies} active={active} onStrategyChange={onStrategyChange} />}
 
+        {isBars ? (
+          <div className="inf-bars-wrap">
+            {/* the answer sits above the list as a plain header card (no centre-node) */}
+            {map && map.answer && (
+              <div className="inf-answer-card">
+                <span className="inf-answer-cap">{answerLabel}</span>
+                <div className="inf-answer-body">{map.answer}</div>
+              </div>
+            )}
+            <ul className="inf-bars" role="list">
+              {sortedSources.map((src) => {
+                const score = clamp01(src.score);
+                const pct = Math.round(score * 100);
+                const isIgnored = ignored.has(src.id);
+                const isSel = selectedId === src.id;
+                const kindLabel = KIND_LABEL[src.kind] || src.kind;
+                const prov = provenanceOf(src.snippet);
+                return (
+                  <li key={src.id} className={"inf-bar-row" + (isIgnored ? " ignored" : "") + (isSel ? " sel" : "")}>
+                    <button type="button" className="inf-bar-main" aria-pressed={isSel}
+                      onClick={() => tapSource(src)}>
+                      <span className="inf-bar-head">
+                        <span className="inf-bar-label">{src.label}</span>
+                        <span className={"inf-kind k-" + src.kind}>{kindLabel}</span>
+                        {prov && (
+                          <span className={"inf-prov " + prov.kind} title={"source: " + prov.label}>
+                            <span className={"inf-prov-dot " + prov.kind} />{prov.kind}
+                          </span>
+                        )}
+                      </span>
+                      <span className="inf-bar-meter">
+                        <span className="inf-bar-track"><span className="inf-bar-fill" style={{ width: pct + "%" }} /></span>
+                        <span className="inf-bar-val">{pct}%</span>
+                      </span>
+                    </button>
+                    <button type="button" className={"inf-bar-ignore" + (isIgnored ? " on" : "")}
+                      aria-pressed={isIgnored} aria-label={(isIgnored ? "restore " : "ignore ") + src.label}
+                      onClick={() => toggleIgnore(src.id)}>
+                      {isIgnored ? "↺" : "×"}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : (
+        <React.Fragment>
         <div className="inf-stage">
           <svg className="inf-svg" viewBox={"0 0 " + layout.size + " " + layout.size} role="img"
             aria-label="influence map — the answer and the sources that fed it">
@@ -361,6 +469,8 @@ export function InfluenceMap({
         {/* the answer under the centre node — full text, plain */}
         {map && map.answer && (
           <div className="inf-answer-text"><span className="inf-answer-cap">{answerLabel}</span>{map.answer}</div>
+        )}
+        </React.Fragment>
         )}
 
         {/* plain-language honesty chips */}

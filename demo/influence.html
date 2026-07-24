@@ -73,6 +73,8 @@
       const props = {
         key: current + (asModal ? ":modal" : ""),
         map: sc.map,
+        view: sc.view,
+        strategyControl: sc.strategyControl,
         strategies: sc.strategies,
         onRerun,
         onStrategyChange: (name) => console.log("onStrategyChange:", name),

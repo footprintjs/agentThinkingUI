@@ -112,6 +112,18 @@ const REFUND_SOURCES = [
   },
 ];
 
+/* a bars-view variant of the sources: same influence scores, but each snippet
+   carries a "[source: live]" / "[source: fallback]" provenance marker (as
+   agentfootprint stamps recorded content) so the bars row shows its live/
+   fallback dot — the recorded tool/memory reads were live; the policy fell
+   back to a cached default. */
+const BARS_SOURCES = REFUND_SOURCES.map((s) => {
+  const marker = s.id === "get_policy" ? " [source: fallback]"
+    : s.kind === "injection" ? "" // injected context has no live/fallback origin
+    : " [source: live]";
+  return marker ? { ...s, snippet: s.snippet + marker } : s;
+});
+
 /* re-run fixtures keyed by the SET of ignored ids (sorted, joined) — the
    demo page looks the result up by the toggles the user flipped. Each is
    exactly what rerunWithoutSources would resolve. */
@@ -245,5 +257,30 @@ window.INFLUENCE_SCENARIOS = {
     },
     strategies: STRATEGIES,
     rerunFixtures: { "style-fact": REFUND_RERUNS["style-fact"] },
+  },
+
+  /* 4 · bars + dropdown — the SAME data, presented simply: a score-sorted list
+     of bars (no radial graph) with the strategy picker as a native dropdown.
+     Snippets carry provenance markers so the live/fallback dots show. */
+  bars: {
+    pick: "4 · bars + dropdown",
+    order: 4,
+    view: "bars",
+    strategyControl: "dropdown",
+    map: {
+      answer: WRONG,
+      answerLabel: "Answer",
+      question: "Same run, read as a ranked list — which source scored highest, and is it live?",
+      sources: BARS_SOURCES,
+      rankedBy: "lexical-overlap",
+      honestyFlags: [
+        {
+          flag: "untracked-sources",
+          note: "1 slice node also consumed untracked inputs (args/env/silent reads) — the slice through it is incomplete.",
+        },
+      ],
+    },
+    strategies: STRATEGIES,
+    rerunFixtures: REFUND_RERUNS,
   },
 };

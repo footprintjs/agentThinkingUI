@@ -241,6 +241,144 @@ describe("InfluenceMap — lifecycle honesty", () => {
   });
 });
 
+/* ── bars view (view="bars") ─────────────────────────────────────────────── */
+describe("InfluenceMap — bars view", () => {
+  // scores deliberately OUT of map.sources order → sorting must reorder them
+  const barsMap = (over = {}) => mapData({
+    sources: [
+      src({ id: "low", label: "low", score: 0.2 }),
+      src({ id: "high", label: "high", score: 0.95 }),
+      src({ id: "mid", label: "mid", score: 0.5 }),
+    ],
+    ...over,
+  });
+
+  it("lists sources sorted by score DESC (not map.sources order)", () => {
+    const { container } = render(view({ map: barsMap(), view: "bars" }));
+    expect(container.querySelector(".inf-bars")).toBeTruthy();
+    expect(container.querySelector(".inf-svg")).toBeNull(); // no radial map
+    const labels = [...container.querySelectorAll(".inf-bar-label")].map((n) => n.textContent);
+    expect(labels).toEqual(["high", "mid", "low"]);
+    // the answer is a plain header card, not a centre-node
+    expect(container.querySelector(".inf-answer-card")).toBeTruthy();
+    expect(container.querySelector(".inf-answer-c")).toBeNull();
+  });
+
+  it("bar widths track the clamped scores", () => {
+    const { container } = render(view({ map: barsMap(), view: "bars" }));
+    const widths = [...container.querySelectorAll(".inf-bar-fill")].map((n) => parseFloat(n.style.width));
+    expect(widths).toEqual([95, 50, 20]); // high, mid, low — Math.round(score*100)
+    // monotonically non-increasing, matching the sorted order
+    expect(widths[0]).toBeGreaterThan(widths[1]);
+    expect(widths[1]).toBeGreaterThan(widths[2]);
+  });
+
+  it("the inline ✕ fires the SAME toggle path — footer + payload in map.sources order", () => {
+    const onRerun = vi.fn(() => new Promise(() => {}));
+    const { container } = render(view({ map: barsMap(), view: "bars", onRerun }));
+    const ignores = container.querySelectorAll(".inf-bar-ignore");
+    fireEvent.click(ignores[0]); // displayed-first = "high"
+    fireEvent.click(ignores[2]); // displayed-last  = "low"
+    expect(container.querySelector(".inf-rerun").textContent).toContain("Re-run without 2 sources");
+    fireEvent.click(container.querySelector(".inf-rerun"));
+    expect(onRerun).toHaveBeenCalledTimes(1);
+    // payload is map.sources order (low, high), NOT display or click order
+    expect(onRerun.mock.calls[0][0]).toEqual(["low", "high"]);
+  });
+
+  it("tapping a row opens the same SourceDetail card", () => {
+    const onSelectSource = vi.fn();
+    const { container } = render(view({ map: barsMap(), view: "bars", onSelectSource }));
+    fireEvent.click(container.querySelectorAll(".inf-bar-main")[0]); // "high"
+    const detail = container.querySelector(".inf-detail");
+    expect(detail).toBeTruthy();
+    expect(detail.textContent).toContain("high");
+    expect(onSelectSource).toHaveBeenCalledTimes(1);
+    expect(onSelectSource.mock.calls[0][0].id).toBe("high");
+  });
+
+  it("shows a provenance dot only when the snippet carries a [source: …] label", () => {
+    const map = barsMap({
+      sources: [
+        src({ id: "a", label: "a", score: 0.9, snippet: "Recalled note. [source: live]" }),
+        src({ id: "b", label: "b", score: 0.5, snippet: "Cached value. [source: fallback]" }),
+        src({ id: "c", label: "c", score: 0.3, snippet: "No provenance marker here." }),
+      ],
+    });
+    const { container } = render(view({ map, view: "bars" }));
+    const rows = [...container.querySelectorAll(".inf-bar-row")];
+    expect(rows[0].querySelector(".inf-prov.live")).toBeTruthy();
+    expect(rows[1].querySelector(".inf-prov.fallback")).toBeTruthy();
+    expect(rows[2].querySelector(".inf-prov")).toBeNull(); // omitted
+  });
+
+  it("shares the honesty chips and re-run result panel with the map view", async () => {
+    const { container } = render(view({ map: barsMap(), view: "bars", onRerun: () => Promise.resolve(rerunResult()) }));
+    expect(container.querySelector(".inf-chip")).toBeTruthy(); // proxies chip
+    fireEvent.click(container.querySelectorAll(".inf-bar-ignore")[0]);
+    fireEvent.click(container.querySelector(".inf-rerun"));
+    await waitFor(() => expect(container.querySelector(".inf-result")).toBeTruthy());
+    expect(container.querySelector(".inf-summary").textContent).toContain("Removing sources");
+  });
+});
+
+/* ── dropdown strategy control (strategyControl="dropdown") ───────────────── */
+describe("InfluenceMap — dropdown strategy control", () => {
+  const strategies = () => [
+    { name: "lexical-overlap", description: "Plain word overlap.", requirements: [], available: true },
+    { name: "keyword-density", description: "Keyword density.", requirements: [], available: true },
+    { name: "semantic-alignment", description: "Embedding alignment.", requirements: ["embedder"], available: false },
+  ];
+
+  it("renders a native select with the active option selected and its description below", () => {
+    const { container } = render(view({ map: mapData(), strategyControl: "dropdown", strategies: strategies() }));
+    const select = container.querySelector(".inf-strat-select");
+    expect(select).toBeTruthy();
+    expect(container.querySelector(".inf-strats")).toBeNull(); // not the tab row
+    expect(select.value).toBe("lexical-overlap");             // map.rankedBy
+    expect(container.querySelector(".inf-sub").textContent).toContain("Plain word overlap."); // active description
+  });
+
+  it("greys the unavailable option (disabled + 🔒 + tooltip) and never selects it", () => {
+    const { container } = render(view({ map: mapData(), strategyControl: "dropdown", strategies: strategies() }));
+    const opts = [...container.querySelectorAll(".inf-strat-select option")];
+    const off = opts.find((o) => o.value === "semantic-alignment");
+    expect(off.disabled).toBe(true);
+    expect(off.textContent).toContain("🔒");
+    expect(off.getAttribute("title")).toContain("Embedding alignment.");
+    expect(off.getAttribute("title")).toContain("Needs: embedder.");
+    // available options carry no lock
+    expect(opts.find((o) => o.value === "lexical-overlap").disabled).toBe(false);
+  });
+
+  it("fires onStrategyChange with the chosen available strategy", () => {
+    const onStrategyChange = vi.fn();
+    const { container } = render(view({ map: mapData(), strategyControl: "dropdown", strategies: strategies(), onStrategyChange }));
+    fireEvent.change(container.querySelector(".inf-strat-select"), { target: { value: "keyword-density" } });
+    expect(onStrategyChange).toHaveBeenCalledWith("keyword-density");
+  });
+
+  it("renders no select when no strategies are supplied", () => {
+    const { container } = render(view({ map: mapData(), strategyControl: "dropdown" }));
+    expect(container.querySelector(".inf-strat-select")).toBeNull();
+  });
+});
+
+/* ── render-parity guard — defaults are byte-compatible with 0.24 ─────────── */
+describe("InfluenceMap — default-prop parity", () => {
+  it("view='map' + strategyControl='tabs' render identically to omitting both", () => {
+    const a = render(view({ map: mapData(), strategies: [
+      { name: "lexical-overlap", description: "x", requirements: [], available: true },
+    ] }));
+    const implicit = a.container.innerHTML;
+    cleanup();
+    const b = render(view({ map: mapData(), view: "map", strategyControl: "tabs", strategies: [
+      { name: "lexical-overlap", description: "x", requirements: [], available: true },
+    ] }));
+    expect(b.container.innerHTML).toBe(implicit);
+  });
+});
+
 /* ── the overlay ─────────────────────────────────────────────────────────── */
 describe("InfluenceMapOverlay", () => {
   it("renders nothing when closed, a dialog with the map when open", () => {
