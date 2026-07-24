@@ -7,6 +7,8 @@
 import { AgentThinkingUI } from "./footprint.jsx";
 import { MultiAgentFlow } from "./multi-agent-flow.jsx";
 import { BacktrackView, BacktrackOverlay } from "./backtrack.jsx";
+import { InfluenceMap, InfluenceMapOverlay, INFLUENCE_COPY } from "./influence-map.jsx";
+import { influenceLayout, INFLUENCE_LAYOUT } from "./influence-layout.js";
 import { Stage, ToolIcon } from "./stage.jsx";
 import { Inspector, Notepad } from "./inspector.jsx";
 import { Timeline } from "./timeline.jsx";
@@ -23,6 +25,8 @@ Object.assign(w, {
   MultiAgentFlow,
   BacktrackView,
   BacktrackOverlay,
+  InfluenceMap, InfluenceMapOverlay, INFLUENCE_COPY,
+  influenceLayout, INFLUENCE_LAYOUT,
   Stage, ToolIcon, Inspector, Notepad, Timeline,
   usePlayback, AF_DWELL, arcLayout, AF_LAYOUT,
   AgentTheme, AgentThemeContext,

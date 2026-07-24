@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgentThinkingUI — InfluenceMap (what influenced this answer?)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesque:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../src/styles.css" />
+  <link rel="stylesheet" href="demo.css" />
+  <style>
+    /* page chrome only — the library never styles the host */
+    .inf-page { max-width: 760px; margin: 26px auto 60px; padding: 0 18px; }
+    .inf-page-head { font-family: "Bricolage Grotesque", sans-serif; margin: 0 0 4px; font-size: 21px; }
+    .inf-page-sub { color: #6E5C49; margin: 0 0 14px; font-size: 13.5px; }
+    .inf-pick { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .inf-pick button { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 12.5px;
+      padding: 7px 14px; border-radius: 999px; border: 1.5px solid #D9C8B2; background: #FFFDFA; color: #6E5C49; cursor: pointer; }
+    .inf-pick button.on { background: #C0531F; border-color: #95380F; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="grain"></div>
+  <div class="inf-page">
+    <h1 class="inf-page-head">InfluenceMap — what influenced this answer?</h1>
+    <p class="inf-page-sub">The answer at the centre, every removable source orbiting it (sized by its
+      influence estimate — a proxy, clues not proof). Tap a node for its detail, flip the ✕ to ignore a
+      source, then re-run to see old vs new side by side. Real data: agentfootprint’s context-bisect run.</p>
+    <div class="inf-pick" id="pick"></div>
+    <div id="root"></div>
+  </div>
+
+  <script src="../node_modules/react/umd/react.development.js"></script>
+  <script src="../node_modules/react-dom/umd/react-dom.development.js"></script>
+  <script src="../dist/agentthinkingui.umd.js"></script>
+  <script src="influence-trace.js"></script>
+  <script>
+    const SCENARIOS = Object.entries(window.INFLUENCE_SCENARIOS)
+      .sort((a, b) => (a[1].order ?? 99) - (b[1].order ?? 99))
+      .map(([key, s]) => [key, s.pick || key]);
+    const params = new URLSearchParams(location.search);
+    let current = SCENARIOS.some(([k]) => k === params.get("scenario")) ? params.get("scenario") : SCENARIOS[0][0];
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    const pick = document.getElementById("pick");
+
+    let asModal = false;
+
+    function render() {
+      pick.innerHTML = "";
+      for (const [key, label] of SCENARIOS) {
+        const b = document.createElement("button");
+        b.textContent = label;
+        b.className = key === current ? "on" : "";
+        b.onclick = () => { current = key; asModal = false; render(); };
+        pick.appendChild(b);
+      }
+      const m = document.createElement("button");
+      m.textContent = "open as modal ▣";
+      m.className = "modal-toggle";
+      m.onclick = () => { asModal = true; render(); };
+      pick.appendChild(m);
+
+      const sc = window.INFLUENCE_SCENARIOS[current];
+      // the host owns the compute: it looks the re-run result up by the toggled
+      // ids and resolves after a delay — exercising the honest pending state.
+      const onRerun = (ids) => new Promise((res) => {
+        const fixtures = sc.rerunFixtures || {};
+        // prefer an exact single-id match; else the first fixture (demo has one per scenario)
+        const key = ids.find((id) => fixtures[id]) || Object.keys(fixtures)[0];
+        setTimeout(() => res(fixtures[key]), 900);
+      });
+      const props = {
+        key: current + (asModal ? ":modal" : ""),
+        map: sc.map,
+        strategies: sc.strategies,
+        onRerun,
+        onStrategyChange: (name) => console.log("onStrategyChange:", name),
+        onSelectSource: (s) => console.log("onSelectSource:", s.id),
+        brand: "AgentThinkingUI",
+      };
+      root.render(asModal
+        ? React.createElement(InfluenceMapOverlay, { ...props, open: true, onClose: () => { asModal = false; render(); } })
+        : React.createElement(InfluenceMap, props));
+    }
+    render();
+  </script>
+</body>
+</html>

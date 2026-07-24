@@ -1020,3 +1020,143 @@
   border-color: var(--accent); color: var(--ink);
   background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
+
+/* ============================================================
+   <InfluenceMap> — "what influenced this answer, and what happens
+   without it?" All rules scoped under .atui-influence. Colours/fonts
+   only via the theme vars; dark mode comes free through theme.mode.
+   ============================================================ */
+.atui-influence, :where(.atui-influence) * { box-sizing: border-box; }
+.atui-influence {
+  font-family: var(--font-body); color: var(--ink); background: var(--card);
+  border: 1px solid var(--line); border-radius: var(--r-xl, 18px);
+  box-shadow: var(--shadow-md); overflow: hidden;
+}
+:where(.atui-influence) button { font-family: inherit; cursor: pointer; }
+:where(.atui-influence) :focus-visible { outline: 2px solid var(--rust); outline-offset: 2px; }
+:where(.atui-influence) .inf-node-hit:focus:not(:focus-visible),
+:where(.atui-influence) .inf-toggle:focus:not(:focus-visible) { outline: none; }
+
+:where(.atui-influence) code { font-family: var(--font-mono); font-size: .92em; background: var(--paper-2); border: 1px solid var(--line-soft); border-radius: 5px; padding: 0 4px; }
+
+/* header bar */
+:where(.atui-influence) .inf-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--line-soft); background: var(--card); }
+:where(.atui-influence) .inf-brand { font-family: var(--font-display); font-weight: 800; font-size: calc(13px * var(--af-text-scale)); color: var(--rust-deep); }
+:where(.atui-influence) .inf-title { font-family: var(--font-display); font-weight: 800; font-size: calc(13px * var(--af-text-scale)); color: var(--rust); text-transform: uppercase; letter-spacing: .06em; }
+:where(.atui-influence) .inf-question { flex: 1; min-width: 0; font-size: calc(13.5px * var(--af-text-scale)); color: var(--ink-soft); }
+
+/* strategy selector — same skeleton as the Why panel's scorer tabs */
+:where(.atui-influence) .inf-strat-wrap { padding: 12px 16px 0; }
+:where(.atui-influence) .inf-strats { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 8px; }
+:where(.atui-influence) .inf-strat {
+  font-family: var(--font-body); font-size: calc(11.5px * var(--af-text-scale)); font-weight: 700;
+  color: var(--ink-soft); background: var(--paper-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 4px 12px; cursor: pointer;
+}
+:where(.atui-influence) .inf-strat.on { background: var(--card); color: var(--rust); border-color: var(--rust); box-shadow: var(--shadow-sm); }
+:where(.atui-influence) .inf-strat.off { color: var(--ink-faint); background: transparent; border-style: dashed; cursor: not-allowed; opacity: .75; }
+:where(.atui-influence) .inf-sub { font-size: calc(11px * var(--af-text-scale)); color: var(--ink-faint); margin-bottom: 4px; line-height: 1.4; }
+
+/* the radial map */
+:where(.atui-influence) .inf-stage { padding: 10px 16px 4px; }
+:where(.atui-influence) .inf-svg { display: block; width: 100%; max-width: 420px; height: auto; margin: 0 auto; overflow: visible; }
+:where(.atui-influence) .inf-edge { stroke: var(--ink-faint); }
+:where(.atui-influence) .inf-answer-c { fill: var(--rust-tint); stroke: var(--rust); stroke-width: 2; }
+:where(.atui-influence) .inf-answer-label { font-family: var(--font-display); font-weight: 800; font-size: 15px; fill: var(--rust-deep); }
+:where(.atui-influence) .inf-node-hit { cursor: pointer; }
+:where(.atui-influence) .inf-node-c { fill: var(--call-tint); stroke: var(--call); stroke-width: 1.5; transition: stroke-width .15s; }
+:where(.atui-influence) .inf-node.sel .inf-node-c { stroke: var(--rust); stroke-width: 3; }
+:where(.atui-influence) .inf-meter-arc { stroke: var(--call-deep); stroke-width: 3; stroke-linecap: round; opacity: .85; }
+:where(.atui-influence) .inf-node-label { font-family: var(--font-body); font-weight: 700; font-size: 11px; fill: var(--ink-soft); }
+:where(.atui-influence) .inf-node.sel .inf-node-label { fill: var(--rust-deep); }
+/* ignored nodes read as struck-out */
+:where(.atui-influence) .inf-node.ignored .inf-node-c { fill: transparent; stroke: var(--ink-faint); stroke-dasharray: 4 3; opacity: .55; }
+:where(.atui-influence) .inf-node.ignored .inf-meter-arc { opacity: .25; }
+:where(.atui-influence) .inf-node.ignored .inf-node-label { fill: var(--ink-faint); text-decoration: line-through; }
+/* per-node ignore toggle */
+:where(.atui-influence) .inf-toggle { cursor: pointer; }
+:where(.atui-influence) .inf-toggle-c { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+:where(.atui-influence) .inf-toggle:hover .inf-toggle-c { stroke: var(--rust); }
+:where(.atui-influence) .inf-node.ignored .inf-toggle-c { fill: var(--rust-tint); stroke: var(--rust); }
+:where(.atui-influence) .inf-toggle-i { font-family: var(--font-body); font-weight: 800; font-size: 12px; fill: var(--ink-soft); }
+
+/* the answer under the centre node */
+:where(.atui-influence) .inf-answer-text { padding: 4px 16px 12px; font-size: calc(13.5px * var(--af-text-scale)); line-height: 1.5; color: var(--ink); }
+:where(.atui-influence) .inf-answer-cap { display: inline-block; margin-right: 8px; font-family: var(--font-mono); font-size: calc(9px * var(--af-text-scale)); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--rust-deep); background: var(--rust-tint); border-radius: 5px; padding: 1px 6px; vertical-align: 1px; }
+
+/* honesty chips */
+:where(.atui-influence) .inf-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; }
+:where(.atui-influence) .inf-chip {
+  font-size: calc(11px * var(--af-text-scale)); line-height: 1.4;
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--paper-2); color: var(--ink-soft);
+}
+:where(.atui-influence) .inf-chip.warn { border-color: var(--instr); background: var(--instr-tint, var(--paper-2)); color: var(--instr-deep); }
+:where(.atui-influence) .inf-chip.warn::before { content: "⚠ "; }
+:where(.atui-influence) .inf-chip.cta { border-color: var(--rust); background: var(--rust-tint); color: var(--rust-deep); font-weight: 700; }
+
+/* the tapped source's detail card */
+:where(.atui-influence) .inf-detail { margin: 0 16px 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md, 12px); background: var(--paper-2); }
+:where(.atui-influence) .inf-detail-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+:where(.atui-influence) .inf-detail-label { font-family: var(--font-mono); font-weight: 700; font-size: calc(12.5px * var(--af-text-scale)); color: var(--ink); }
+:where(.atui-influence) .inf-kind { font-family: var(--font-mono); font-size: calc(9px * var(--af-text-scale)); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border-radius: 5px; padding: 1px 6px; background: var(--call-tint, var(--card)); color: var(--call-deep); }
+:where(.atui-influence) .inf-kind.k-injection { background: var(--instr-tint, var(--card)); color: var(--instr-deep); }
+:where(.atui-influence) .inf-kind.k-memory { background: var(--data-tint, var(--card)); color: var(--data-deep); }
+:where(.atui-influence) .inf-detail-meter { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
+:where(.atui-influence) .inf-meter-track { flex: 1; display: block; height: 8px; border-radius: 999px; background: var(--paper-3, var(--card)); overflow: hidden; }
+:where(.atui-influence) .inf-meter-fill { display: block; height: 100%; border-radius: 999px; background: var(--call); }
+:where(.atui-influence) .inf-meter-val { font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-soft); white-space: nowrap; }
+:where(.atui-influence) .inf-snippet { margin: 0 0 9px; padding: 8px 11px; border-left: 3px solid var(--line); background: var(--card); border-radius: 0 8px 8px 0; font-size: calc(12px * var(--af-text-scale)); line-height: 1.5; color: var(--ink-soft); }
+:where(.atui-influence) .inf-path { list-style: none; margin: 0 0 9px; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+:where(.atui-influence) .inf-hop { font-size: calc(11.5px * var(--af-text-scale)); line-height: 1.45; color: var(--ink-soft); }
+:where(.atui-influence) .inf-hop.is-control { color: var(--instr-deep); }
+:where(.atui-influence) .inf-detail-foot { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+:where(.atui-influence) .inf-src, :where(.atui-influence) .inf-stagename { font-size: calc(10px * var(--af-text-scale)); color: var(--ink-faint); }
+:where(.atui-influence) .inf-detail-ignore { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: calc(11.5px * var(--af-text-scale)); font-weight: 700; }
+:where(.atui-influence) .inf-detail-ignore:hover { border-color: var(--rust); color: var(--rust-deep); }
+:where(.atui-influence) .inf-detail-ignore.on { border-color: var(--rust); background: var(--rust-tint); color: var(--rust-deep); }
+
+/* the ignore footer + re-run seam */
+:where(.atui-influence) .inf-footer { margin: 0 16px 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md, 12px); background: var(--card); }
+:where(.atui-influence) .inf-footer-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+:where(.atui-influence) .inf-rerun { padding: 7px 14px; border-radius: 9px; border: 1px solid var(--rust); background: var(--rust); color: var(--on-rust, #fff); font-family: var(--font-body); font-weight: 700; font-size: calc(12px * var(--af-text-scale)); }
+:where(.atui-influence) .inf-rerun:hover { background: var(--rust-deep); }
+:where(.atui-influence) .inf-rerun:disabled { opacity: .6; cursor: default; }
+:where(.atui-influence) .inf-ignored-list { flex: 1; min-width: 0; font-size: calc(11.5px * var(--af-text-scale)); color: var(--ink-soft); }
+:where(.atui-influence) .inf-pending { margin-top: 10px; font-size: calc(12px * var(--af-text-scale)); color: var(--ink-soft); line-height: 1.5; }
+:where(.atui-influence) .inf-error { margin-top: 10px; font-size: calc(12px * var(--af-text-scale)); color: var(--error-deep); }
+
+/* the re-run result panel — old vs new side by side */
+:where(.atui-influence) .inf-result { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 12px; }
+:where(.atui-influence) .inf-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+:where(.atui-influence) .inf-col { padding: 10px 12px; border: 1px solid var(--line-soft); border-radius: 10px; background: var(--paper-2); }
+:where(.atui-influence) .inf-col-label { font-family: var(--font-mono); font-size: calc(9px * var(--af-text-scale)); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 5px; }
+:where(.atui-influence) .inf-col-body { font-size: calc(12.5px * var(--af-text-scale)); line-height: 1.5; color: var(--ink); }
+:where(.atui-influence) .inf-summary { margin-bottom: 9px; font-size: calc(12.5px * var(--af-text-scale)); line-height: 1.5; color: var(--ink); }
+:where(.atui-influence) .inf-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+:where(.atui-influence) .inf-fact { font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-soft); background: var(--paper-2); border: 1px solid var(--line-soft); border-radius: 999px; padding: 2px 9px; }
+:where(.atui-influence) .inf-verdict { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); }
+:where(.atui-influence) .inf-verdict.ok { border-color: var(--answer); background: var(--answer-tint, var(--paper-2)); }
+:where(.atui-influence) .inf-verdict.neutral { border-color: var(--line); background: var(--paper-2); }
+:where(.atui-influence) .inf-verdict.warn { border-color: var(--instr); background: var(--instr-tint, var(--paper-2)); }
+:where(.atui-influence) .inf-verdict-lead { font-weight: 800; font-size: calc(12.5px * var(--af-text-scale)); }
+:where(.atui-influence) .inf-verdict.ok .inf-verdict-lead { color: var(--answer-deep); }
+:where(.atui-influence) .inf-verdict.warn .inf-verdict-lead { color: var(--instr-deep); }
+:where(.atui-influence) .inf-verdict-claim { font-size: calc(11.5px * var(--af-text-scale)); color: var(--ink-soft); line-height: 1.45; }
+:where(.atui-influence) .inf-observed { padding: 9px 12px; border-radius: 10px; border: 1px dashed var(--line); background: var(--paper-2); font-size: calc(12px * var(--af-text-scale)); color: var(--ink-soft); line-height: 1.45; }
+
+@media (max-width: 560px) {
+  :where(.atui-influence) .inf-compare { grid-template-columns: 1fr; }
+}
+
+/* the host overlay — centered modal on desktop, full-screen under 640px */
+.atui-influence-overlay { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(20, 14, 8, .5); backdrop-filter: blur(2px); }
+:where(.atui-influence-overlay) .imo-sheet { width: min(720px, 100%); max-height: 92vh; overflow: auto; border-radius: 18px; background: var(--card, #FFFDFA); box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
+:where(.atui-influence-overlay) .imo-bar { position: sticky; top: 0; z-index: 6; display: flex; align-items: center; padding: 7px 10px; background: var(--card, rgba(255, 253, 250, .94)); border-bottom: 1px solid var(--line-soft); }
+:where(.atui-influence-overlay) .imo-back { border: none; background: none; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 13px; color: var(--rust-deep); padding: 4px 8px; border-radius: 8px; }
+:where(.atui-influence-overlay) .imo-back:hover { background: var(--rust-tint); }
+:where(.atui-influence-overlay) .atui-influence { border: none; box-shadow: none; border-radius: 0; }
+@media (max-width: 640px) {
+  .atui-influence-overlay { padding: 0; }
+  :where(.atui-influence-overlay) .imo-sheet { width: 100%; height: 100dvh; max-height: none; border-radius: 0; }
+}

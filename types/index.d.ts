@@ -257,6 +257,193 @@ export interface BacktrackOverlayProps extends BacktrackViewProps {
  *  view with a back button under 640px. Trigger it from any decision point. */
 export const BacktrackOverlay: FC<BacktrackOverlayProps>;
 
+/* ── InfluenceMap — "what influenced this answer, and what happens without it?"
+   A product-grade, non-technical surface: the answer at the centre, every
+   removable source orbiting it (sized + metered by its influence score), a
+   plain-language honesty layer, ignore toggles, and an honest re-run seam.
+   Pure UI: the DATA arrives as one plain `map` prop shaped structurally like
+   agentfootprint's `removableSources(report)`; atui never imports af. */
+
+/** One hop in a source's evidence path (mirrors af `EdgePathStep`). */
+export interface InfluencePathStep {
+  fromName: string;
+  toName: string;
+  kind: "data" | "control";
+  /** state key (data hop) or decide() rule label (control hop) */
+  key?: string;
+}
+
+/** One removable source — a node on the map (mirrors af `RemovableSource`
+ *  plus optional evidence pulled from its suspect). */
+export interface InfluenceSource {
+  /** the id `onRerun` echoes back — the ONLY ids af's rerunWithoutSources accepts */
+  id: string;
+  kind: "tool" | "injection" | "memory";
+  /** the node caption (af `suspectLabel`) */
+  label: string;
+  /** runtimeStageId — shown small/mono in the detail card */
+  source: string;
+  stageName: string;
+  /** 0..1 proxy score — SIZES + meters the node, never convicts (clamped) */
+  score: number;
+  /** the recorded content (host pre-truncates) */
+  snippet?: string;
+  /** the evidence path, rendered in plain words */
+  path?: InfluencePathStep[];
+}
+
+/** A plain-language honesty flag (mirrors af `HonestyFlag`). */
+export interface InfluenceHonestyFlag {
+  /** af `HonestyFlagKind` — an open string so future af kinds don't break atui */
+  flag: string;
+  /** af's own sentence — the fallback copy for an unknown kind */
+  note: string;
+}
+
+/** The `map` prop — the whole influence map, serialized. */
+export interface InfluenceMapData {
+  /** the original run's answer (af rerun option `originalAnswer`) */
+  answer: string;
+  /** the centre-node caption (default "Answer") */
+  answerLabel?: string;
+  /** an optional header context line */
+  question?: string;
+  /** af `removableSources(report)` output, ranked order (2–10 typical) */
+  sources: InfluenceSource[];
+  /** af `ContextBugReport.rankedBy` — lights its tab in the selector */
+  rankedBy?: string;
+  /** af `ContextBugReport.honestyFlags` → plain chips */
+  honestyFlags?: InfluenceHonestyFlag[];
+}
+
+/** What `onRerun`'s promise resolves to (af `RerunWithoutSourcesResult`,
+ *  serialized). Extra af fields (`removed`/`runs`/`baseline`) may ride along
+ *  and are ignored. */
+export interface InfluenceRerunResult {
+  /** the re-run's answer (seed 0) */
+  answer: string;
+  /** every seeded re-run's answer — optional in atui (only the count is surfaced) */
+  answers?: string[];
+  whatChanged: {
+    answerFlipped: boolean;
+    flips: number;
+    samples: number;
+    similarityToOriginal: { mean: number; min: number; max: number; stdev: number };
+    baselineChecked: boolean;
+    /** PRESENTATION ONLY — rendered verbatim, never parsed */
+    summary: string;
+  };
+  /** the causal-tier claim — present ONLY when the host ran `checkBaseline: true` */
+  verdict?: {
+    verdict: "confirmed" | "not-confirmed" | "inconclusive";
+    claim: string;
+  };
+}
+
+/** A strategy selector item — af `InfluenceStrategy` minus `scorer`, plus a
+ *  host-declared `available` flag. */
+export interface InfluenceStrategyOption {
+  /** kebab id, echoed on `rankedBy` */
+  name: string;
+  /** tooltip + sub-line */
+  description: string;
+  /** shown in the unavailable tooltip */
+  requirements?: string[];
+  /** HOST-DECLARED — the host knows if it has (e.g.) an embedder */
+  available: boolean;
+}
+
+/** The overridable honesty-copy map (keys = af HonestyFlagKind + atui chips). */
+export interface InfluenceCopy {
+  "slice-truncated": string;
+  "untracked-sources": string;
+  "no-control-deps": string;
+  "no-read-tracking": string;
+  "no-llm-call-ids": string;
+  "baseline-unstable": string;
+  proxies: string;
+  rerunCta: string;
+  observedOnly: string;
+  verdictConfirmed: string;
+  verdictNotConfirmed: string;
+  verdictInconclusive: string;
+  [key: string]: string;
+}
+
+export interface InfluenceMapProps {
+  /** the whole map — ONE plain serialized object, like `trace` */
+  map: InfluenceMapData;
+  /** fired ONLY on the explicit Re-run click (never on mount); the host runs
+   *  af's `rerunWithoutSources` and resolves the serialized result. Returning
+   *  `undefined` simply shows no result panel. */
+  onRerun?: (ignoredSourceIds: string[]) => Promise<InfluenceRerunResult | void> | InfluenceRerunResult | void;
+  /** selector items — renders only when non-empty */
+  strategies?: InfluenceStrategyOption[];
+  /** fired when a strategy tab is clicked; the host re-ranks and swaps `map` */
+  onStrategyChange?: (name: string) => void;
+  /** which strategy ranked `map`; defaults to `map.rankedBy` */
+  activeStrategy?: string;
+  /** partial overrides merged over `INFLUENCE_COPY` */
+  honestyCopy?: Partial<InfluenceCopy>;
+  /** fires alongside the built-in detail card when a source node is tapped */
+  onSelectSource?: (source: InfluenceSource) => void;
+  theme?: ThemeConfig;
+  labels?: { agent?: string; toolbox?: string };
+  icons?: { brain?: IconConfig; toolbox?: IconConfig };
+  brand?: ReactNode;
+}
+/** The influence map — the answer, its sources sized by influence, plain-
+ *  language honesty, ignore toggles, and an honest re-run seam. */
+export const InfluenceMap: FC<InfluenceMapProps>;
+
+export interface InfluenceMapOverlayProps extends InfluenceMapProps {
+  /** controlled visibility — the host owns it */
+  open: boolean;
+  /** fires on Escape, the scrim, and the back button */
+  onClose?: () => void;
+  /** back-button label (default "back") */
+  backLabel?: string;
+}
+/** InfluenceMap as a host overlay: centered modal on desktop, full-screen
+ *  under 640px. */
+export const InfluenceMapOverlay: FC<InfluenceMapOverlayProps>;
+
+/** The default honesty-copy map — frozen; override per-instance via `honestyCopy`. */
+export const INFLUENCE_COPY: InfluenceCopy;
+
+/** One laid-out node on the influence map. */
+export interface InfluenceLayoutNode {
+  id: string;
+  x: number;
+  y: number;
+  /** node radius (scales with the clamped score) */
+  r: number;
+  /** angle in radians (rank 1 at 12 o'clock, clockwise) */
+  angle: number;
+  /** clamped 0..1 score */
+  score: number;
+  /** the answer-rim → node-rim edge endpoints */
+  edge: { x1: number; y1: number; x2: number; y2: number };
+}
+export interface InfluenceLayout {
+  size: number;
+  center: { x: number; y: number };
+  nodes: InfluenceLayoutNode[];
+}
+/** Pure radial layout for the influence map (no React, no DOM). */
+export function influenceLayout(
+  sources: { id?: string; score?: number }[],
+  opts?: Partial<{ size: number; answerR: number; orbit: number; rMin: number; rMax: number }>,
+): InfluenceLayout;
+/** The default radial-layout constants (frozen). */
+export const INFLUENCE_LAYOUT: {
+  readonly size: number;
+  readonly answerR: number;
+  readonly orbit: number;
+  readonly rMin: number;
+  readonly rMax: number;
+};
+
 export const Stage: FC<any>;
 export const Inspector: FC<any>;
 export const Notepad: FC<any>;

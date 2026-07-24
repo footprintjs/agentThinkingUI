@@ -1,3 +1,52 @@
+## [0.24.0] - 2026-07-24
+
+### Added
+
+- **`InfluenceMap` — "what influenced this answer, and what happens
+  without it?"** A product-grade, non-technical surface: the answer at
+  the centre of a radial map, every removable source orbiting it, each
+  node SIZED and metered by its influence score (a proxy — clamped to
+  0..1, labelled an estimate, never a conviction). Plain SVG/DOM
+  positioned by a new pure `influenceLayout` module (unit-tested with no
+  DOM, precedent: `arcLayout`/`layoutFlow`); no new dependencies, no
+  build-step change. Tap a node for its detail — kind in plain words
+  (Tool call / Injected context / Memory), the influence estimate as a
+  meter, the recorded snippet, and the evidence path in plain words
+  ("passed data (‘systemPrompt’)" / "steered a decision"). Data arrives
+  as ONE plain `map` prop shaped structurally like agentfootprint's
+  `removableSources(report)`; atui never imports af.
+- **Plain-language honesty chips.** The report's technical honesty flags
+  become human chips ("Some inputs weren't tracked — this map may be
+  missing pieces.", "This maps what data flowed in, not which decisions
+  steered the path.", …), plus an always-on proxies caveat ("Scores
+  estimate alignment — clues, not proof.") and a CTA ("Want proof?
+  Remove a source and re-run."). Copy lives in ONE overridable map
+  (`INFLUENCE_COPY`), merged with the `honestyCopy` prop; unknown future
+  af flag kinds fall back to af's own note — the map degrades honestly,
+  never blank.
+- **Ignore toggles + an honest re-run seam (`onRerun`).** Each source
+  node carries an ignore toggle; a Re-run button fires
+  `onRerun(ignoredSourceIds)` — atui stays pure UI (the HOST runs af's
+  `rerunWithoutSources` and resolves the serialized result, mirroring
+  how `onExplain` works). While waiting, an honest pending state (no
+  fake progress); on resolve, old vs new answer side by side, the
+  `whatChanged.summary` rendered VERBATIM (never parsed), fact badges
+  read from the structured fields, and — ONLY when the result carries a
+  host-supplied `verdict` (a baseline-checked re-run) — the causal
+  verdict chip; otherwise the honest observational framing. Toggling any
+  ignore after a result clears it (a stale result would lie). Never
+  fires on mount — opening the map costs $0.
+- **Strategy selector.** Host passes `strategies` (af `InfluenceStrategy`
+  minus `scorer`, plus a host-declared `available` flag) +
+  `onStrategyChange(name)`; rendered with the same greyed + tooltip +
+  🔒 pattern as the Why panel's scorer selector — unavailable strategies
+  are never hidden, never faked, and the tooltip says what turns them on.
+- **`InfluenceMapOverlay`** — a controlled modal wrapper (byte-pattern of
+  `BacktrackOverlay`): Esc, the scrim, and the back button close it. New
+  exports `InfluenceMap`, `InfluenceMapOverlay`, `INFLUENCE_COPY`,
+  `influenceLayout`, `INFLUENCE_LAYOUT`, all hand-typed in
+  `types/index.d.ts`. Demo: `demo/influence.html`. 211 tests (26 new).
+
 ## 0.23.0 - 2026-07-08
 
 ### Added
