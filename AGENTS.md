@@ -54,6 +54,10 @@ exported and can be composed by hand with the state from `usePlayback(trace)`.
 | `metaphor` | `boolean` | show the storytelling tags (default true) |
 | `loop` | `boolean` | auto-loop playback |
 | `mobile` | `boolean` | stacked mobile layout (tabs + footer transport) |
+| `toolMenu` | `'card' \| 'rack'` | tool-menu layout (default `card`). `rack` = a vertical rack of every tool the model saw (picked lit, arrow on it, "+N more" cap) + the **"Why this tool?"** inspector panel (relevance bars, **Copy for LLM**, **Explain (live)**) — see the spec below |
+| `onExplain` | `(ctx) => Promise<string \| { reason, score }>` | rack mode: wire the Why-panel's "✨ Explain (live)" button to YOUR LLM (`ctx = { trace, step, tool, prompt }`). The library makes no LLM calls itself |
+
+> **Tool-choice explainability + the skill-graph routing it visualizes:** see the consolidated, usage-oriented spec at `agentfootprint/docs/design/skill-graph-spec.md` (rack/Why-panel/Copy-for-LLM/`onExplain` are ✅ shipped here; agentfootprint's declarative `skillGraph()` it draws is ✅ usable v1, v2 hardening ✅ shipped in agentfootprint 8.3–8.5 (cursor-honored picks, build-time refusals, deep checkup)).
 
 ## The trace contract (what to emit)
 
