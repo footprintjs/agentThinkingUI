@@ -1,4 +1,8 @@
-<h1 align="center">AgentThinkingUI</h1>
+<h1 align="center">Story Lens</h1>
+
+<p align="center"><sub>npm package: <a href="https://www.npmjs.com/package/agentthinkingui"><code>agentthinkingui</code></a></sub></p>
+
+<p align="center"><b>the story: explain it to a person</b></p>
 
 <p align="center"><b>Watch any agent think</b> — a drop-in player for an agent's runtime footprint.</p>
 
@@ -12,6 +16,8 @@
 </p>
 
 <p align="center"><sub>Part of the <a href="https://footprintjs.github.io/"><b>footprintjs ecosystem</b></a> &mdash; the self-explaining stack.</sub></p>
+
+<p align="center"><sub>One causal trace. Replay it as every step (<a href="https://github.com/footprintjs/explainable-ui"><b>Flow Lens</b></a>), grouped steps (<a href="https://github.com/footprintjs/agentfootprint-lens"><b>Why Lens</b></a>), or the story (<b>Story Lens</b>).</sub></p>
 
 <picture>
   <source media="(prefers-color-scheme: dark)"  srcset="docs/assets/hero-dark.svg">
@@ -29,7 +35,7 @@
 > **instruction** — a **skill / steering** doc that says *how to act* — or **both**,
 > and it loops to the answer.
 
-**Watch any agent think.** AgentThinkingUI is a drop-in, framework-agnostic player
+**Watch any agent think.** Story Lens is a drop-in, framework-agnostic player
 for an agent's *runtime footprint*: feed it a recorded trace and it replays the
 agent loop as an animated, scrubbable story — the LLM **brain** reaching for
 **tools**, the replies coming back, the reasoning building up, beat by beat. You
@@ -40,7 +46,7 @@ can time-travel through every step.
 
 It isn't tied to any vendor, framework, or model. If you can record a run as a
 small trace — a hand-rolled loop, a RAG pipeline, LangChain/LlamaIndex, Claude or
-OpenAI tool-calling — AgentThinkingUI can play it. Everything visual flows through
+OpenAI tool-calling — Story Lens can play it. Everything visual flows through
 a theme, the logic is split into small ES modules, and React is the only peer dep.
 
 ## The idea — an agent solves a problem the way a person does
@@ -49,7 +55,7 @@ Strip away the jargon and an agent loop is just how a human works through a
 problem: you **think**, you realize you're missing something, you go **get** it,
 and what comes back is either **facts** or **instructions** — then you keep going.
 
-AgentThinkingUI makes that legible. Each beat is one of a few shapes:
+Story Lens makes that legible. Each beat is one of a few shapes:
 
 - **The brain thinks.** The LLM reasons about the task with what it currently has.
 - **The brain reaches for a tool** to get what it's missing — a search, a RAG
@@ -319,9 +325,9 @@ a red error beat (and a red agent node in the flow) — same for both adapters.
 
 ### On top of your observability stack
 
-AgentThinkingUI is **complementary** to Langfuse / Arize Phoenix / LangSmith /
+Story Lens is **complementary** to Langfuse / Arize Phoenix / LangSmith /
 OpenTelemetry, not a replacement: they record + evaluate the trace (dev-facing
-waterfalls, metrics); AgentThinkingUI is the **last-mile, user-facing** view you
+waterfalls, metrics); Story Lens is the **last-mile, user-facing** view you
 embed in your own product to show users, operators or stakeholders *what the agent
 did*. Since they all speak OTel/OpenInference, there's no re-instrumentation — your
 backend hands the spans to the same adapters:
