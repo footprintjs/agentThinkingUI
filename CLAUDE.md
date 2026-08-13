@@ -27,6 +27,12 @@ library; `demo/` is a runnable example.
   container applies them **scoped to its own element** (not `:root`) and passes
   resolved icons/labels to the views via the shared `context.js` React context.
   Font sizes are `calc(px * var(--af-text-scale))`.
+- **Untrusted text never becomes HTML.** Tool I/O (`highlight`) and beat prose
+  (`markdown.js` → `<Prose>`) are tokenized into React **elements** — there is no
+  `dangerouslySetInnerHTML` anywhere in `src/`, and no sanitizer to keep in sync.
+  Markdown links/images render inert (no `href`, no `src`): model text must not
+  be clickable and must not fetch. Keep it that way — render a body through
+  `<Prose>`, never by building markup.
 - **No host leakage.** Every library rule is scoped under the root classes
   `.atui` / `.atui-swarm` via `:where(...)` (specificity-preserving), so generic
   inner names (`.panel`, `.note`, `.code`) never style a host's elements. The
@@ -37,6 +43,7 @@ library; `demo/` is a runnable example.
 
 ```
 src/        theme.js · layout.js · flow-layout.js (pure multi-agent graph layout) ·
+            markdown.js (pure beat-prose parser) · prose.jsx (<Prose> renderer) ·
             playback.js · context.js · stage.jsx · inspector.jsx · timeline.jsx ·
             footprint.jsx · multi-agent-flow.jsx · adapters/otlp.js ·
             index.jsx (ESM entry) · global.jsx (UMD entry) · styles.css

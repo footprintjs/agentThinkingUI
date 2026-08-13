@@ -148,6 +148,35 @@ case, where the reply carried data **and** an instruction, so the brain reasons 
 one half and acts on the other (two bubbles). A step that **failed** carries
 `error` and renders red across the scene, timeline, inspector and notepad.
 
+### Beat bodies are markdown
+
+Models write markdown, so `brain` (and `actNote` / `thinking`) is **rendered** as
+markdown wherever the player shows it — notepad, inspector, thought bubble:
+headings, bold/italic, inline + fenced code, bullet and numbered lists, tables,
+quotes, rules. A wide table scrolls **inside its own beat**; it never widens the
+panel. Nothing to turn on — an ordinary sentence still renders as an ordinary
+sentence:
+
+```js
+{ kind: "return", tool: "seo_audit", replyType: "data", output: { score: 61 },
+  brain: [
+    "## Findings",
+    "",
+    "**Two** blockers, one `meta` warning:",
+    "",
+    "| Page     | Score | Fix                   |",
+    "|----------|------:|-----------------------|",
+    "| /home    |    61 | add a meta description |",
+  ].join("\n"),
+  cost: { ms: 4200, tokens: 800 } }
+```
+
+The body is **model text, so it is treated as untrusted**: it becomes React
+elements, never HTML — raw `<script>` / `<img onerror=…>` stays visible literal
+text. Links render inert (the label, with the destination as a hover title) and
+images render as their alt text, so a beat can never become a clickable link or
+fetch a tracking pixel.
+
 ## Layout
 
 ```
@@ -155,6 +184,8 @@ src/                 # the library — ES modules (import/export, scoped)
   theme.js           Theming engine — normalize / toVars / apply (colors, fonts, icons, labels)
   layout.js          Pure geometry (arcLayout): anchors + arc paths. No React.
   playback.js        Time-travel — usePlayback(trace): step, play/pause, speed, live tail
+  markdown.js        Pure markdown parser for beat prose (a safe subset; no HTML, ever)
+  prose.jsx          <Prose> — renders a model-written body: markdown as elements, links inert
   stage.jsx          <Stage>     — the runtime "thinking" scene (brain, toolbox, arcs, bubbles)
   inspector.jsx      <Inspector> per-step detail + <Notepad> chronological journal
   timeline.jsx       <Timeline>  — time-travel scrubber + transport + legend

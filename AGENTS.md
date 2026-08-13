@@ -86,6 +86,13 @@ type Step =
 type Cost = { ms: number; tokens: number };
 ```
 
+- `brain` (and `actNote` / `thinking`) is rendered as **markdown** — headings,
+  bold/italic, inline + fenced code, lists, tables, quotes, rules — in the
+  notepad, the inspector and the thought bubble. Emit the model's text as it
+  wrote it; a plain sentence still renders as a plain sentence, and a wide table
+  scrolls inside its own beat. It is treated as untrusted: raw HTML in a body
+  stays literal text, links render inert (not clickable) and images render as
+  alt text.
 - `replyType: "data"` → set `brainMode: "reason"`.
 - `replyType: "instruction"` → set `brainMode: "act"`, `skill`, and `actChecklist`.
 - `replyType: "both"` → both bubbles; include data in `output` and the

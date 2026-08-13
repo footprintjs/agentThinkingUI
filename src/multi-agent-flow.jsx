@@ -4,6 +4,7 @@ import { BrainGlyph } from "./stage.jsx";
 import { Timeline } from "./timeline.jsx";
 import { usePlayback } from "./playback.js";
 import { AgentThemeContext } from "./context.js";
+import { Prose } from "./prose.jsx";
 import * as AgentTheme from "./theme.js";
 import { DIM, dimOf, layoutFlow, countCrossings } from "./flow-layout.js";
 
@@ -21,7 +22,7 @@ function TeamNote({ s, n, active }) {
       <span className="note-dot" />
       <div className="note-nb">
         <div className="note-head"><span className="note-n">{String(n + 1).padStart(2, "0")}</span><span className="note-title">{s._name} · {s.kind}</span></div>
-        <div className="note-text">{note}</div>
+        <div className="note-text"><Prose text={note} /></div>
       </div>
     </div>
   );

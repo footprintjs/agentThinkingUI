@@ -1,6 +1,7 @@
 import React from "react";
 import { AgentThemeContext } from "./context.js";
 import { arcLayout, AF_LAYOUT, iconScaleFor, RACK_ITEM_H, rackPickedY } from "./layout.js";
+import { Prose } from "./prose.jsx";
 
 const { useRef: sUseRef, useState: sUseState, useLayoutEffect } = React;
 
@@ -198,7 +199,7 @@ function Cloud({ tag, text, metaphor, compact, tone }) {
   return (
     <div className={"cloud" + (compact ? " compact" : "") + (tone === "data" ? " tone-data" : "")}>
       {metaphor && <span className="ctag">{tag}<Dots /></span>}
-      <span className="ctext">{text}</span>
+      <div className="ctext"><Prose text={text} /></div>
     </div>
   );
 }
@@ -217,7 +218,7 @@ function ThinkingCallout({ text }) {
         <span className="tc-label">thinking</span>
         <span className="tc-chev" aria-hidden="true">{open ? "▾" : "▸"}</span>
       </button>
-      <div className="tc-text">{open ? text : preview}</div>
+      <div className="tc-text">{open ? <Prose text={text} /> : preview}</div>
     </div>
   );
 }

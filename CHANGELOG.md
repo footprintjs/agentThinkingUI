@@ -1,3 +1,40 @@
+## [0.27.0] - 2026-08-13
+
+### Added
+
+- **Beat bodies render markdown — safely.** Models write markdown, and the
+  player was printing it raw: `##`, `**`, table pipes and fences sat in the
+  notepad as literal characters. `brain` / `actNote` / `thinking` now render as
+  markdown everywhere the player shows a body — the **notepad**, the **step
+  inspector**, the **thought bubble**, the expanded **thinking callout** and the
+  multi-agent **team notepad**: headings, bold, italic, strikethrough, inline
+  and fenced code, bullet + numbered lists (nested), GFM tables with alignment,
+  blockquotes and rules. A wide table scrolls **inside its own beat** (focusable,
+  so a keyboard can scroll it) and never widens the panel.
+- **The body stays untrusted.** Prose is tokenized into React **elements** —
+  never an HTML string — so raw `<script>` / `<img onerror=…>` in a beat stays
+  visible literal text. There is no `dangerouslySetInnerHTML` and no sanitizer to
+  keep in sync (same rule the JSON highlighter already followed for tool I/O).
+  Markdown **links render inert** (the label, destination shown only as a hover
+  title) and **images render as alt text**: model text can't become a clickable
+  link or fetch a tracking pixel. Bodies are capped at 20k characters with an
+  explicit "… truncated" marker.
+- **Zero new dependencies.** An internal parser (`src/markdown.js`) + renderer
+  (`src/prose.jsx`) — 6.8 KB minified, 2.6 KB gzipped — instead of a markdown
+  library plus an HTML sanitizer. The package still has no runtime deps, and
+  building elements directly is what makes the raw-HTML guarantee structural
+  rather than a sanitizer configuration.
+
+### Unchanged on purpose
+
+- **A plain sentence renders exactly as before** — the same bare text node, no
+  wrapper element, so a plain beat sits next to a markdown one with no layout
+  shift. `snake_case` and stray `*` in ordinary prose stay literal.
+- **One voice per line.** The notepad's "LLM reasons — " / "LLM follows <skill> — "
+  prefix is now its own span in front of the body rather than string-concatenated
+  into it, so a heading or table body still parses as markdown — and the 0.26
+  authorship rule (`brainSource: "framework"` → no prefix) is untouched.
+
 ## [0.26.0] - 2026-08-13
 
 ### Fixed

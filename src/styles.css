@@ -563,6 +563,54 @@
 
 :where(.atui, .atui-swarm, .atui-backtrack) .brain-text { font-size: calc(14px * var(--af-text-scale)); line-height: 1.5; color: var(--ink); }
 :where(.atui, .atui-swarm, .atui-backtrack) .brain-text.act { font-family: var(--font-body); }
+
+/* ---- markdown in beat prose (model text: headings/bold/lists/tables/code) ----
+   Everything is sized in `em` so the same rules work in the 12.5px notepad, the
+   14px inspector and the thought bubble. A plain sentence never enters this
+   subtree (it renders as a bare string), so these can't shift a plain beat. */
+:where(.atui, .atui-swarm, .atui-backtrack) .md { display: flow-root; color: inherit; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md > :first-child { margin-top: 0; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md > :last-child { margin-bottom: 0; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md p { margin: 0 0 .55em; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-h { font-family: var(--font-display); font-weight: 700; color: var(--ink);
+  line-height: 1.25; margin: .85em 0 .3em; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-h1 { font-size: 1.24em; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-h2 { font-size: 1.15em; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-h3 { font-size: 1.07em; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-h4,
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-h5,
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-h6 { font-size: 1em; letter-spacing: .01em; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md strong { font-weight: 700; color: var(--ink); }
+:where(.atui, .atui-swarm, .atui-backtrack) .md em { font-style: italic; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md del { opacity: .7; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-code { font-family: var(--font-mono); font-size: .9em; background: var(--paper-2);
+  border: 1px solid var(--line-soft); border-radius: 5px; padding: 0 4px; word-break: break-word; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-pre { margin: 0 0 .6em; padding: 8px 10px; background: var(--paper-2);
+  border: 1px solid var(--line); border-radius: 9px; overflow-x: auto; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-pre code { font-family: var(--font-mono); font-size: .88em; color: var(--ink);
+  background: none; border: 0; padding: 0; white-space: pre; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-list { margin: 0 0 .55em; padding-left: 1.3em; }
+:where(.atui, .atui-swarm, .atui-backtrack) ul.md-list { list-style: disc; }
+:where(.atui, .atui-swarm, .atui-backtrack) ol.md-list { list-style: decimal; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-list li { margin: .12em 0; padding-left: 0; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-list .md-list { margin: .12em 0 0; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md blockquote { margin: 0 0 .55em; padding: 1px 0 1px .7em;
+  border-left: 3px solid var(--line); color: var(--ink-soft); }
+:where(.atui, .atui-swarm, .atui-backtrack) .md hr { border: 0; border-top: 1px solid var(--line); margin: .7em 0; }
+/* a wide table scrolls INSIDE its beat — it never widens the panel */
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-tablewrap { max-width: 100%; overflow-x: auto; margin: 0 0 .6em;
+  border: 1px solid var(--line-soft); border-radius: 9px; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-tablewrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-table { border-collapse: collapse; font-size: .95em; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-table th,
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-table td { padding: 4px 9px; text-align: left; white-space: nowrap;
+  border-bottom: 1px solid var(--line-soft); }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-table th { font-weight: 700; color: var(--ink); background: var(--paper-2); }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-table tr:last-child td { border-bottom: 0; }
+/* a link in model text is SHOWN, not clickable (the destination is a tooltip) */
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-link { text-decoration: underline dotted; text-underline-offset: 2px;
+  text-decoration-color: var(--line); cursor: help; }
+:where(.atui, .atui-swarm, .atui-backtrack) .md .md-trunc { color: var(--ink-faint); font-style: italic; }
 :where(.atui, .atui-swarm) .steer-row { display: inline-flex; align-items: center; gap: 7px; background: var(--instr-tint); border: 1px solid var(--instr);
   color: var(--instr-deep); border-radius: 8px; padding: 5px 10px; font-family: var(--font-mono); font-size: calc(12px * var(--af-text-scale)); font-weight: 700; }
 

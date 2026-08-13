@@ -3,6 +3,7 @@ import { toolRelevance } from "./relevance.js";
 import { isSkillName } from "./stage.jsx";
 import { buildToolWhyText, buildDescribeText } from "./copyForLLM.js";
 import { diffWords } from "./descdiff.js";
+import { Prose } from "./prose.jsx";
 
 const { useState: inspUseState } = React;
 
@@ -534,18 +535,24 @@ function PanelTabs({ view, setView }) {
 const isModelVoice = (step) =>
   step.brainSource !== "framework" && !!(step.brain && String(step.brain).trim());
 
-// prefix + body when the body is the model's; the body alone when it isn't
-const voiced = (prefix, step) => (isModelVoice(step) ? prefix + " — " + step.brain : step.brain || "");
+// The prefix stays OUT of the body: the body is markdown (a heading, a table),
+// and the narrator's words must never end up parsed as part of it. Rendered as
+// its own span in front of the prose — one line, still one voice.
+const voicePrefix = (prefix, step) => (isModelVoice(step) ? prefix : "");
 
-// one journal line per beat — a header + its commentary
+// a "both" beat prints the body and the act note as one commentary — kept on one
+// line when both are one-liners, split into paragraphs when either is markdown
+const joinBoth = (parts) => parts.join(parts.some((p) => p.includes("\n")) ? "\n\n" : " ");
+
+// one journal line per beat — a header, its commentary, and who is speaking
 function journal(step) {
   const t = step.toolName || step.tool;
   if (step.kind === "prompt") return { title: "Task comes in", note: step.brain };
   if (step.kind === "ask")    return { title: "LLM → asks " + t, note: step.brain };
   if (step.kind === "answer") return { title: "Answer delivered to " + step.to, note: step.answer.headline };
-  if (step.replyType === "data")        return { title: t + " → returns data", note: voiced("LLM reasons", step) };
-  if (step.replyType === "instruction") return { title: t + " → returns instruction", note: voiced(step.skill ? "LLM follows " + step.skill : "LLM follows the instruction", step) };
-  return { title: t + " → returns data + instruction", note: [step.brain, step.actNote].filter(Boolean).join(" ") };
+  if (step.replyType === "data")        return { title: t + " → returns data", voice: voicePrefix("LLM reasons", step), note: step.brain || "" };
+  if (step.replyType === "instruction") return { title: t + " → returns instruction", voice: voicePrefix(step.skill ? "LLM follows " + step.skill : "LLM follows the instruction", step), note: step.brain || "" };
+  return { title: t + " → returns data + instruction", note: joinBoth([step.brain, step.actNote].filter(Boolean)) };
 }
 
 function fmtLatency(ms) {
@@ -568,7 +575,10 @@ function NoteEntry({ step, n, active }) {
           <span className="note-n">{String(n + 1).padStart(2, "0")}</span>
           <span className="note-title">{j.title}</span>
         </div>
-        <div className="note-text">{j.note}</div>
+        <div className="note-text">
+          {j.voice ? <span className="note-voice">{j.voice + " — "}</span> : null}
+          <Prose text={j.note} />
+        </div>
         <div className="note-meta">⏱ {fmtLatency((step.cost && step.cost.ms) || 0)} · ◇ {(step.cost && step.cost.tokens) || 0} tok</div>
       </div>
     </div>
@@ -627,7 +637,7 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
         {/* PROMPT */}
         {step.kind === "prompt" && (
           <Section label="Task received">
-            <div className="brain-text">{step.brain}</div>
+            <div className="brain-text"><Prose text={step.brain} /></div>
           </Section>
         )}
 
@@ -639,11 +649,11 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
               <pre className="code">{highlight(step.input)}</pre>
             </Section>
             <Section label="LLM brain">
-              <div className="brain-text">{step.brain}</div>
+              <div className="brain-text"><Prose text={step.brain} /></div>
             </Section>
             {step.thinking && (
               <Section label="💭 Extended thinking">
-                <div className="brain-text thinking">{step.thinking}</div>
+                <div className="brain-text thinking"><Prose text={step.thinking} /></div>
               </Section>
             )}
             <ToolsSeen tools={step.toolsSeen} />
@@ -669,7 +679,7 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
                   <span className="steer-row">steered by · {step.skill}</span>
                 </div>
               )}
-              <div className={"brain-text " + (step.brainMode || "reason")}>{step.brain}</div>
+              <div className={"brain-text " + (step.brainMode || "reason")}><Prose text={step.brain} /></div>
             </Section>
 
             {isBoth && (
@@ -677,7 +687,7 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
                 <div style={{ marginBottom: 9 }}>
                   <span className="steer-row">steered by · {step.skill}</span>
                 </div>
-                <div className="brain-text act">{step.actNote}</div>
+                <div className="brain-text act"><Prose text={step.actNote} /></div>
               </Section>
             )}
           </>
@@ -689,10 +699,10 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
             {step.thinking && (
               <>
                 <div className="io-label">💭 extended thinking</div>
-                <div className="brain-text thinking" style={{ marginBottom: 12 }}>{step.thinking}</div>
+                <div className="brain-text thinking" style={{ marginBottom: 12 }}><Prose text={step.thinking} /></div>
               </>
             )}
-            <div className="brain-text" style={{ marginBottom: 12 }}>{step.brain}</div>
+            <div className="brain-text" style={{ marginBottom: 12 }}><Prose text={step.brain} /></div>
             <div className="answer-card">
               <div className="ac-head">{step.answer.headline}</div>
               {/* plan / budget / cta are OPTIONAL in the trace contract — only an
