@@ -56,6 +56,10 @@ export interface Answer {
   [key: string]: unknown;
 }
 
+/** Who authored a step's `brain` text — the model, or the framework narrating
+ *  on its behalf. Absent means the trace did not record it; treated as model. */
+export type BrainSource = "model" | "framework";
+
 /** The task comes in. */
 export interface PromptStep {
   kind: "prompt";
@@ -119,6 +123,12 @@ export interface AskStep {
   toolName?: string;
   input: Record<string, unknown>;
   brain: string;
+  /** Who wrote `brain`. Omit (or "model") when it is the model's own words —
+   *  the views may then narrate it as such ("LLM reasons — …"). Set "framework"
+   *  when your runtime supplied the sentence (a delivery / bookkeeping line like
+   *  "The tool returned its result."): the views render it plain, so one line
+   *  never carries two narrators. */
+  brainSource?: BrainSource;
   cost: Cost;
   /** Model's extended-thinking chain-of-thought for this iteration. */
   thinking?: string;
@@ -141,6 +151,12 @@ export interface ReturnStep {
   replyType: ReplyType;
   output: Record<string, unknown>;
   brain: string;
+  /** Who wrote `brain`. Omit (or "model") when it is the model's own words —
+   *  the views may then narrate it as such ("LLM reasons — …"). Set "framework"
+   *  when your runtime supplied the sentence (a delivery / bookkeeping line like
+   *  "The tool returned its result."): the views render it plain, so one line
+   *  never carries two narrators. */
+  brainSource?: BrainSource;
   cost: Cost;
   /** data → "reason", instruction → "act" */
   brainMode?: BrainMode;
@@ -164,6 +180,12 @@ export interface AnswerStep {
   answer: Answer;
   spanId?: string;
   traceId?: string;
+  /** Who wrote `brain`. Omit (or "model") when it is the model's own words —
+   *  the views may then narrate it as such ("LLM reasons — …"). Set "framework"
+   *  when your runtime supplied the sentence (a delivery / bookkeeping line like
+   *  "The tool returned its result."): the views render it plain, so one line
+   *  never carries two narrators. */
+  brainSource?: BrainSource;
   cost: Cost;
   /** set when the agent run errored */
   error?: string;

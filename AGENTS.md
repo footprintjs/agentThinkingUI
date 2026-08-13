@@ -78,6 +78,7 @@ type Step =
       replyType: "data" | "instruction" | "both";
       output: object; brain: string; cost: Cost;
       brainMode?: "reason" | "act";                       // data→reason, instruction→act
+      brainSource?: "model" | "framework";               // who wrote `brain` (see below)
       skill?: string; actChecklist?: { text: string }[];  // for instruction / both
       actNote?: string }
   | { kind: "answer";  to: string; brain: string; answer: Answer; cost: Cost };
@@ -89,6 +90,15 @@ type Cost = { ms: number; tokens: number };
 - `replyType: "instruction"` → set `brainMode: "act"`, `skill`, and `actChecklist`.
 - `replyType: "both"` → both bubbles; include data in `output` and the
   `skill`/`actChecklist`/`actNote` for the instruction half.
+- `brainSource` — who wrote the `brain` sentence. Leave it off (or `"model"`) for
+  the model's own words: the notepad narrates those as *"LLM reasons — …"* /
+  *"LLM follows <skill> — …"*. Set `"framework"` when **your runtime** supplied
+  the line (a delivery / bookkeeping sentence such as *"The tool returned its
+  result."*) and the notepad prints it plain — the "LLM …" prefix is a claim
+  about authorship, so it is only made when the trace records it. On `ask` and
+  `answer` beats it is recorded for downstream consumers; nothing is prefixed
+  there. The OTLP / OpenInference adapters stamp it for you (`"framework"` on
+  their fallback narration, `"model"` on a real assistant message).
 
 ## Bring your existing traces (OpenTelemetry / OpenInference)
 

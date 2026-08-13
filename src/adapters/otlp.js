@@ -152,9 +152,12 @@ function buildTrace(otlp, R, opts = {}) {
     const before = ci > 0 ? chats[ci - 1] : undefined;
     const after = chats[ci]; // first chat at/after the call (starts are monotonic & distinct)
     const c = cost(t), half = halveCost(c);
+    // record WHO wrote each `brain` body: the model's own message, or our
+    // fallback narration. The views only put "LLM …" in front of model text.
+    const asked = toText(before && R.assistantMsg(before.a, before.sp));
     steps.push({
       kind: "ask", tool: name, toolName: name, input: asObject(R.toolInput(a, t.sp)),
-      brain: toText(before && R.assistantMsg(before.a, before.sp)) || ("Calling " + name), cost: half,
+      brain: asked || ("Calling " + name), brainSource: asked ? "model" : "framework", cost: half,
       ...idOf(t.sp),
     });
     const cls = classifyReply(name, a, opts);
@@ -168,6 +171,7 @@ function buildTrace(otlp, R, opts = {}) {
       brain: reasoned || (cls.replyType === "instruction"
         ? "Following " + (cls.skill || name)
         : "Reasoning over the result from " + name),
+      brainSource: reasoned ? "model" : "framework",
       cost: half,
       ...idOf(t.sp),
     };
@@ -183,6 +187,7 @@ function buildTrace(otlp, R, opts = {}) {
   const answerStep = {
     kind: "answer", to: opts.asker || "user",
     brain: answerText || (agentErr ? "Run failed." : "Done."),
+    brainSource: answerText ? "model" : "framework",
     answer: { headline: (answerText || (agentErr || "Done.")).slice(0, 120), plan: [], budget: [], cta: opts.cta || "" },
     cost: (lastChat && cost(lastChat)) || (agentSpan && cost(agentSpan)) || { ms: 0, tokens: 0 },
     ...idOf((agentSpan && agentSpan.sp) || (lastChat && lastChat.sp)),

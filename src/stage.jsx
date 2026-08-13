@@ -300,7 +300,11 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
   const G = arcLayout(w, h, by, straight, iconScale, toolY, useRack);
   const active = isTool ? (dir === "ask" ? G.down : G.up) : null;
 
-  const cloudTag =
+  // "thinking" / "calling" attribute the bubble's words to the brain. When the
+  // trace says the framework wrote them (brainSource:"framework"), tag it
+  // neutrally instead of putting the runtime's sentence in the model's mouth.
+  const frameworkVoice = step.brainSource === "framework";
+  const cloudTag = frameworkVoice ? "what happened" :
     step.kind === "prompt" ? "reading the ask" :
     step.kind === "ask" ? "calling" :
     step.kind === "answer" ? "wrapping up" : "thinking";
@@ -316,7 +320,7 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
     dualThoughts = (
       <div className="dual-thoughts" style={{ left: dualLeft, bottom: h - by + 54 }}>
         {thinkingEl}
-        <Cloud tag="thinking" text={step.brain} metaphor={metaphor} compact tone="data" />
+        <Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} compact tone="data" />
         <SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} compact />
       </div>
     );

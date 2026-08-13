@@ -1,3 +1,15 @@
+## [0.26.0] - 2026-08-13
+
+### Fixed
+
+- **One voice per line.** Beats whose text is a framework delivery sentence
+  (`brainSource: "framework"`) render plain — the "LLM reasons — " prefix now
+  claims authorship only when the model actually wrote the words. New optional
+  trace fact `brainSource` on `ask`/`return`/`answer` steps (absent = model, so
+  existing producers are unchanged); the OTLP adapter stamps its own
+  narration; empty bodies never leave orphaned prefixes; "LLM follows
+  undefined" fixed. Pairs with agentfootprint 9.28's producer-side stamp.
+
 ## [0.25.0] - 2026-07-24
 
 ### Added

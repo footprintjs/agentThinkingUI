@@ -527,15 +527,25 @@ function PanelTabs({ view, setView }) {
   );
 }
 
+// A prefix like "LLM reasons —" CLAIMS the sentence after it is the model's own
+// words. Say it only when the trace recorded it that way: a body the framework
+// wrote (`brainSource: "framework"` — a delivery / bookkeeping sentence) or an
+// empty body renders plain, so one line never carries two narrators.
+const isModelVoice = (step) =>
+  step.brainSource !== "framework" && !!(step.brain && String(step.brain).trim());
+
+// prefix + body when the body is the model's; the body alone when it isn't
+const voiced = (prefix, step) => (isModelVoice(step) ? prefix + " — " + step.brain : step.brain || "");
+
 // one journal line per beat — a header + its commentary
 function journal(step) {
   const t = step.toolName || step.tool;
   if (step.kind === "prompt") return { title: "Task comes in", note: step.brain };
   if (step.kind === "ask")    return { title: "LLM → asks " + t, note: step.brain };
   if (step.kind === "answer") return { title: "Answer delivered to " + step.to, note: step.answer.headline };
-  if (step.replyType === "data")        return { title: t + " → returns data", note: "LLM reasons — " + step.brain };
-  if (step.replyType === "instruction") return { title: t + " → returns instruction", note: "LLM follows " + step.skill + " — " + step.brain };
-  return { title: t + " → returns data + instruction", note: step.brain + " " + (step.actNote || "") };
+  if (step.replyType === "data")        return { title: t + " → returns data", note: voiced("LLM reasons", step) };
+  if (step.replyType === "instruction") return { title: t + " → returns instruction", note: voiced(step.skill ? "LLM follows " + step.skill : "LLM follows the instruction", step) };
+  return { title: t + " → returns data + instruction", note: [step.brain, step.actNote].filter(Boolean).join(" ") };
 }
 
 function fmtLatency(ms) {
