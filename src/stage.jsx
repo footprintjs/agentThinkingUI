@@ -1,7 +1,8 @@
 import React from "react";
 import { AgentThemeContext } from "./context.js";
-import { arcLayout, AF_LAYOUT, iconScaleFor, RACK_ITEM_H, rackPickedY } from "./layout.js";
+import { arcLayout, AF_LAYOUT, iconScaleFor, RACK_ITEM_H, rackPickedY, bubbleBoxFor, BUBBLE_TAIL_X } from "./layout.js";
 import { Prose } from "./prose.jsx";
+import { AgentIconGlyph, isAgentIconName } from "./agent-icons.jsx";
 
 const { useRef: sUseRef, useState: sUseState, useLayoutEffect } = React;
 
@@ -147,7 +148,22 @@ function TypeGlyph({ data }) {
 
 // the agent avatar — animated brain mascot, or an emoji/image. Reused by the
 // single-agent scene AND by <MultiAgentFlow> agent cards.
-export function BrainGlyph({ icon, mode }) {
+//
+// `agentIcon` is the newer, more specific way to say who the agent is, and it
+// WINS over the legacy `icons.brain` config when both are given. The rule for
+// its value is one line: a STRING is a built-in NAME, anything else is YOUR
+// node. An unrecognised name falls back to the mascot rather than printing
+// itself into the scene (to draw literal text, pass a node: <span>🦊</span>).
+export function BrainGlyph({ icon, mode, agentIcon }) {
+  if (agentIcon != null && agentIcon !== false) {
+    if (typeof agentIcon !== "string") {
+      return (
+        <div className={"brain agent-icon agent-icon-node " + (mode === "act" ? "acting" : "thinking")}>{agentIcon}</div>
+      );
+    }
+    // "brain" (and any unknown name) falls through to the default mascot below
+    if (agentIcon !== "brain" && isAgentIconName(agentIcon)) return <AgentIconGlyph name={agentIcon} mode={mode} />;
+  }
   const cfg = icon || { kind: "default" };
   if (cfg.kind === "image" && cfg.value) {
     return <div className="brain brain-custom"><img src={cfg.value} alt="" /></div>;
@@ -178,8 +194,8 @@ export function BrainGlyph({ icon, mode }) {
   );
 }
 
-function Brain({ mode }) {
-  return <BrainGlyph icon={afIcons(React.useContext(AgentThemeContext)).brain} mode={mode} />;
+function Brain({ mode, agentIcon }) {
+  return <BrainGlyph icon={afIcons(React.useContext(AgentThemeContext)).brain} mode={mode} agentIcon={agentIcon} />;
 }
 
 // Prefer the resolved theme handed down by <AgentThinkingUI> via context; fall
@@ -273,7 +289,7 @@ function Toolbox({ active }) {
   );
 }
 
-function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToolClick }) {
+function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToolClick, agentIcon }) {
   const { w, h } = dims;
   const resolved = React.useContext(AgentThemeContext);
 
@@ -288,7 +304,12 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
   // them low (the callout grows upward into the room above); desktop keeps its
   // line. No per-step measurement → no movement.
   const L = AF_LAYOUT || {};
-  const by = h * (straight ? (L.brainYMobile || 0.72) : (L.brainY || 0.6));
+  const brainYFrac = straight ? (L.brainYMobile || 0.72) : (L.brainY || 0.6);
+  const by = h * brainYFrac;
+  // the bubbles' size budget, from the MEASURED scene: how wide they may grow
+  // before wrapping, and (last resort) how tall the body may get before it
+  // scrolls. Rides the same custom-property channel as the icon scale.
+  const box = bubbleBoxFor(w, h, brainYFrac);
   // one scale for the cast — capped + container-responsive; feeds the CSS icon
   // sizes (via --af-icon-scale on the scene) AND the arc geometry, in lockstep.
   const iconScale = iconScaleFor(w);
@@ -316,7 +337,8 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
   // single bubble hugs above the brain; BOTH = think (teal, left) + act (amber, right) over the brain
   let thought = null, dualThoughts = null;
   if (isBoth) {
-    const half = 196;
+    // the pair sits side by side (compact caps + the 12px gap), kept on-screen
+    const half = box.compactW + 8;
     const dualLeft = Math.max(half + 12, Math.min(w - half - 12, G.bx + 78));
     dualThoughts = (
       <div className="dual-thoughts" style={{ left: dualLeft, bottom: h - by + 54 }}>
@@ -334,7 +356,13 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
   const brainMode = isAct ? "act" : "reason";
 
   return (
-    <div className="scene-inner" style={{ "--af-icon-scale": iconScale }}>
+    <div className="scene-inner" style={{
+      "--af-icon-scale": iconScale,
+      "--af-bubble-w": box.maxW + "px",
+      "--af-bubble-wc": box.compactW + "px",
+      "--af-bubble-h": box.maxBodyH + "px",
+      "--af-bubble-tail": BUBBLE_TAIL_X + "px",
+    }}>
       {dualThoughts}
       {/* fixed flowchart connectors (brain ⇄ toolbox). only the packet flows through them. */}
       <svg className="arc-svg" width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
@@ -381,7 +409,7 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
       {/* LLM brain (left) */}
       <div className="brain-node" style={{ left: G.bx, top: G.by }}>
         {thought}
-        <Brain mode={brainMode} />
+        <Brain mode={brainMode} agentIcon={agentIcon} />
         <div className="brain-label">{afLabels(resolved).agent}</div>
       </div>
 
@@ -410,7 +438,7 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
   );
 }
 
-export function Stage({ trace, step, index, metaphor, straight, toolMenu, onToolClick }) {
+export function Stage({ trace, step, index, metaphor, straight, toolMenu, onToolClick, agentIcon }) {
   const sceneRef = sUseRef(null);
   const [dims, setDims] = sUseState({ w: 720, h: 460 });
 
@@ -444,7 +472,7 @@ export function Stage({ trace, step, index, metaphor, straight, toolMenu, onTool
   return (
     <div className={"panel stage " + accentClass}>
       <div className="flowscene" ref={sceneRef}>
-        <SceneInner key={index} step={step} dims={dims} metaphor={metaphor} straight={straight} toolMenu={toolMenu} rackTools={rackTools} onToolClick={onToolClick} />
+        <SceneInner key={index} step={step} dims={dims} metaphor={metaphor} straight={straight} toolMenu={toolMenu} rackTools={rackTools} onToolClick={onToolClick} agentIcon={agentIcon} />
       </div>
     </div>
   );

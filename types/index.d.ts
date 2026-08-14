@@ -8,6 +8,16 @@ export interface IconConfig {
   value?: string | null;
 }
 
+/**
+ * The built-in agent glyphs for the `agentIcon` prop. `"brain"` is the animated
+ * mascot (the default); the rest are stroke icons drawn in the same style as the
+ * tool icons, tinted by the theme's brain gradient.
+ */
+export type AgentIconName = "brain" | "robot" | "sparkle" | "footsteps";
+
+/** the built-in names, in order — e.g. to build a picker */
+export const AGENT_ICON_NAMES: AgentIconName[];
+
 export interface ThemeConfig {
   /** "light" (default) or "dark" — swaps the neutral surface/text palette */
   mode?: "light" | "dark";
@@ -33,6 +43,15 @@ export interface AgentThinkingUIProps {
   theme?: ThemeConfig;
   labels?: { agent?: string; toolbox?: string };
   icons?: { brain?: IconConfig; toolbox?: IconConfig };
+  /**
+   * Who the agent looks like, on stage. A STRING is a built-in name
+   * (`"brain"` — the default animated mascot — `"robot"`, `"sparkle"`,
+   * `"footsteps"`); anything else is YOUR node, drawn in the agent's place
+   * (`agentIcon={<MyLogo/>}`). It wins over `icons.brain` when both are given,
+   * and an unrecognised name falls back to the mascot. The thought bubble's
+   * tail keeps pointing at whatever stands there. Also accepted by `<Stage>`.
+   */
+  agentIcon?: AgentIconName | ReactNode;
   /** optional wordmark/logo for the top bar (the library ships none) */
   brand?: ReactNode;
   /** show the storytelling tags (default true) */

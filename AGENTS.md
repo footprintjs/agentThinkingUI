@@ -50,6 +50,7 @@ exported and can be composed by hand with the state from `usePlayback(trace)`.
 | `theme` | `{ colors, fonts }` | scoped CSS-variable theming (reactive) |
 | `labels` | `{ agent, toolbox }` | display names |
 | `icons` | `{ brain, toolbox }` | `{kind:'default'\|'emoji'\|'image', value}` |
+| `agentIcon` | `'brain'\|'robot'\|'sparkle'\|'footsteps'` \| `ReactNode` | who stands on stage. A **string is a built-in name**, anything else is **your node** (`agentIcon={<MyLogo/>}`). Omitted = the animated mascot, unchanged. Wins over `icons.brain`; an unknown name falls back to the mascot. Also accepted by `<Stage>`; `AGENT_ICON_NAMES` is exported |
 | `brand` | `ReactNode` | optional wordmark/logo for the top bar — **the library ships none**; your app supplies its own |
 | `metaphor` | `boolean` | show the storytelling tags (default true) |
 | `loop` | `boolean` | auto-loop playback |

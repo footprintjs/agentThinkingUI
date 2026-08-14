@@ -44,7 +44,8 @@ library; `demo/` is a runnable example.
 ```
 src/        theme.js · layout.js · flow-layout.js (pure multi-agent graph layout) ·
             markdown.js (pure beat-prose parser) · prose.jsx (<Prose> renderer) ·
-            playback.js · context.js · stage.jsx · inspector.jsx · timeline.jsx ·
+            playback.js · context.js · stage.jsx · agent-icons.jsx (agentIcon glyphs) ·
+            inspector.jsx · timeline.jsx ·
             footprint.jsx · multi-agent-flow.jsx · adapters/otlp.js ·
             index.jsx (ESM entry) · global.jsx (UMD entry) · styles.css
 build.mjs   esbuild → dist/ (ESM + UMD + css)
@@ -60,6 +61,12 @@ docs/assets gen-hero.mjs → hero-light.svg / hero-dark.svg    (animated README 
 - Geometry (brain/tool anchors, arc paths) is pure and lives in `layout.js`
   (`arcLayout`, `AF_LAYOUT`). The brain/toolbox use a **fixed** anchor per layout
   so they never jump between steps.
+- The thought bubble's size budget is pure too (`bubbleBoxFor`, `BUBBLE`): the
+  scene measures its container once and publishes the caps as custom properties
+  (`--af-bubble-w` / `-wc` / `-h` / `-tail`, alongside `--af-icon-scale`) which
+  the CSS consumes. Widths come from `width: max-content` under those caps — the
+  browser measures the TEXT, we only decide the room. Don't reintroduce a fixed
+  px cap on `.cloud` / `.skilldoc` / `.thinking-callout`.
 - Animation **choreography** is one block of staged `animation-delay`s in
   `styles.css` (search "choreography").
 

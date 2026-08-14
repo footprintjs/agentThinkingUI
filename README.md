@@ -177,6 +177,18 @@ text. Links render inert (the label, with the destination as a hover title) and
 images render as their alt text, so a beat can never become a clickable link or
 fetch a tracking pixel.
 
+### The thought bubble spends its room on width
+
+A bubble is sized by its content under a cap **measured from the stage** (about
+70% of the scene's width), so a long markdown body wraps late and wide instead of
+growing into a tall column — three words still get a snug bubble. On a 687×549
+stage the same report renders **480 × 258** instead of **268 × 425**. Only if it
+is *still* too tall does the body scroll inside the bubble, at the room above the
+agent (≈202px there); a wide table keeps scrolling inside the bubble as before.
+Nothing to configure — it re-measures when the panel resizes, and the width eases
+rather than jumping as text streams in (and holds still under
+`prefers-reduced-motion`).
+
 ## Layout
 
 ```
@@ -187,6 +199,7 @@ src/                 # the library — ES modules (import/export, scoped)
   markdown.js        Pure markdown parser for beat prose (a safe subset; no HTML, ever)
   prose.jsx          <Prose> — renders a model-written body: markdown as elements, links inert
   stage.jsx          <Stage>     — the runtime "thinking" scene (brain, toolbox, arcs, bubbles)
+  agent-icons.jsx    the built-in agent glyphs for `agentIcon` (robot · sparkle · footsteps)
   inspector.jsx      <Inspector> per-step detail + <Notepad> chronological journal
   timeline.jsx       <Timeline>  — time-travel scrubber + transport + legend
   footprint.jsx      <AgentThinkingUI> — ready-made shell wiring all four together
@@ -484,6 +497,29 @@ const theme = {
   icons={{ brain: { kind: "emoji", value: "🤖" } }}  // or {kind:"image",value:"/bot.png"} / {kind:"default"}
 />
 ```
+
+### `agentIcon` — who stands on stage
+
+The figure at the centre of the scene is the host's call. Pass a **built-in
+name** (a string) or **your own node** (anything else):
+
+```jsx
+<AgentThinkingUI trace={trace} agentIcon="robot" />        // "brain" (default) | "robot" | "sparkle" | "footsteps"
+<AgentThinkingUI trace={trace} agentIcon={<MyLogo />} />   // any React node — an SVG, an <img>, a styled div
+```
+
+| value | what you get |
+|-------|--------------|
+| *(omitted)* / `"brain"` | the animated brain mascot — **unchanged**, so existing players look exactly as they did |
+| `"robot"` · `"sparkle"` · `"footsteps"` | stroke glyphs drawn on one grid with one stroke weight — the same look as the tool icons — tinted by the theme's `brainFrom`/`brainTo` gradient, so a re-theme re-colours them |
+| any node | drawn in the agent's place, sized to the same box |
+
+A **string is a name**, so an unrecognised one falls back to the mascot rather
+than printing itself on stage (to draw literal text, pass a node:
+`agentIcon={<span>🦊</span>}`). `agentIcon` wins over `icons.brain` when both are
+given. Whatever stands there keeps the agent's box, so the label, the connector
+arcs and the thought bubble's tail all keep pointing at it. `<Stage>` accepts the
+same prop, and `AGENT_ICON_NAMES` is exported if you want to build a picker.
 
 A color may be a single hex (its `deep`/`tint` shades are derived) or a full
 `{ base, deep, tint }` triad for exact control. Foregrounds on coloured fills are

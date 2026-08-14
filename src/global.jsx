@@ -10,6 +10,7 @@ import { BacktrackView, BacktrackOverlay } from "./backtrack.jsx";
 import { InfluenceMap, InfluenceMapOverlay, INFLUENCE_COPY } from "./influence-map.jsx";
 import { influenceLayout, INFLUENCE_LAYOUT } from "./influence-layout.js";
 import { Stage, ToolIcon } from "./stage.jsx";
+import { AGENT_ICON_NAMES } from "./agent-icons.jsx";
 import { Inspector, Notepad } from "./inspector.jsx";
 import { Timeline } from "./timeline.jsx";
 import { usePlayback, AF_DWELL } from "./playback.js";
@@ -28,6 +29,7 @@ Object.assign(w, {
   InfluenceMap, InfluenceMapOverlay, INFLUENCE_COPY,
   influenceLayout, INFLUENCE_LAYOUT,
   Stage, ToolIcon, Inspector, Notepad, Timeline,
+  AGENT_ICON_NAMES,
   usePlayback, AF_DWELL, arcLayout, AF_LAYOUT,
   AgentTheme, AgentThemeContext,
   AgentAdapters: { fromOTLP, fromOpenInference, fromOTLPMulti, fromOpenInferenceMulti, createMonitor },

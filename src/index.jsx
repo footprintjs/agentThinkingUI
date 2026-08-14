@@ -9,6 +9,7 @@ export { BacktrackView, BacktrackOverlay } from "./backtrack.jsx";
 export { InfluenceMap, InfluenceMapOverlay, INFLUENCE_COPY } from "./influence-map.jsx";
 export { influenceLayout, INFLUENCE_LAYOUT } from "./influence-layout.js";
 export { Stage, ToolIcon } from "./stage.jsx";
+export { AGENT_ICON_NAMES } from "./agent-icons.jsx";
 export { Inspector, Notepad } from "./inspector.jsx";
 export { Timeline } from "./timeline.jsx";
 export { usePlayback, AF_DWELL } from "./playback.js";

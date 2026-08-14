@@ -235,10 +235,14 @@
 
 /* --- brain node (left) --- */
 :where(.atui, .atui-swarm, .atui-backtrack) .brain-node { position: absolute; transform: translate(-50%, -50%); }
-:where(.atui, .atui-swarm) .thoughtpos { position: absolute; bottom: 100%; margin-bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 6; }
+/* The bubble column hangs above the agent and grows RIGHTWARD from a fixed
+   tail offset (--af-bubble-tail, mirrored by BUBBLE_TAIL_X in layout.js): the
+   tail still lands on the agent's head, but a wide bubble now has the whole
+   scene to grow into instead of running off the left edge. */
+:where(.atui, .atui-swarm) .thoughtpos { position: absolute; bottom: 100%; margin-bottom: 12px; left: 50%; margin-left: calc(-1 * var(--af-bubble-tail, 44px)); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; z-index: 6; }
 
 /* Extended-thinking callout — the model's chain-of-thought, above the action. */
-:where(.atui, .atui-swarm) .thinking-callout { width: max-content; max-width: 268px; background: var(--paper-2); border: 1px dashed var(--line); border-radius: 14px; padding: 6px 11px; box-shadow: var(--shadow-sm); }
+:where(.atui, .atui-swarm) .thinking-callout { width: max-content; max-width: var(--af-bubble-w, 268px); background: var(--paper-2); border: 1px dashed var(--line); border-radius: 14px; padding: 6px 11px; box-shadow: var(--shadow-sm); }
 :where(.atui, .atui-swarm) .thinking-callout .tc-toggle { display: flex; align-items: center; gap: 6px; width: 100%; background: none; border: none; cursor: pointer; padding: 0; font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; }
 :where(.atui, .atui-swarm) .thinking-callout .tc-label { font-weight: 700; }
 :where(.atui, .atui-swarm) .thinking-callout .tc-chev { margin-left: auto; color: var(--ink-faint); }
@@ -251,35 +255,49 @@
   background: var(--accent-tint); color: var(--accent-deep); border: 1px solid var(--accent); box-shadow: var(--shadow-sm); animation: tagIn .5s cubic-bezier(.2,1,.3,1) both .55s; }
 @keyframes tagIn { from { opacity: 0; transform: translate(10px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
 
+/* SPACE-AWARE: `width: max-content` keeps three words snug; the cap is measured
+   from the container (--af-bubble-w = ~70% of the scene, set by the scene from
+   bubbleBoxFor) so a long markdown body spends the room it has on WIDTH before
+   it spends it on height. The cap is quantised to 8px steps and eased, so text
+   streaming in widens the bubble smoothly instead of jumping. */
 :where(.atui, .atui-swarm) .cloud {
   position: relative; background: var(--card); border: 2px solid var(--accent);
   color: var(--ink); border-radius: 34px 40px 30px 42px / 40px 32px 42px 34px; padding: 15px 19px; box-shadow: var(--shadow-md);
-  width: max-content; max-width: 268px; animation: pop .5s cubic-bezier(.2,1.2,.3,1) both .5s;
+  width: max-content; max-width: var(--af-bubble-w, 268px); animation: pop .5s cubic-bezier(.2,1.2,.3,1) both .5s;
+  transition: max-width .25s cubic-bezier(.2,.8,.3,1);
 }
 :where(.atui, .atui-swarm) .cloud::before, :where(.atui, .atui-swarm) .cloud::after { content: ""; position: absolute; background: var(--card);
   border: 1.5px solid var(--accent); border-radius: 50%; }
-:where(.atui, .atui-swarm) .cloud::before { width: 15px; height: 15px; left: 50%; bottom: -11px; transform: translateX(-50%); }
-:where(.atui, .atui-swarm) .cloud::after { width: 8px; height: 8px; left: 50%; bottom: -22px; transform: translateX(-50%); }
+/* the tail trails down from a FIXED offset (not the bubble's centre) → it stays
+   on the agent's head at every bubble width */
+:where(.atui, .atui-swarm) .cloud::before { width: 15px; height: 15px; left: var(--af-bubble-tail, 44px); bottom: -11px; transform: translateX(-50%); }
+:where(.atui, .atui-swarm) .cloud::after { width: 8px; height: 8px; left: calc(var(--af-bubble-tail, 44px) - 8px); bottom: -22px; transform: translateX(-50%); }
 :where(.atui, .atui-swarm) .cloud .ctag { font-family: var(--font-hand); font-size: calc(17px * var(--af-text-scale)); color: var(--accent-deep); line-height: 1; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
 :where(.atui, .atui-swarm) .cloud .ctag .dots { display: inline-flex; gap: 3px; }
 :where(.atui, .atui-swarm) .cloud .ctag .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); display: inline-block; animation: blink 1.3s infinite; }
 :where(.atui, .atui-swarm) .cloud .ctag .dots i:nth-child(2) { animation-delay: .18s; }
 :where(.atui, .atui-swarm) .cloud .ctag .dots i:nth-child(3) { animation-delay: .36s; }
-:where(.atui, .atui-swarm) .cloud .ctext { font-size: calc(12.5px * var(--af-text-scale)); line-height: 1.42; color: var(--ink); }
+/* LAST RESORT: a body that is still too tall after widening scrolls INSIDE the
+   bubble rather than overflowing the scene. --af-bubble-h is the room above the
+   agent minus the bubble's own chrome (≈149px in the default 720×460 stage). */
+:where(.atui, .atui-swarm) .cloud .ctext { font-size: calc(12.5px * var(--af-text-scale)); line-height: 1.42; color: var(--ink);
+  max-height: var(--af-bubble-h, 320px); overflow-y: auto; overscroll-behavior: contain; }
 @keyframes blink { 0%, 65%, 100% { opacity: .22; transform: translateY(0); } 32% { opacity: 1; transform: translateY(-3px); } }
 
 /* cloud + doc carry their own .5s entrance delay */
 
 :where(.atui, .atui-swarm) .skilldoc {
-  width: max-content; max-width: 268px; background: var(--card); border: 1.5px solid var(--instr);
+  width: max-content; max-width: var(--af-bubble-w, 268px); background: var(--card); border: 1.5px solid var(--instr);
   border-radius: 16px; box-shadow: var(--shadow-md); overflow: hidden; animation: slideUp .5s cubic-bezier(.2,1,.3,1) both .5s;
+  transition: max-width .25s cubic-bezier(.2,.8,.3,1);
 }
 :where(.atui, .atui-swarm) .skilldoc .sd-head { display: flex; align-items: center; gap: 8px; padding: 9px 13px; background: var(--instr-tint);
   border-bottom: 1px solid var(--instr); }
 :where(.atui, .atui-swarm) .skilldoc .sd-clip { width: 22px; height: 22px; border-radius: 6px; background: var(--instr); color: var(--on-instr, #fff); display: grid; place-items: center; font-size: calc(13px * var(--af-text-scale)); flex: none; }
 :where(.atui, .atui-swarm) .skilldoc .sd-name { font-family: var(--font-mono); font-size: calc(12.5px * var(--af-text-scale)); font-weight: 700; color: var(--instr-deep); }
 :where(.atui, .atui-swarm) .skilldoc .sd-kicker { font-size: calc(10px * var(--af-text-scale)); letter-spacing: .12em; text-transform: uppercase; color: var(--instr-deep); opacity: .8; margin-left: auto; font-weight: 700; }
-:where(.atui, .atui-swarm) .skilldoc .sd-list { list-style: none; margin: 0; padding: 8px 13px 11px; display: flex; flex-direction: column; gap: 7px; }
+:where(.atui, .atui-swarm) .skilldoc .sd-list { list-style: none; margin: 0; padding: 8px 13px 11px; display: flex; flex-direction: column; gap: 7px;
+  max-height: var(--af-bubble-h, 320px); overflow-y: auto; overscroll-behavior: contain; }
 :where(.atui, .atui-swarm) .skilldoc .sd-list li { display: flex; align-items: flex-start; gap: 9px; font-size: calc(13px * var(--af-text-scale)); color: var(--ink); opacity: 1; animation: checkIn .4s ease both; }
 :where(.atui, .atui-swarm) .skilldoc .sd-list li .box { width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid var(--instr); background: var(--instr); color: var(--on-instr, #fff); display: grid; place-items: center; font-size: calc(11px * var(--af-text-scale)); flex: none; margin-top: 1px; }
 
@@ -329,6 +347,20 @@
 :where(.atui, .atui-swarm, .atui-backtrack) .brain .mouth { position: absolute; bottom: 26px; left: 50%; width: 16px; height: 8px; border-radius: 0 0 16px 16px;
   border: 2px solid var(--ink); border-top: 0; transform: translateX(-50%); }
 :where(.atui, .atui-swarm, .atui-backtrack) .brain.acting .mouth { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ink); bottom: 24px; }
+
+/* --- the agent icon (`agentIcon` prop) ---------------------------------
+   A stroke glyph — or the host's own node — standing exactly where the mascot
+   stands: it reuses the `.brain` box, so the anchor, the label offset, the arc
+   ends and the thought bubble's tail all keep pointing at it. Each built-in
+   carries one `.ai-pulse` part that breathes while the agent thinks. */
+:where(.atui, .atui-swarm, .atui-backtrack) .brain.agent-icon { display: grid; place-items: center; }
+:where(.atui, .atui-swarm, .atui-backtrack) .agent-icon .agent-icon-svg { width: 100%; height: 100%; overflow: visible; }
+:where(.atui, .atui-swarm, .atui-backtrack) .agent-icon.agent-icon-node > * { max-width: 100%; max-height: 100%; }
+:where(.atui, .atui-swarm, .atui-backtrack) .agent-icon .ai-pulse { transform-origin: center; }
+:where(.atui, .atui-swarm, .atui-backtrack) .agent-icon.thinking .ai-pulse { animation: aiPulse 2.6s ease-in-out infinite; }
+:where(.atui, .atui-swarm, .atui-backtrack) .agent-icon.acting .agent-icon-svg { animation: aiNudge 2.2s ease-in-out infinite; }
+@keyframes aiPulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+@keyframes aiNudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @keyframes pop { from { opacity: 0; transform: scale(.85) translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes fadeIn { to { opacity: 1; } }
@@ -493,7 +525,7 @@
 :where(.atui, .atui-swarm) .dual-thoughts { position: absolute; transform: translateX(-50%); display: flex; gap: 12px; align-items: flex-end; z-index: 6; }
 :where(.atui, .atui-swarm) .dual-thoughts .cloud::before, :where(.atui, .atui-swarm) .dual-thoughts .cloud::after { display: none; }
 :where(.atui, .atui-swarm) .cloud.tone-data { --accent: var(--data); --accent-deep: var(--data-deep); --accent-tint: var(--data-tint); }
-:where(.atui, .atui-swarm) .cloud.compact, :where(.atui, .atui-swarm) .skilldoc.compact { max-width: 186px; }
+:where(.atui, .atui-swarm) .cloud.compact, :where(.atui, .atui-swarm) .skilldoc.compact { max-width: var(--af-bubble-wc, 186px); }
 :where(.atui, .atui-swarm) .cloud.compact { padding: 10px 12px; }
 :where(.atui, .atui-swarm) .cloud.compact .ctag { font-size: calc(16px * var(--af-text-scale)); margin-bottom: 3px; }
 :where(.atui, .atui-swarm) .cloud.compact .ctext { font-size: calc(11.5px * var(--af-text-scale)); line-height: 1.34; }
@@ -691,8 +723,9 @@
 .atui.mobile .tool-out .to-ico { width: 27px; height: 27px; }
 .atui.mobile .tool-out .to-name { font-size: calc(11px * var(--af-text-scale)); }
 .atui.mobile .brain-label { font-size: calc(10.5px * var(--af-text-scale)); }
-.atui.mobile .cloud, .atui.mobile .skilldoc { max-width: 190px; }
-.atui.mobile .thoughtpos { transform: translateX(-30%); }
+/* the phone frame gets the same measured cap, held to a width that can't crowd
+   a portrait screen (the scene there is narrow, so the cap is already small) */
+.atui.mobile .cloud, .atui.mobile .skilldoc { max-width: min(var(--af-bubble-w, 190px), 244px); }
 .atui.mobile .cloud .ctext { font-size: calc(11.5px * var(--af-text-scale)); line-height: 1.36; }
 .atui.mobile .cloud .ctag, .atui.mobile .skilldoc .sd-tag { font-size: calc(15px * var(--af-text-scale)); }
 .atui.mobile .skilldoc .sd-head { padding: 6px 11px; }
@@ -701,7 +734,7 @@
 .atui.mobile .arc-tag { font-size: calc(15px * var(--af-text-scale)); padding: 2px 11px; }
 /* the dual (data+instruction) callouts stack + sit up top so they fit a portrait screen */
 .atui.mobile .dual-thoughts { flex-direction: column; gap: 8px; align-items: center; top: 12px !important; bottom: auto !important; left: 50% !important; }
-.atui.mobile .cloud.compact, .atui.mobile .skilldoc.compact { max-width: 180px; }
+.atui.mobile .cloud.compact, .atui.mobile .skilldoc.compact { max-width: min(var(--af-bubble-wc, 180px), 216px); }
 :where(.atui, .atui-swarm) .tl-seg .seg-dot { position: absolute; top: -19px; left: 50%; transform: translateX(-50%); font-size: calc(14px * var(--af-text-scale)); opacity: .8; }
 
 /* playhead */
@@ -752,6 +785,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   :where(.atui, .atui-swarm, .atui-backtrack) .brain .eyes, :where(.atui, .atui-swarm) .cloud .ctag .dots i, :where(.atui, .atui-swarm) .task-pill .rec { animation: none !important; }
+  /* the agent icon breathes; the bubble eases its width as text streams in */
+  :where(.atui, .atui-swarm, .atui-backtrack) .agent-icon .ai-pulse, :where(.atui, .atui-swarm, .atui-backtrack) .agent-icon .agent-icon-svg { animation: none !important; }
+  :where(.atui, .atui-swarm) .cloud, :where(.atui, .atui-swarm) .skilldoc { transition: none !important; }
   :where(.atui-backtrack) .bt-why .rec, :where(.atui-backtrack) .bt-stamp, :where(.atui-backtrack) .bt-custody li { animation: none !important; opacity: 1; }
   :where(.atui-backtrack) .bt-meter .bt-fill, :where(.atui-backtrack) .bt-meter-val, :where(.atui-backtrack) .bt-sc-note { transition: none !important; }
 }

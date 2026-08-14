@@ -24,6 +24,61 @@ export function iconScaleFor(w) {
   return Math.max(ICON_SCALE.min, Math.min(ICON_SCALE.max, s));
 }
 
+/* ---- the thought bubble's size budget ------------------------------------
+   A bubble is `width: max-content` under a max-width, so three words stay snug
+   and a long body wraps. What decides WHERE it wraps is that cap — and a FIXED
+   cap (the old 268px) turns a markdown body into a very tall column: the same
+   text at 268px wide ran ~412px tall, overflowing a 460px scene. So the cap is
+   MEASURED from the container: a fraction of the scene width, clamped to a
+   readable line, and quantised so text streaming in can't jitter the width.
+
+   Height is the LAST resort. A bubble hangs above the agent, so its room is
+   everything between the top of the scene and the agent's head; only past that
+   does the body scroll inside the bubble. */
+export const BUBBLE = {
+  frac: 0.70,        // of the scene width — the widest a bubble may grow
+  min: 232,          // …but never narrower than a comfortable line
+  max: 624,          // …nor wider than a comfortable measure
+  gutter: 24,        // keep the cap inside a very narrow scene
+  step: 8,           // quantise the cap → a 1px resize can't restyle the bubble
+  ref: 880,          // fallback scene width when unmeasured (0/undefined)
+  refH: 460,         // …and height
+  compactFrac: 0.46, // the side-by-side (data + instruction) pair share the budget
+  compactMin: 168,
+  agent: 61,         // the agent's half-box + the bubble's margin, below the bubble
+  crown: 8,          // breathing room above the bubble
+  chrome: 58,        // the bubble's own padding + hand-written tag
+  minBody: 120,      // scroll rather than shrink the body past this…
+  hardMinBody: 56,   // …unless the scene is SHORTER than that: a squeezed panel
+                     // gets a smaller bubble (down to ~3 lines) rather than one
+                     // that spills past the top of the scene and gets clipped
+  maxBody: 420,
+};
+
+const quantise = (v, step) => Math.round(v / step) * step;
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+// Width cap (+ the compact pair's cap, + the body-height cap) for the thought
+// bubbles, from the MEASURED scene. A `w`/`h` of 0 or undefined means "not
+// measured yet" → fall back to the reference size (same convention as
+// iconScaleFor). Pure: the browser still does the measuring of the TEXT.
+export function bubbleBoxFor(w, h, brainY = AF_LAYOUT.brainY) {
+  const W = w || BUBBLE.ref, H = h || BUBBLE.refH;
+  const hi = clamp(W - BUBBLE.gutter, 120, BUBBLE.max);
+  const lo = Math.min(BUBBLE.min, hi);
+  const maxW = clamp(quantise(W * BUBBLE.frac, BUBBLE.step), lo, hi);
+  const compactW = Math.max(Math.min(BUBBLE.compactMin, maxW), quantise(maxW * BUBBLE.compactFrac, BUBBLE.step));
+  const avail = Math.round(H * brainY - BUBBLE.agent - BUBBLE.crown - BUBBLE.chrome);
+  const floor = Math.min(BUBBLE.minBody, Math.max(BUBBLE.hardMinBody, avail));
+  const maxBodyH = clamp(avail, floor, BUBBLE.maxBody);
+  return { maxW, compactW, maxBodyH };
+}
+
+// The bubble's tail sits this far from its LEFT edge (not its centre): the
+// column is anchored so the tail lands on the agent's head, which is what lets
+// a wide bubble grow rightward into the scene instead of off the left edge.
+export const BUBBLE_TAIL_X = 44;
+
 // Rack ("toolMenu: 'rack'") row pitch in px — the vertical distance between tool
 // rows. Single source for BOTH the CSS row height (--tr-item-h, set inline) and
 // the arrow geometry (rackPickedY), so the arrowhead lands dead-centre on a row.

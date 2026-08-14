@@ -1,3 +1,47 @@
+## [0.28.0] - 2026-08-13
+
+### Added
+
+- **The thought bubble is space-aware.** Bodies became markdown in 0.27 and the
+  bubble's width cap was a fixed 268px, so a long body spent all of it on
+  HEIGHT: measured at **268 × 425** in a 687×549 stage — 156px of it clipped off
+  the top of the scene (the phone layout was worse: 190 × 462). The cap is now
+  **measured from the container** — ~70% of the scene's width, clamped to a
+  readable line and quantised to 8px steps — so the same report renders
+  **480 × 258** and fits, and the mobile one **244 × 134**. A three-word bubble
+  is untouched (**130 × 74**, byte for byte): width still comes from the
+  content (`width: max-content`), the container only decides the room.
+- **Height is the last resort.** If a body is *still* too tall after widening it
+  scrolls INSIDE the bubble, capped at the room above the agent (the scene's
+  height × the agent's anchor, less its half-box and the bubble's own chrome —
+  ≈202px in a 549px-tall stage, ≈149px in a 460px one). Below ~3 lines of room a
+  squeezed panel shrinks the bubble instead of spilling. Wide tables keep
+  scrolling inside the bubble (0.27's tablewrap), and the steering-doc checklist
+  gets the same treatment.
+- **No jump as text streams in.** The cap is quantised, so a 1px resize can't
+  restyle the bubble, and `max-width` eases (250ms) rather than stepping —
+  silenced under `prefers-reduced-motion`, like the rest of the player.
+- **`agentIcon` — who stands on stage.** A new container prop (also accepted by
+  `<Stage>`): a **built-in name** (`"brain"` | `"robot"` | `"sparkle"` |
+  `"footsteps"`) or **your own node** (`agentIcon={<MyLogo/>}`). The three new
+  glyphs are drawn on one 48×48 grid with one stroke weight and round caps — the
+  same look as the tool icons, just bigger — and take the theme's
+  `brainFrom`/`brainTo` gradient, so a re-theme re-colours them. No emoji. The
+  set is exported as `AGENT_ICON_NAMES` for building a picker.
+
+### Unchanged on purpose
+
+- **The default agent is the same mascot.** With no `agentIcon`, the scene
+  renders exactly the animated brain it always did (pinned by a DOM test), and
+  `icons.brain`'s emoji/image avatars keep working. `agentIcon` wins when both
+  are given, and a string is always a NAME — an unrecognised one falls back to
+  the mascot rather than printing itself on stage.
+- **Whatever stands there keeps the agent's box**, so the label, the connector
+  arcs and the bubble's tail all keep pointing at it. The tail now hangs from a
+  fixed offset (44px from the bubble's left edge) instead of the bubble's centre
+  — measured at 0px from the agent's centre — which is what lets a wide bubble
+  grow rightward into the scene instead of off the left edge.
+
 ## [0.27.0] - 2026-08-13
 
 ### Added
