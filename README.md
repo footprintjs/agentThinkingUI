@@ -570,6 +570,39 @@ const theme = {
 />
 ```
 
+### Characters — who the story is about
+
+The scene's protagonist is a **character**, and the player ships two. The brain
+mascot is the **default** and stays the default: it carries the metaphor this
+whole player is built on, so no existing scene changes unless you ask.
+
+<p align="center">
+  <img alt="The two characters: the brain mascot (the default), and Ops-Bot — the footprint sole as a torso, its four toes as status LEDs." src="docs/assets/characters.svg" width="560">
+</p>
+
+```jsx
+<AgentThinkingUI trace={trace} />                      // the brain mascot — unchanged
+<AgentThinkingUI trace={trace} character="ops-bot" />  // the footprintjs family robot
+```
+
+**Ops-Bot** is the family mascot: its torso is the footprint sole and the sole's
+four toes are its status LEDs — one amber, because somebody is on watch. It
+stands in the same box as the mascot, so the label, the connector arcs and the
+thought bubble's tail all keep pointing at it, and it wears **one** palette
+(no theme tokens) so it reads on light and dark alike.
+
+A character also **names itself** under the figure — "Ops-Bot · *the agent at
+work*", rather than borrowing the brain's metaphor — unless you pass
+`labels={{ agent: "…" }}`, which always wins. Its moods are the mascot's moods,
+drawn with the robot's own parts: while it **thinks** the eyes glance around and
+the antenna beacon breathes; while it **acts** the smile becomes an "o" and the
+figure nudges. CSS only, and every animation stops under
+`prefers-reduced-motion`.
+
+An unrecognised name falls back to the mascot, `<Stage>` accepts the same prop,
+and `CHARACTER_NAMES` is exported if you want to build a picker. Anything more
+specific wins over a character: `agentIcon` (below) and `icons.brain` both do.
+
 ### `agentIcon` — who stands on stage
 
 The figure at the centre of the scene is the host's call. Pass a **built-in

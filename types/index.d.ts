@@ -18,6 +18,17 @@ export type AgentIconName = "brain" | "robot" | "sparkle" | "footsteps";
 /** the built-in names, in order — e.g. to build a picker */
 export const AGENT_ICON_NAMES: AgentIconName[];
 
+/**
+ * The scene's protagonist. `"brain"` — the DEFAULT — is the animated brain
+ * mascot the player has always drawn; `"ops-bot"` is the footprintjs family
+ * mascot (the footprint sole as a torso, its four toes as status LEDs). A
+ * character brings its own name too, unless `labels.agent` says otherwise.
+ */
+export type CharacterName = "brain" | "ops-bot";
+
+/** the built-in characters, mascot first — e.g. to build a picker */
+export const CHARACTER_NAMES: CharacterName[];
+
 export interface ThemeConfig {
   /** "light" (default) or "dark" — swaps the neutral surface/text palette */
   mode?: "light" | "dark";
@@ -52,6 +63,15 @@ export interface AgentThinkingUIProps {
    * tail keeps pointing at whatever stands there. Also accepted by `<Stage>`.
    */
   agentIcon?: AgentIconName | ReactNode;
+  /**
+   * Who stands on stage, as a CAST member rather than a glyph: `"brain"`
+   * (default — the animated mascot, so nothing changes for existing players) or
+   * `"ops-bot"`, the family robot. The character also names itself under the
+   * figure ("Ops-Bot · the agent at work") unless `labels.agent` overrides it.
+   * `agentIcon` and `icons.brain` are more specific and win over it; an
+   * unrecognised name falls back to the mascot. Also accepted by `<Stage>`.
+   */
+  character?: CharacterName;
   /** optional wordmark/logo for the top bar (the library ships none) */
   brand?: ReactNode;
   /** show the storytelling tags (default true) */

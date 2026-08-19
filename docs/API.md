@@ -36,6 +36,7 @@ playback in a resizable split.
 | `theme` | [`ThemeConfig`](#themeconfig) | built-in | scoped, reactive theming (applied as CSS vars on the player's own element) |
 | `labels` | `{ agent?, toolbox? }` | built-in | display names for the brain / toolbox |
 | `icons` | `{ brain?, toolbox?: `[`IconConfig`](#iconconfig)` }` | drawn | swap the brain/toolbox glyphs (emoji / image / drawn) |
+| `character` | `'brain' \| 'ops-bot'` | `'brain'` | who stands on stage: the animated brain mascot (default, unchanged) or **Ops-Bot**, the footprintjs family robot. The character names itself under the figure unless `labels.agent` overrides it; `agentIcon` / `icons.brain` win over it. `CHARACTER_NAMES` is exported |
 | `brand` | `ReactNode` | none | optional wordmark/logo in the top bar |
 | `metaphor` | `boolean` | `true` | show the storytelling tags ("calling", "data comes back", …) |
 | `loop` | `boolean` | `false` | auto-loop playback |

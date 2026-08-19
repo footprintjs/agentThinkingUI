@@ -50,6 +50,7 @@ exported and can be composed by hand with the state from `usePlayback(trace)`.
 | `theme` | `{ colors, fonts }` | scoped CSS-variable theming (reactive) |
 | `labels` | `{ agent, toolbox }` | display names |
 | `icons` | `{ brain, toolbox }` | `{kind:'default'\|'emoji'\|'image', value}` |
+| `character` | `'brain' \| 'ops-bot'` | who the story is about (default `brain` — the animated mascot, unchanged). `ops-bot` swaps in the footprintjs family robot (the footprint sole as a torso, its four toes as status LEDs) and names itself *"Ops-Bot · the agent at work"* unless `labels.agent` says otherwise. Same box, same anchor; `agentIcon`/`icons.brain` win over it. Also accepted by `<Stage>`; `CHARACTER_NAMES` is exported |
 | `agentIcon` | `'brain'\|'robot'\|'sparkle'\|'footsteps'` \| `ReactNode` | who stands on stage. A **string is a built-in name**, anything else is **your node** (`agentIcon={<MyLogo/>}`). Omitted = the animated mascot, unchanged. Wins over `icons.brain`; an unknown name falls back to the mascot. Also accepted by `<Stage>`; `AGENT_ICON_NAMES` is exported |
 | `brand` | `ReactNode` | optional wordmark/logo for the top bar — **the library ships none**; your app supplies its own |
 | `metaphor` | `boolean` | show the storytelling tags (default true) |

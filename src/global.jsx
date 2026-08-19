@@ -11,6 +11,7 @@ import { InfluenceMap, InfluenceMapOverlay, INFLUENCE_COPY } from "./influence-m
 import { influenceLayout, INFLUENCE_LAYOUT } from "./influence-layout.js";
 import { Stage, ToolIcon } from "./stage.jsx";
 import { AGENT_ICON_NAMES } from "./agent-icons.jsx";
+import { CHARACTER_NAMES } from "./characters.jsx";
 import { Inspector, Notepad } from "./inspector.jsx";
 import { Timeline } from "./timeline.jsx";
 import { usePlayback, AF_DWELL } from "./playback.js";
@@ -31,6 +32,7 @@ Object.assign(w, {
   influenceLayout, INFLUENCE_LAYOUT,
   Stage, ToolIcon, Inspector, Notepad, Timeline,
   AGENT_ICON_NAMES,
+  CHARACTER_NAMES,
   usePlayback, AF_DWELL, arcLayout, AF_LAYOUT,
   AgentTheme, AgentThemeContext,
   AgentAdapters: { fromOTLP, fromOpenInference, fromOTLPMulti, fromOpenInferenceMulti, createMonitor, fromRecording },

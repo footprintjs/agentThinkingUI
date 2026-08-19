@@ -3,6 +3,7 @@ import { AgentThemeContext } from "./context.js";
 import { arcLayout, AF_LAYOUT, iconScaleFor, RACK_ITEM_H, RACK, rackArrowY, rackBoxFor, rackPinFor, rackIsCompact, rackRailLeft, rackArrowInset, bubbleBoxFor, bubbleHeadroom } from "./layout.js";
 import { Prose } from "./prose.jsx";
 import { AgentIconGlyph, isAgentIconName } from "./agent-icons.jsx";
+import { CHARACTERS, characterOf, characterLabel } from "./characters.jsx";
 
 const { useRef: sUseRef, useState: sUseState, useLayoutEffect } = React;
 
@@ -182,7 +183,12 @@ function TypeGlyph({ data }) {
 // its value is one line: a STRING is a built-in NAME, anything else is YOUR
 // node. An unrecognised name falls back to the mascot rather than printing
 // itself into the scene (to draw literal text, pass a node: <span>🦊</span>).
-export function BrainGlyph({ icon, mode, agentIcon }) {
+//
+// `character` picks WHICH mascot stands there when nothing more specific was
+// asked for (characters.jsx). It is the last word before the built-in brain,
+// so anything the host named explicitly — a node, a glyph name, an emoji or an
+// image — still wins over it. Default "brain" = today's scene, untouched.
+export function BrainGlyph({ icon, mode, agentIcon, character }) {
   if (agentIcon != null && agentIcon !== false) {
     if (typeof agentIcon !== "string") {
       return (
@@ -199,6 +205,8 @@ export function BrainGlyph({ icon, mode, agentIcon }) {
   if (cfg.kind === "emoji" && cfg.value) {
     return <div className="brain brain-custom brain-emoji">{cfg.value}</div>;
   }
+  const Art = CHARACTERS[characterOf(character)].Art;
+  if (Art) return <Art mode={mode} />;
   return (
     <div className={"brain " + (mode === "act" ? "acting" : "thinking")}>
       <svg className="brain-svg" viewBox="0 0 112 98" aria-hidden="true">
@@ -222,8 +230,8 @@ export function BrainGlyph({ icon, mode, agentIcon }) {
   );
 }
 
-function Brain({ mode, agentIcon }) {
-  return <BrainGlyph icon={afIcons(React.useContext(AgentThemeContext)).brain} mode={mode} agentIcon={agentIcon} />;
+function Brain({ mode, agentIcon, character }) {
+  return <BrainGlyph icon={afIcons(React.useContext(AgentThemeContext)).brain} mode={mode} agentIcon={agentIcon} character={character} />;
 }
 
 // Prefer the resolved theme handed down by <AgentThinkingUI> via context; fall
@@ -317,9 +325,12 @@ function Toolbox({ active }) {
   );
 }
 
-function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToolClick, agentIcon }) {
+function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToolClick, agentIcon, character }) {
   const { w, h } = dims;
   const resolved = React.useContext(AgentThemeContext);
+  // who is on stage — defaulted here (an unknown name is the brain) so the
+  // scene's marker class and the figure can never disagree
+  const char = characterOf(character);
 
   const isTool = step.kind === "ask" || step.kind === "return";
   const isReturn = step.kind === "return";
@@ -413,9 +424,12 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
   }
 
   const brainMode = isAct ? "act" : "reason";
+  // the name under the figure: the host's `labels.agent` if it set one, else the
+  // character's own — plus its small honest second line (the brain has none)
+  const who = characterLabel(char, afLabels(resolved).agent);
 
   return (
-    <div className="scene-inner" style={{
+    <div className={"scene-inner char-" + char} style={{
       "--af-icon-scale": iconScale,
       "--af-bubble-w": box.maxW + "px",
       "--af-bubble-wc": box.compactW + "px",
@@ -469,10 +483,11 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
           use the free left of the arena without ever reaching the tool column */}
       {thought}
 
-      {/* LLM brain (left) */}
+      {/* the agent (left) — the brain mascot by default, or the chosen character.
+          It names itself unless the host passed `labels.agent`. */}
       <div className="brain-node" style={{ left: G.bx, top: G.by }}>
-        <Brain mode={brainMode} agentIcon={agentIcon} />
-        <div className="brain-label">{afLabels(resolved).agent}</div>
+        <Brain mode={brainMode} agentIcon={agentIcon} character={char} />
+        <div className="brain-label">{who.name}{who.note ? <span className="brain-note">{who.note}</span> : null}</div>
       </div>
 
       {/* toolbox (right). RACK mode: a vertical rack of every tool, picked one lit
@@ -501,7 +516,7 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
   );
 }
 
-export function Stage({ trace, step, index, metaphor, straight, toolMenu, onToolClick, agentIcon }) {
+export function Stage({ trace, step, index, metaphor, straight, toolMenu, onToolClick, agentIcon, character }) {
   const sceneRef = sUseRef(null);
   const [dims, setDims] = sUseState({ w: 720, h: 460 });
 
@@ -535,7 +550,7 @@ export function Stage({ trace, step, index, metaphor, straight, toolMenu, onTool
   return (
     <div className={"panel stage " + accentClass}>
       <div className="flowscene" ref={sceneRef}>
-        <SceneInner key={index} step={step} dims={dims} metaphor={metaphor} straight={straight} toolMenu={toolMenu} rackTools={rackTools} onToolClick={onToolClick} agentIcon={agentIcon} />
+        <SceneInner key={index} step={step} dims={dims} metaphor={metaphor} straight={straight} toolMenu={toolMenu} rackTools={rackTools} onToolClick={onToolClick} agentIcon={agentIcon} character={character} />
       </div>
     </div>
   );

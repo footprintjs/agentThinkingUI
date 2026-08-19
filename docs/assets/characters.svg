@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 210" width="560" height="210" role="img" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <title>The two characters: the brain mascot (the default) and Ops-Bot.</title>
+  <defs>
+    <linearGradient id="brainG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E68A52"/><stop offset="1" stop-color="#C0531F"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .name { font-size: 15px; font-weight: 700; fill: #7E6B55; }
+    .sub  { font-size: 12px; fill: #9C8B76; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .rim  { stroke: #FFFFFF; }
+    @media (prefers-color-scheme: dark) {
+      .name { fill: #C3B197; } .sub { fill: #8B7A64; } .rim { stroke: #16110B; }
+    }
+  </style>
+
+  <!-- the brain mascot (viewBox 0 0 112 98 in the app), centred at x=126 -->
+  <g transform="translate(70 25)">
+    <path class="rim" fill="url(#brainG)" stroke-width="3" stroke-linejoin="round"
+      d="M56 9 C64 3 77 5 81 14 C92 11 101 20 97 31 C105 36 106 48 97 54 C103 63 98 74 88 75 C85 85 73 89 65 82 C61 88 51 88 47 82 C39 89 27 85 24 75 C14 74 9 63 15 54 C6 48 7 36 15 31 C11 20 20 11 31 14 C35 5 48 3 56 9 Z"/>
+    <g fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".46">
+      <path d="M56 13 Q51 31 56 49 Q61 67 56 80"/>
+      <path d="M31 33 q7 5 1 10 M27 50 q8 6 2 11 M35 64 q6 4 0 9"/>
+      <path d="M81 33 q-7 5 -1 10 M85 50 q-8 6 -2 11 M77 64 q-6 4 0 9"/>
+    </g>
+    <g fill="#2C1F15"><circle cx="45" cy="45" r="5.5"/><circle cx="67" cy="45" r="5.5"/></g>
+    <path d="M49 58 q7 6 14 0" fill="none" stroke="#2C1F15" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- Ops-Bot, drawn around x=74 of its own canvas — shifted so it stands at x=430 -->
+  <g transform="translate(356 15)">
+    <path d="M84 12q6 6 0 12" stroke="#f0a24c" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M90 8q10 10 0 20" stroke="#f0a24c" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".7"/>
+    <line x1="74" y1="14" x2="74" y2="26" stroke="#28607f" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="74" cy="12" r="4" fill="#f0a24c"/>
+    <rect x="52" y="26" width="44" height="32" rx="10" fill="#3b93bf"/>
+    <circle cx="66" cy="42" r="4" fill="#0d2a3a"/><circle cx="82" cy="42" r="4" fill="#0d2a3a"/>
+    <path d="M67 51q7 4 14 0" stroke="#0d2a3a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M74 60c-16 0-24 12-22 26 2 12 10 22 22 22s20-10 22-22c2-14-6-26-22-26z" fill="#5eb3d6"/>
+    <circle cx="62" cy="76" r="3" fill="#e9f7fb"/><circle cx="70" cy="72" r="3" fill="#e9f7fb"/><circle cx="78" cy="72" r="3" fill="#f0a24c"/><circle cx="86" cy="76" r="3" fill="#e9f7fb"/>
+    <ellipse cx="64" cy="110" rx="6" ry="4.2" fill="#28607f"/><ellipse cx="84" cy="110" rx="6" ry="4.2" fill="#28607f"/>
+  </g>
+
+  <text x="126" y="168" class="name" text-anchor="middle">LLM as Human Brain</text>
+  <text x="126" y="188" class="sub"  text-anchor="middle">character="brain" — the default</text>
+  <text x="430" y="168" class="name" text-anchor="middle">Ops-Bot</text>
+  <text x="430" y="188" class="sub"  text-anchor="middle">character="ops-bot"</text>
+</svg>

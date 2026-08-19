@@ -267,6 +267,9 @@
 :where(.atui, .atui-swarm) .thinking-callout.open .tc-text { max-height: 220px; overflow: auto; }
 :where(.atui, .atui-swarm, .atui-backtrack) .brain-label { position: absolute; top: 50%; margin-top: calc(49px * var(--af-icon-scale) + 10px); left: 50%; transform: translateX(-50%); white-space: normal;
   max-width: 100px; text-align: center; line-height: 1.2; font-size: calc(11.5px * var(--af-text-scale)); font-weight: 700; color: var(--ink-soft); letter-spacing: .01em; }
+/* the character's own second line — what the figure IS, in plain words (the
+   brain mascot carries none: its name already says it) */
+:where(.atui, .atui-swarm, .atui-backtrack) .brain-note { display: block; margin-top: 2px; font-weight: 500; font-size: calc(10px * var(--af-text-scale)); color: var(--ink-faint); letter-spacing: 0; }
 :where(.atui, .atui-swarm) .io-tag { position: absolute; right: 100%; margin-right: 16px; top: 50%; transform: translateY(-50%); white-space: nowrap;
   font-family: var(--font-display); font-weight: 700; font-size: calc(11px * var(--af-text-scale)); letter-spacing: .03em; padding: 5px 11px; border-radius: 999px;
   background: var(--accent-tint); color: var(--accent-deep); border: 1px solid var(--accent); box-shadow: var(--shadow-sm); animation: tagIn .5s cubic-bezier(.2,1,.3,1) both .55s; }
@@ -372,6 +375,37 @@
 :where(.atui, .atui-swarm, .atui-backtrack) .agent-icon.acting .agent-icon-svg { animation: aiNudge 2.2s ease-in-out infinite; }
 @keyframes aiPulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 @keyframes aiNudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+/* --- Ops-Bot (`character="ops-bot"`) -----------------------------------
+   The family mascot in the agent's slot: the footprint sole is its torso and
+   the sole's four toes are its status LEDs (one amber — somebody is on watch).
+   It reuses the `.brain` box, so the anchor, the label offset, the arc ends and
+   the thought bubble's tail all keep pointing at it. ONE palette, no theme
+   tokens — it is legible on light and on dark alike.
+
+   Its moods are the mascot's moods, drawn with the robot's parts: THINKING =
+   the eyes glance around and the antenna beacon breathes; ACTING = the smile
+   becomes an "o" and the whole figure nudges. CSS only — no SMIL. */
+:where(.atui, .atui-swarm, .atui-backtrack) .brain.ops-bot { display: grid; place-items: center; filter: drop-shadow(0 8px 16px rgba(20,70,105,.20)); }
+:where(.atui, .atui-swarm, .atui-backtrack) .ops-bot .ops-bot-svg { width: 100%; height: 100%; overflow: visible; }
+/* SVG parts animate around their OWN centre (fill-box), not the canvas origin */
+:where(.atui, .atui-swarm, .atui-backtrack) .ops-bot .ob-eye,
+:where(.atui, .atui-swarm, .atui-backtrack) .ops-bot .ob-beacon { transform-box: fill-box; transform-origin: center; }
+:where(.atui, .atui-swarm, .atui-backtrack) .ops-bot.thinking .ob-eye { animation: obGlance 3s ease-in-out infinite; }
+:where(.atui, .atui-swarm, .atui-backtrack) .ops-bot.thinking .ob-beacon { animation: aiPulse 2.6s ease-in-out infinite; }
+/* the two mouths trade places with the beat (opacity, not motion — so the mood
+   still reads when motion is off) */
+:where(.atui, .atui-swarm, .atui-backtrack) .ops-bot .ob-mouth-o { opacity: 0; }
+:where(.atui, .atui-swarm, .atui-backtrack) .ops-bot.acting .ob-mouth { opacity: 0; }
+:where(.atui, .atui-swarm, .atui-backtrack) .ops-bot.acting .ob-mouth-o { opacity: 1; }
+:where(.atui, .atui-swarm, .atui-backtrack) .ops-bot.acting .ops-bot-svg { animation: aiNudge 2.2s ease-in-out infinite; }
+@keyframes obGlance {
+  0%, 60%, 100% { transform: translateX(0) scaleY(1); }
+  18% { transform: translateX(-3px) scaleY(1); }
+  40% { transform: translateX(3px) scaleY(1); }
+  84% { transform: translateX(0) scaleY(.16); }
+  90% { transform: translateX(0) scaleY(1); }
+}
 @keyframes pop { from { opacity: 0; transform: scale(.85) translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes fadeIn { to { opacity: 1; } }
@@ -839,6 +873,8 @@
   :where(.atui, .atui-swarm, .atui-backtrack) .brain .eyes, :where(.atui, .atui-swarm) .cloud .ctag .dots i, :where(.atui, .atui-swarm) .task-pill .rec { animation: none !important; }
   /* the agent icon breathes; the bubble eases its width as text streams in */
   :where(.atui, .atui-swarm, .atui-backtrack) .agent-icon .ai-pulse, :where(.atui, .atui-swarm, .atui-backtrack) .agent-icon .agent-icon-svg { animation: none !important; }
+  /* Ops-Bot: the glance, the beacon and the nudge stop — the mouth still swaps (opacity) */
+  :where(.atui, .atui-swarm, .atui-backtrack) .ops-bot .ob-eye, :where(.atui, .atui-swarm, .atui-backtrack) .ops-bot .ob-beacon, :where(.atui, .atui-swarm, .atui-backtrack) .ops-bot .ops-bot-svg { animation: none !important; }
   :where(.atui, .atui-swarm) .cloud, :where(.atui, .atui-swarm) .skilldoc { transition: none !important; }
   :where(.atui, .atui-swarm) .thoughtpos.tailed::before, :where(.atui, .atui-swarm) .thoughtpos.tailed::after { animation: none !important; opacity: 1; }
   :where(.atui-backtrack) .bt-why .rec, :where(.atui-backtrack) .bt-stamp, :where(.atui-backtrack) .bt-custody li { animation: none !important; opacity: 1; }

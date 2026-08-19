@@ -10,6 +10,7 @@ export { InfluenceMap, InfluenceMapOverlay, INFLUENCE_COPY } from "./influence-m
 export { influenceLayout, INFLUENCE_LAYOUT } from "./influence-layout.js";
 export { Stage, ToolIcon } from "./stage.jsx";
 export { AGENT_ICON_NAMES } from "./agent-icons.jsx";
+export { CHARACTER_NAMES } from "./characters.jsx";
 export { Inspector, Notepad } from "./inspector.jsx";
 export { Timeline } from "./timeline.jsx";
 export { usePlayback, AF_DWELL } from "./playback.js";

@@ -19,7 +19,7 @@ import { buildRunSummaryText } from "./copyForLLM.js";
    four components into their own layout (they're each independent).
    (window.AgentFootprint remains as a deprecated alias.)
    ============================================================ */
-export function AgentThinkingUI({ trace, theme, labels, icons, agentIcon, brand, metaphor = true, loop = false, live = false, toolMenu = "card", onExplain, onScore, onAttribute, onBacktrack, style, mobile, storageKey, onRender, onSelect, linkResolver, renderDetail }) {
+export function AgentThinkingUI({ trace, theme, labels, icons, agentIcon, character, brand, metaphor = true, loop = false, live = false, toolMenu = "card", onExplain, onScore, onAttribute, onBacktrack, style, mobile, storageKey, onRender, onSelect, linkResolver, renderDetail }) {
   const { useState, useRef, useMemo, useEffect } = React;
   const rootRef = useRef(null);
   // persist scrub position per-trace so two players on one page don't collide;
@@ -118,7 +118,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, agentIcon, brand,
         <div className="m-view">
           {mobileView === "notepad"
             ? <Notepad trace={trace} index={index} onCollapse={() => {}} view="notepad" setView={() => {}} />
-            : <Stage trace={trace} step={step} index={index} metaphor={metaphor} toolMenu={toolMenu} agentIcon={agentIcon} straight />}
+            : <Stage trace={trace} step={step} index={index} metaphor={metaphor} toolMenu={toolMenu} agentIcon={agentIcon} character={character} straight />}
         </div>
         {/* transport pinned in the footer, shared by both tabs */}
         <Timeline trace={trace} index={index} setIndex={seek} playing={playing} setPlaying={setPlaying} speed={speed} setSpeed={setSpeed} minimal />
@@ -168,7 +168,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, agentIcon, brand,
 
       <div className={"workspace" + (inspOpen ? "" : " insp-collapsed")} ref={wsRef}>
         <div className="ws-runtime" style={inspOpen ? { flex: `0 0 ${runtimePct}%` } : { flex: "1 1 auto" }}>
-          <Stage trace={trace} step={step} index={index} metaphor={metaphor} toolMenu={toolMenu} agentIcon={agentIcon} onToolClick={showWhy} />
+          <Stage trace={trace} step={step} index={index} metaphor={metaphor} toolMenu={toolMenu} agentIcon={agentIcon} character={character} onToolClick={showWhy} />
         </div>
 
         {inspOpen ? (

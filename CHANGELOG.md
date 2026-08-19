@@ -1,3 +1,43 @@
+## [0.31.0] - 2026-08-19
+
+### Added
+
+- **A cast: `character` — who the story is about.** The scene's protagonist was
+  a fact of the library; it is a prop now. `character="ops-bot"` puts the
+  footprintjs family mascot on stage: its torso is the footprint sole and the
+  sole's four toes are its status LEDs, one amber because somebody is on watch.
+  It stands in the **same box** as the brain, so the label offset, the connector
+  arc ends and the thought bubble's tail all keep pointing at it, and it wears
+  ONE palette — no theme tokens — so it reads on light and on dark alike.
+
+  Its moods are the mascot's moods, drawn with the robot's own parts: while it
+  **thinks** the eyes glance around and the antenna beacon breathes; while it
+  **acts** the smile becomes an "o" and the whole figure nudges. The mouths trade
+  places by opacity rather than by motion, so the mood still reads under
+  `prefers-reduced-motion` — where every one of those animations stops. CSS only:
+  no SMIL, which freezes inside an `<img>`.
+
+- **A character names itself.** The brain's label states the metaphor ("LLM as
+  Human Brain"); a robot borrowing that sentence would be a small lie, so Ops-Bot
+  writes its own — **"Ops-Bot"**, with *"the agent at work"* beneath it in plain
+  words. `labels={{ agent: "…" }}` still wins over both, for either face.
+
+- **`CHARACTER_NAMES`**, exported from the package and attached to `window` by the
+  UMD bundle (beside `AGENT_ICON_NAMES`) — the list, mascot first, for building a
+  picker. `<Stage>` accepts `character` too, and the scene's root element carries
+  the choice as a class (`.char-brain` / `.char-ops-bot`) so a host can hang its
+  own styling off it.
+
+### Unchanged (on purpose)
+
+- **The default is still `"brain"`, and the brain's scene is byte-for-byte what it
+  was.** The brain metaphor is published pedagogy — no consumer's player may
+  change its face, or its name, because a new option shipped. A character brings a
+  name of its own only if it HAS one, so the mascot keeps whatever the theme calls
+  it, and an unrecognised `character` falls back to it rather than blanking the
+  stage. Anything more specific still wins: `agentIcon` (a name or your own node)
+  and the legacy `icons.brain` both override the character.
+
 ## [0.30.0] - 2026-08-19
 
 ### Added
