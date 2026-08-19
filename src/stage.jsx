@@ -1,6 +1,6 @@
 import React from "react";
 import { AgentThemeContext } from "./context.js";
-import { arcLayout, AF_LAYOUT, iconScaleFor, RACK_ITEM_H, rackPickedY, bubbleBoxFor, BUBBLE_TAIL_X } from "./layout.js";
+import { arcLayout, AF_LAYOUT, iconScaleFor, RACK_ITEM_H, RACK, rackArrowY, rackBoxFor, rackPinFor, rackIsCompact, rackRailLeft, rackArrowInset, bubbleBoxFor, bubbleHeadroom } from "./layout.js";
 import { Prose } from "./prose.jsx";
 import { AgentIconGlyph, isAgentIconName } from "./agent-icons.jsx";
 
@@ -38,65 +38,93 @@ function MenuGlyph({ name }) {
   return <ToolIcon name={name} />;
 }
 
-// Rack mode ("toolMenu: 'rack'") shows a max of RACK_CAP rows; past that it keeps
-// (CAP−1) tools + a "+N more" summary row. The picked tool is ALWAYS kept visible
-// (swapped into the last head slot if it fell into the overflow), so the arrow can
-// always land on it. Pure data — exported for testing.
-export const RACK_CAP = 7;
-export function rackView(tools, picked, cap = RACK_CAP) {
-  if (!tools || !tools.length) return { rows: [], moreCount: 0, pickedIndex: -1, rowCount: 0 };
-  let rows = tools, moreCount = 0;
-  if (tools.length > cap) {
-    const headN = cap - 1; // reserve one row for the "+N more" summary
-    const pickedIdx = picked ? tools.findIndex((t) => t.name === picked) : -1;
-    rows = pickedIdx >= headN
-      ? [...tools.slice(0, headN - 1), tools[pickedIdx]] // keep the picked tool visible
-      : tools.slice(0, headN);
-    moreCount = tools.length - rows.length;
-  }
-  const pickedIndex = picked ? rows.findIndex((t) => t.name === picked) : -1;
-  const rowCount = rows.length + (moreCount > 0 ? 1 : 0); // the "+N" row occupies a row too
-  return { rows, moreCount, pickedIndex, rowCount };
+// Rack mode ("toolMenu: 'rack'") shows EVERY tool the model could see, in
+// first-seen order — no cap and no "+N more" summary (retired: a rack that hides
+// tools can't answer "out of what?"). When they outrun the arena the list
+// SCROLLS, and the picked row is pinned inside it (rackPinFor) so it never
+// scrolls away. Pure data — exported for testing.
+export function rackView(tools, picked) {
+  if (!tools || !tools.length) return { rows: [], pickedIndex: -1, rowCount: 0 };
+  const pickedIndex = picked ? tools.findIndex((t) => t.name === picked) : -1;
+  return { rows: tools, pickedIndex, rowCount: tools.length };
 }
 
-// The rack: a vertical stack of the tools the model can use (icon + name beneath),
-// the picked one lit and the rest dimmed — "the model chose this out of N", laid
-// out spatially so the connector arrow can point right at the chosen tool. Takes a
-// precomputed `view` (from rackView) so the scene can derive the arrow target from
-// the same layout. Skills get the doc glyph; tools get the tool icon. When `onPick`
-// is supplied, rows are clickable — click a tool to see WHY it scored (the
-// inspector's "Why this tool?" panel).
-export function ToolRack({ view, onPick }) {
-  const { rows, moreCount, pickedIndex } = view || {};
+// The rack: a vertical stack of EVERY tool the model can use (icon + name
+// beneath), the picked one lit and the rest dimmed — "the model chose this out of
+// N", laid out spatially so the connector arrow can point right at the chosen
+// tool. Takes a precomputed `view` (from rackView) so the scene can derive the
+// arrow target from the same layout. Skills get the doc glyph; tools get the tool
+// icon. When `onPick` is supplied, rows are clickable — click a tool to see WHY it
+// scored (the inspector's "Why this tool?" panel).
+//
+// `maxH` is the room the arena has for the ROWS (from rackBoxFor) — past it the
+// list scrolls, so no tool is ever hidden and none is ever clipped. `pin`
+// (rackPinFor) is what makes a scrolling rack safe: it seeds the scroll so the
+// picked row lands on its slot, and that slot becomes the row's sticky band, so
+// the pick stays visible — and the arrow stays honest — at any scroll position.
+// `compact` drops the labels on an arena too narrow to carry both a rack and a
+// readable bubble — the names stay in the tooltip and the aria label.
+export function ToolRack({ view, onPick, compact, maxH, pin, scrollable }) {
+  const { rows, pickedIndex } = view || {};
+  const listRef = sUseRef(null);
+  const seed = pin ? pin.scrollTop : 0;
+  // Seed the scroll ONCE per beat (the scene remounts on every step), so the
+  // pinned row starts on its slot without having been moved off its natural
+  // place. This is the only imperative line in the rack — and it sets a value
+  // the geometry already computed, it does not read one back.
+  useLayoutEffect(() => {
+    if (listRef.current) listRef.current.scrollTop = seed;
+  }, [seed]);
   if (!rows || !rows.length) return null;
   const clickable = typeof onPick === "function";
   return (
-    <div className={"tool-rack" + (clickable ? " clickable" : "")} style={{ "--tr-item-h": RACK_ITEM_H + "px" }} role="list" aria-label="tools the model can use">
-      {rows.map((t, i) => {
-        const on = i === pickedIndex;
-        return (
-          <div
-            key={(t.name || "") + i}
-            role={clickable ? "button" : "listitem"}
-            tabIndex={clickable ? 0 : undefined}
-            onClick={clickable ? () => onPick(t.name) : undefined}
-            onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick(t.name); } } : undefined}
-            className={"tr-item" + (on ? " on" : "") + (isSkillName(t.name) ? " skill" : "")}
-            aria-current={on ? "true" : undefined}
-            title={t.name + (t.description ? " — " + t.description : "") + (on ? "  (picked)" : clickable ? "  (click: why?)" : "")}
-          >
-            <span className="tr-ico"><MenuGlyph name={t.name} /></span>
-            <span className="tr-name">{t.name}</span>
-          </div>
-        );
-      })}
-      {moreCount > 0 && <div className="tr-more" aria-label={moreCount + " more tools"}>+{moreCount} more</div>}
+    <div
+      className={"tool-rack" + (clickable ? " clickable" : "") + (compact ? " compact" : "")}
+      style={{
+        "--tr-item-h": RACK_ITEM_H + "px",
+        "--tr-w": (compact ? RACK.wCompact : RACK.w) + "px",
+        "--tr-list-h": maxH > 0 ? maxH + "px" : "none",
+        "--tr-pin-top": (pin ? pin.top : 0) + "px",
+        "--tr-pin-bottom": (pin ? pin.bottom : 0) + "px",
+      }}
+    >
+      {/* the scroll container is a tab stop when it actually scrolls, so the list
+          is reachable (and arrow-scrollable) without a mouse */}
+      <div
+        className="tr-list"
+        ref={listRef}
+        role="list"
+        tabIndex={scrollable ? 0 : undefined}
+        aria-label={"tools the model can use" + (scrollable ? " — scrollable list of " + rows.length : "")}
+      >
+        {rows.map((t, i) => {
+          const on = i === pickedIndex;
+          return (
+            <div
+              key={(t.name || "") + i}
+              role={clickable ? "button" : "listitem"}
+              tabIndex={clickable ? 0 : undefined}
+              onClick={clickable ? () => onPick(t.name) : undefined}
+              onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick(t.name); } } : undefined}
+              className={"tr-item" + (on ? " on" : "") + (on && pin ? " pinned" : "") + (isSkillName(t.name) ? " skill" : "")}
+              aria-current={on ? "true" : undefined}
+              title={t.name + (t.description ? " — " + t.description : "")
+                + (on ? (pin ? "  (picked — pinned while the rest scroll)" : "  (picked)") : clickable ? "  (click: why?)" : "")}
+            >
+              <span className="tr-ico"><MenuGlyph name={t.name} /></span>
+              <span className="tr-name">{t.name}</span>
+              {on && pin && <span className="tr-pinned-tag" aria-hidden="true">picked</span>}
+            </div>
+          );
+        })}
+      </div>
       {/* "Why this tool?" trigger — floats BELOW the rack (absolute, so it doesn't
           shift the rows off-centre → the arrow geometry stays accurate). Focuses
           the picked tool in the inspector's Why panel; says "skill" for skills. */}
       {clickable && pickedIndex >= 0 && (
-        <button type="button" className="tr-why" onClick={() => onPick(rows[pickedIndex].name)}>
-          🔍 Why this {isSkillName(rows[pickedIndex].name) ? "skill" : "tool"}?
+        <button type="button" className="tr-why" onClick={() => onPick(rows[pickedIndex].name)}
+          title={"Why this " + (isSkillName(rows[pickedIndex].name) ? "skill" : "tool") + "?"}>
+          {compact ? "🔍 Why?" : "🔍 Why this " + (isSkillName(rows[pickedIndex].name) ? "skill" : "tool") + "?"}
         </button>
       )}
     </div>
@@ -306,20 +334,31 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
   const L = AF_LAYOUT || {};
   const brainYFrac = straight ? (L.brainYMobile || 0.72) : (L.brainY || 0.6);
   const by = h * brainYFrac;
-  // the bubbles' size budget, from the MEASURED scene: how wide they may grow
-  // before wrapping, and (last resort) how tall the body may get before it
-  // scrolls. Rides the same custom-property channel as the icon scale.
-  const box = bubbleBoxFor(w, h, brainYFrac);
   // one scale for the cast — capped + container-responsive; feeds the CSS icon
   // sizes (via --af-icon-scale on the scene) AND the arc geometry, in lockstep.
   const iconScale = iconScaleFor(w);
   // rack mode: the toolbox is a vertical rack of all tools; the arrow points at
   // the PICKED tool's row, so derive its y from the same layout the rack renders.
   const useRack = toolMenu === "rack" && Array.isArray(rackTools) && rackTools.length > 0;
+  // …and the rack is a COLUMN of a known width whose rows scroll inside a height
+  // budgeted from the arena, centred where it stays inside the scene. Its left
+  // edge is the rail the bubble must stay clear of — that is the ONE decision
+  // that keeps the two apart (see bubbleBoxFor).
+  const rackCompact = useRack && rackIsCompact(w);
+  const rackBox = useRack ? rackBoxFor(h, rackTools.length, by, typeof onToolClick === "function") : null;
   const rackV = useRack ? rackView(rackTools, isTool ? step.tool : null) : null;
-  const toolY = rackV && rackV.pickedIndex >= 0 ? rackPickedY(by, rackV.rowCount, rackV.pickedIndex) : by;
-  // rack mode: the brain→tool "ask" is a straight line pointing at the picked row
-  const G = arcLayout(w, h, by, straight, iconScale, toolY, useRack);
+  // a rack whose tools outrun the arena scrolls, and pins the picked row at one
+  // computed slot — so the arrow below has a target that no scrolling can move
+  const rackPin = useRack ? rackPinFor(rackV.rowCount, rackV.pickedIndex, rackBox.listMaxH) : null;
+  // the bubbles' size budget, from the MEASURED scene: how wide they may grow
+  // before wrapping (never past the rack), and (last resort) how tall the body
+  // may get before it scrolls. Rides the same custom-property channel as the icon scale.
+  const box = bubbleBoxFor(w, h, brainYFrac, useRack ? rackRailLeft(w, rackCompact) : 0);
+  const toolY = rackBox ? rackArrowY(rackBox, rackV.pickedIndex, rackPin) : by;
+  // rack mode: the brain→tool "ask" is a straight line pointing at the picked row,
+  // stopping just short of the rack column (not 62px short of the toolbox)
+  const G = arcLayout(w, h, by, straight, iconScale, toolY, useRack,
+    useRack ? rackArrowInset(rackCompact) : undefined);
   const active = isTool ? (dir === "ask" ? G.down : G.up) : null;
 
   // "thinking" / "calling" attribute the bubble's words to the brain. When the
@@ -334,23 +373,43 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
   // The model's extended-thinking sits ABOVE the action callout (when present).
   const thinkingEl = step.thinking ? <ThinkingCallout text={step.thinking} /> : null;
 
+  // The bubble column is a BAND of the scene — from its left edge to the rail —
+  // rather than a box hanging off the agent, so it can spend the wasted LEFT of
+  // the arena and can never reach the tool column. It sits just above the agent's
+  // head; `lead` inside it parks a short bubble ON that head (see .thoughtpos).
+  const headroom = bubbleHeadroom(iconScale);
+  const bandStyle = {
+    left: box.bandLeft, width: box.maxW, bottom: h - by + headroom,
+    "--af-bubble-lead": box.lead + "px",
+  };
   // single bubble hugs above the brain; BOTH = think (teal, left) + act (amber, right) over the brain
   let thought = null, dualThoughts = null;
   if (isBoth) {
-    // the pair sits side by side (compact caps + the 12px gap), kept on-screen
+    // the pair sits side by side (compact caps + the 12px gap), kept on-screen —
+    // and, in rack mode, kept inside the same band the single bubble uses
     const half = box.compactW + 8;
-    const dualLeft = Math.max(half + 12, Math.min(w - half - 12, G.bx + 78));
+    const right = Math.min(w - half - 12, box.bandRight - half);
+    const dualLeft = Math.max(half + 12, Math.min(right, G.bx + 78));
     dualThoughts = (
-      <div className="dual-thoughts" style={{ left: dualLeft, bottom: h - by + 54 }}>
+      <div className="dual-thoughts" style={{ left: dualLeft, bottom: h - by + headroom }}>
         {thinkingEl}
         <Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} compact tone="data" />
         <SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} compact />
       </div>
     );
-  } else if (isAct) {
-    thought = <div className="thoughtpos">{thinkingEl}<SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} /></div>;
   } else {
-    thought = <div className="thoughtpos">{thinkingEl}<Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} /></div>;
+    // the cloud draws a tail down onto the agent's head; the steering doc doesn't
+    thought = (
+      <div className={"thoughtpos" + (isAct ? "" : " tailed")} style={bandStyle}>
+        <span className="tp-lead" aria-hidden="true" />
+        <div className="tp-col">
+          {thinkingEl}
+          {isAct
+            ? <SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} />
+            : <Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} />}
+        </div>
+      </div>
+    );
   }
 
   const brainMode = isAct ? "act" : "reason";
@@ -361,7 +420,7 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
       "--af-bubble-w": box.maxW + "px",
       "--af-bubble-wc": box.compactW + "px",
       "--af-bubble-h": box.maxBodyH + "px",
-      "--af-bubble-tail": BUBBLE_TAIL_X + "px",
+      "--af-bubble-tail": box.tail + "px",
     }}>
       {dualThoughts}
       {/* fixed flowchart connectors (brain ⇄ toolbox). only the packet flows through them. */}
@@ -406,9 +465,12 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
           : "answer is ready"}
       </div>
 
+      {/* the agent's thought column — a scene-level BAND (see bandStyle), so it can
+          use the free left of the arena without ever reaching the tool column */}
+      {thought}
+
       {/* LLM brain (left) */}
       <div className="brain-node" style={{ left: G.bx, top: G.by }}>
-        {thought}
         <Brain mode={brainMode} agentIcon={agentIcon} />
         <div className="brain-label">{afLabels(resolved).agent}</div>
       </div>
@@ -417,8 +479,9 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
           (the arrow points at it). CARD mode (default): the tool pops out the top
           on a call, with the "saw N" menu beneath. */}
       {useRack ? (
-        <div className={"tool-node rack" + (isTool ? "" : " idle")} style={{ left: G.tx, top: G.ty }}>
-          <ToolRack view={rackV} onPick={onToolClick} />
+        <div className={"tool-node rack" + (isTool ? "" : " idle")} style={{ left: G.tx, top: rackBox.cy }}>
+          <ToolRack view={rackV} onPick={onToolClick} compact={rackCompact} maxH={rackBox.listMaxH}
+            pin={rackPin} scrollable={rackBox.overflowing} />
         </div>
       ) : isTool ? (
         <div className="tool-node" style={{ left: G.tx, top: G.ty }}>

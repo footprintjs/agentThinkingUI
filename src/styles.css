@@ -235,11 +235,28 @@
 
 /* --- brain node (left) --- */
 :where(.atui, .atui-swarm, .atui-backtrack) .brain-node { position: absolute; transform: translate(-50%, -50%); }
-/* The bubble column hangs above the agent and grows RIGHTWARD from a fixed
-   tail offset (--af-bubble-tail, mirrored by BUBBLE_TAIL_X in layout.js): the
-   tail still lands on the agent's head, but a wide bubble now has the whole
-   scene to grow into instead of running off the left edge. */
-:where(.atui, .atui-swarm) .thoughtpos { position: absolute; bottom: 100%; margin-bottom: 12px; left: 50%; margin-left: calc(-1 * var(--af-bubble-tail, 44px)); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; z-index: 6; }
+/* THE THOUGHT BAND. The bubble column is not a box hanging off the agent — it is
+   a BAND of the scene, sized and placed by the layout (left/width/bottom, from
+   bubbleBoxFor): it starts at the scene's left edge and STOPS before the tool
+   column, so a bubble can never grow onto the rack. No measuring, no z-index
+   war — the two simply cannot occupy the same x.
+
+   Inside the band, a shrinkable lead (`.tp-lead`, basis --af-bubble-lead) parks
+   the bubble on the agent's head. A body that outgrows the room to its RIGHT
+   makes the lead shrink, so the bubble spends the arena's wasted LEFT instead of
+   crossing the band — pure flexbox, so it happens during layout, not after it.
+
+   The tail is drawn by the BAND (at --af-bubble-tail, the agent's x within it)
+   rather than by the bubble, so it stays on the agent's head however far the
+   bubble has slid left. `.tailed` = a cloud (the steering doc has no tail). */
+:where(.atui, .atui-swarm) .thoughtpos { position: absolute; display: flex; align-items: flex-end; z-index: 6; pointer-events: none; }
+:where(.atui, .atui-swarm) .thoughtpos > * { pointer-events: auto; }
+:where(.atui, .atui-swarm) .thoughtpos .tp-lead { flex: 0 1 var(--af-bubble-lead, 0px); min-width: 0; }
+:where(.atui, .atui-swarm) .thoughtpos .tp-col { flex: 0 0 auto; min-width: 0; max-width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+:where(.atui, .atui-swarm) .thoughtpos.tailed::before, :where(.atui, .atui-swarm) .thoughtpos.tailed::after { content: ""; position: absolute; background: var(--card);
+  border: 1.5px solid var(--accent); border-radius: 50%; opacity: 0; animation: fadeIn .3s ease forwards .6s; }
+:where(.atui, .atui-swarm) .thoughtpos.tailed::before { width: 15px; height: 15px; left: var(--af-bubble-tail, 44px); bottom: -11px; transform: translateX(-50%); }
+:where(.atui, .atui-swarm) .thoughtpos.tailed::after { width: 8px; height: 8px; left: calc(var(--af-bubble-tail, 44px) - 8px); bottom: -22px; transform: translateX(-50%); }
 
 /* Extended-thinking callout — the model's chain-of-thought, above the action. */
 :where(.atui, .atui-swarm) .thinking-callout { width: max-content; max-width: var(--af-bubble-w, 268px); background: var(--paper-2); border: 1px dashed var(--line); border-radius: 14px; padding: 6px 11px; box-shadow: var(--shadow-sm); }
@@ -266,12 +283,6 @@
   width: max-content; max-width: var(--af-bubble-w, 268px); animation: pop .5s cubic-bezier(.2,1.2,.3,1) both .5s;
   transition: max-width .25s cubic-bezier(.2,.8,.3,1);
 }
-:where(.atui, .atui-swarm) .cloud::before, :where(.atui, .atui-swarm) .cloud::after { content: ""; position: absolute; background: var(--card);
-  border: 1.5px solid var(--accent); border-radius: 50%; }
-/* the tail trails down from a FIXED offset (not the bubble's centre) → it stays
-   on the agent's head at every bubble width */
-:where(.atui, .atui-swarm) .cloud::before { width: 15px; height: 15px; left: var(--af-bubble-tail, 44px); bottom: -11px; transform: translateX(-50%); }
-:where(.atui, .atui-swarm) .cloud::after { width: 8px; height: 8px; left: calc(var(--af-bubble-tail, 44px) - 8px); bottom: -22px; transform: translateX(-50%); }
 :where(.atui, .atui-swarm) .cloud .ctag { font-family: var(--font-hand); font-size: calc(17px * var(--af-text-scale)); color: var(--accent-deep); line-height: 1; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
 :where(.atui, .atui-swarm) .cloud .ctag .dots { display: inline-flex; gap: 3px; }
 :where(.atui, .atui-swarm) .cloud .ctag .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); display: inline-block; animation: blink 1.3s infinite; }
@@ -385,26 +396,58 @@
 :where(.atui, .atui-swarm) .tool-out .tm-ico.skill.picked { background: var(--instr); color: var(--on-instr, #fff); }
 
 /* RACK mode (toolMenu="rack"): the toolbox is a vertical rack of every tool the
-   model can use (icon + name beneath). The picked tool is lit + the arrow lands
-   on it; the rest are dimmed. Rows are a fixed --tr-item-h (set inline from JS,
-   matching the arrow geometry) with no gaps, so the pitch is exact. */
+   model can use (icon + name beneath) — all of them, scrolling when they outrun
+   the arena. The picked tool is lit, pinned, and the arrow lands on it; the rest
+   are dimmed. Rows are a fixed --tr-item-h (set inline from JS, matching the
+   arrow geometry) with no gaps, so the pitch is exact. */
 :where(.atui, .atui-swarm) .tool-node.rack { z-index: 3; }
-:where(.atui, .atui-swarm) .tool-rack { position: relative; display: flex; flex-direction: column; background: var(--card); border: 1.5px solid var(--call); border-radius: 14px; padding: 6px; box-shadow: 0 0 0 3px var(--call-tint), var(--shadow-md); }
+:where(.atui, .atui-swarm) .tool-rack { position: relative; width: var(--tr-w, 152px); display: flex; flex-direction: column; background: var(--card); border: 1.5px solid var(--call); border-radius: 14px; padding: 6px; box-shadow: 0 0 0 3px var(--call-tint), var(--shadow-md); }
+/* The rows live in their own viewport, capped at the room the arena has
+   (--tr-list-h, from rackBoxFor). EVERY tool is a row: past that cap the list
+   SCROLLS rather than hiding tools behind a summary row or being cut off by the
+   scene's `overflow: hidden`. It is a tab stop when it scrolls, so a keyboard
+   reaches the rest of the list with the arrow keys. */
+:where(.atui, .atui-swarm) .tool-rack .tr-list { display: flex; flex-direction: column; max-height: var(--tr-list-h, none); overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent; -webkit-overflow-scrolling: touch; }
+:where(.atui, .atui-swarm) .tool-rack .tr-list::-webkit-scrollbar { width: 6px; }
+:where(.atui, .atui-swarm) .tool-rack .tr-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+:where(.atui, .atui-swarm) .tool-rack .tr-list:focus-visible { outline: 2px solid var(--call); outline-offset: 2px; border-radius: 9px; }
+
+/* THE PIN. In a scrolling rack the picked row is sticky, and its two insets
+   describe a band exactly ONE row tall (--tr-pin-top / --tr-pin-bottom, computed
+   by rackPinFor) — so it is held at that one slot at EVERY scroll position: the
+   list is seeded so the row starts there naturally, and the reader's scrolling
+   slides the other rows past it. One fixed slot is also why the "ask" arrow can
+   aim at it from pure geometry, with no scroll listener anywhere.
+   It carries the picked styling PLUS a lift (ring + shadow) so it reads as held,
+   not merely first, and an opaque backing so scrolling rows never bleed through. */
+:where(.atui, .atui-swarm) .tool-rack .tr-item.pinned { position: sticky; top: var(--tr-pin-top, 0px); bottom: var(--tr-pin-bottom, 0px); z-index: 1;
+  background: linear-gradient(var(--call-tint), var(--call-tint)), var(--card);
+  box-shadow: 0 0 0 1.5px var(--call), 0 9px 16px -9px rgba(44, 31, 21, .5), 0 -9px 16px -9px rgba(44, 31, 21, .5); }
+:where(.atui, .atui-swarm) .tool-rack .tr-item.pinned.skill { background: linear-gradient(var(--instr-tint, var(--paper-2)), var(--instr-tint, var(--paper-2))), var(--card);
+  box-shadow: 0 0 0 1.5px var(--instr), 0 9px 16px -9px rgba(44, 31, 21, .5), 0 -9px 16px -9px rgba(44, 31, 21, .5); }
+:where(.atui, .atui-swarm) .tool-rack .tr-pinned-tag { position: absolute; top: 3px; right: 7px; font-family: var(--font-display); font-size: calc(8px * var(--af-text-scale));
+  font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--call-deep); opacity: .72; }
+:where(.atui, .atui-swarm) .tool-rack .tr-item.skill .tr-pinned-tag { color: var(--instr-deep); }
+/* COMPACT: an arena too narrow to carry both a labelled rack and a readable
+   bubble keeps the glyphs and drops the names (still in the tooltip + aria). */
+:where(.atui, .atui-swarm) .tool-rack.compact .tr-item { padding: 0 6px; }
+:where(.atui, .atui-swarm) .tool-rack.compact .tr-name, :where(.atui, .atui-swarm) .tool-rack.compact .tr-pinned-tag { display: none; }
+:where(.atui, .atui-swarm) .tool-rack.compact .tr-why { left: 50%; right: auto; width: max-content; transform: translateX(-50%); }
 /* "Why this tool?" trigger — floats below the rack (absolute → doesn't shift rows) */
 :where(.atui, .atui-swarm) .tool-rack .tr-why { position: absolute; top: calc(100% + 8px); left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink-soft); font-family: var(--font-body); font-size: calc(11.5px * var(--af-text-scale)); font-weight: 700; cursor: pointer; box-shadow: var(--shadow-sm); transition: background .15s, color .15s, border-color .15s; }
 :where(.atui, .atui-swarm) .tool-rack .tr-why:hover { background: var(--call); border-color: var(--call-deep); color: var(--on-call, #fff); }
 :where(.atui, .atui-swarm) .tool-rack .tr-why:focus-visible { outline: 2px solid var(--call); outline-offset: 1px; }
-:where(.atui, .atui-swarm) .tool-rack .tr-item { height: var(--tr-item-h, 48px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0 12px; border-radius: 9px; opacity: .42; transition: opacity .2s ease, background .2s ease; }
+:where(.atui, .atui-swarm) .tool-rack .tr-item { position: relative; height: var(--tr-item-h, 48px); flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0 12px; border-radius: 9px; opacity: .42; transition: opacity .2s ease, background .2s ease; }
 :where(.atui, .atui-swarm) .tool-rack .tr-ico { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; background: var(--paper-2); color: var(--ink-soft); }
 :where(.atui, .atui-swarm) .tool-rack .tr-ico svg { width: 15px; height: 15px; }
-:where(.atui, .atui-swarm) .tool-rack .tr-name { font-family: var(--font-mono); font-size: calc(10px * var(--af-text-scale)); color: var(--ink-soft); white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+:where(.atui, .atui-swarm) .tool-rack .tr-name { font-family: var(--font-mono); font-size: calc(10px * var(--af-text-scale)); color: var(--ink-soft); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 :where(.atui, .atui-swarm) .tool-rack .tr-item.on { opacity: 1; background: var(--call-tint); }
 :where(.atui, .atui-swarm) .tool-rack .tr-item.on .tr-ico { background: var(--call); color: var(--on-call, #fff); }
 :where(.atui, .atui-swarm) .tool-rack .tr-item.on .tr-name { color: var(--call-deep); font-weight: 700; }
 :where(.atui, .atui-swarm) .tool-rack .tr-item.skill.on { background: var(--instr-tint, var(--paper-2)); }
 :where(.atui, .atui-swarm) .tool-rack .tr-item.skill.on .tr-ico { background: var(--instr); color: var(--on-instr, #fff); }
 :where(.atui, .atui-swarm) .tool-rack .tr-item.skill.on .tr-name { color: var(--instr-deep); }
-:where(.atui, .atui-swarm) .tool-rack .tr-more { height: var(--tr-item-h, 48px); display: grid; place-items: center; font-family: var(--font-mono); font-size: calc(10px * var(--af-text-scale)); color: var(--ink-faint); }
 /* clickable rack (rack mode): each tool opens the inspector's "Why this tool?" */
 :where(.atui, .atui-swarm) .tool-rack.clickable .tr-item { cursor: pointer; }
 :where(.atui, .atui-swarm) .tool-rack.clickable .tr-item:hover { opacity: 1; background: var(--paper-3, var(--paper-2)); }
@@ -523,7 +566,6 @@
 /* compact + dual bubbles (a tool that returns BOTH data and instruction) */
 :where(.atui, .atui-swarm) .k-both { --accent: var(--instr); --accent-deep: var(--instr-deep); --accent-tint: var(--instr-tint); --accent-on: var(--on-instr); }
 :where(.atui, .atui-swarm) .dual-thoughts { position: absolute; transform: translateX(-50%); display: flex; gap: 12px; align-items: flex-end; z-index: 6; }
-:where(.atui, .atui-swarm) .dual-thoughts .cloud::before, :where(.atui, .atui-swarm) .dual-thoughts .cloud::after { display: none; }
 :where(.atui, .atui-swarm) .cloud.tone-data { --accent: var(--data); --accent-deep: var(--data-deep); --accent-tint: var(--data-tint); }
 :where(.atui, .atui-swarm) .cloud.compact, :where(.atui, .atui-swarm) .skilldoc.compact { max-width: var(--af-bubble-wc, 186px); }
 :where(.atui, .atui-swarm) .cloud.compact { padding: 10px 12px; }
@@ -788,6 +830,7 @@
   /* the agent icon breathes; the bubble eases its width as text streams in */
   :where(.atui, .atui-swarm, .atui-backtrack) .agent-icon .ai-pulse, :where(.atui, .atui-swarm, .atui-backtrack) .agent-icon .agent-icon-svg { animation: none !important; }
   :where(.atui, .atui-swarm) .cloud, :where(.atui, .atui-swarm) .skilldoc { transition: none !important; }
+  :where(.atui, .atui-swarm) .thoughtpos.tailed::before, :where(.atui, .atui-swarm) .thoughtpos.tailed::after { animation: none !important; opacity: 1; }
   :where(.atui-backtrack) .bt-why .rec, :where(.atui-backtrack) .bt-stamp, :where(.atui-backtrack) .bt-custody li { animation: none !important; opacity: 1; }
   :where(.atui-backtrack) .bt-meter .bt-fill, :where(.atui-backtrack) .bt-meter-val, :where(.atui-backtrack) .bt-sc-note { transition: none !important; }
 }

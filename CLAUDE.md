@@ -63,10 +63,31 @@ docs/assets gen-hero.mjs → hero-light.svg / hero-dark.svg    (animated README 
   so they never jump between steps.
 - The thought bubble's size budget is pure too (`bubbleBoxFor`, `BUBBLE`): the
   scene measures its container once and publishes the caps as custom properties
-  (`--af-bubble-w` / `-wc` / `-h` / `-tail`, alongside `--af-icon-scale`) which
-  the CSS consumes. Widths come from `width: max-content` under those caps — the
-  browser measures the TEXT, we only decide the room. Don't reintroduce a fixed
+  (`--af-bubble-w` / `-wc` / `-h` / `-tail` / `-lead`, alongside `--af-icon-scale`)
+  which the CSS consumes. Widths come from `width: max-content` under those caps —
+  the browser measures the TEXT, we only decide the room. Don't reintroduce a fixed
   px cap on `.cloud` / `.skilldoc` / `.thinking-callout`.
+- **The bubble and the rack cannot overlap, by construction.** The bubble is not a
+  box hanging off the agent: `.thoughtpos` is a BAND of the scene (left/width from
+  `bubbleBoxFor`) that stops before the rack's left edge (`rackRailLeft`). Inside
+  it, the shrinkable `.tp-lead` parks a short bubble on the agent's head and lets a
+  long one spend the arena's free LEFT — flexbox, so it resolves during layout, no
+  measuring and no z-index war. The band draws the tail (`--af-bubble-tail` = the
+  agent's x inside it), which is why the bubble can slide out from over it.
+- The rack has a pure box too (`rackBoxFor`, `RACK`): the y that keeps it and its
+  "Why this tool?" button inside the scene, and the max-height its list scrolls
+  at. EVERY tool is a row — there is no cap and no "+N more" fold (retired: a
+  rack that hides tools can't answer "picked this out of WHAT?"). Its width is
+  fixed (`--tr-w`) — that is what lets the bubble band's edge be computed instead
+  of measured.
+- **The pin is what makes a scrolling rack safe** (`rackPinFor`): the picked row
+  is `position: sticky` with insets that describe a band exactly ONE row tall
+  (`--tr-pin-top`/`--tr-pin-bottom`), so it is held at one slot at every scroll
+  position; the list is seeded to `pin.scrollTop` on mount so the row starts
+  there naturally (nothing displaced at rest). Because that slot is computed
+  before anything renders, `rackArrowY` aims the "ask" arrow at it with **no
+  scroll listener and no measuring** — keep it that way. A beat with no pick
+  pins nothing and the list scrolls freely.
 - Animation **choreography** is one block of staged `animation-delay`s in
   `styles.css` (search "choreography").
 

@@ -20,6 +20,29 @@ const SAW = [
   { name: "load_skill", description: "Load a steering doc (e.g. budget rules) before committing" },
 ];
 
+// A DELIBERATELY BIG tool menu (14 entries) for the `oncall` scenario below: the
+// rack ("toolMenu: 'rack'") renders one row per tool, so this is the case that
+// proves the rack out — every tool present, the list scrolling inside the arena
+// with the picked tool pinned in it, and never crowding the thought bubble.
+// The last step picks `load_skill`, the FOURTEENTH tool, on purpose: a pick that
+// far down is the one a capped rack used to hide.
+const BIG_SAW = [
+  { name: "search_logs", description: "Full-text search the last 24h of service logs" },
+  { name: "read_dashboard", description: "Read the current values off a metrics dashboard" },
+  { name: "list_deploys", description: "List the recent deploys for a service" },
+  { name: "diff_deploy", description: "Show what changed between two deploys" },
+  { name: "check_alerts", description: "List the alerts firing right now" },
+  { name: "trace_request", description: "Fetch the distributed trace for one request id" },
+  { name: "query_db", description: "Run a read-only query against the primary database" },
+  { name: "restart_service", description: "Roll a service's pods one at a time" },
+  { name: "rollback_deploy", description: "Roll a service back to a previous deploy" },
+  { name: "scale_service", description: "Change a service's replica count" },
+  { name: "page_oncall", description: "Page the on-call engineer for a team" },
+  { name: "open_incident", description: "Open an incident channel and start its timeline" },
+  { name: "post_status", description: "Post an update to the public status page" },
+  { name: "load_skill", description: "Load a steering doc (e.g. the rollback runbook)" },
+];
+
 window.AGENT_TRACES = {
   // ───────────────────────── 1 · plan a team offsite ─────────────────────────
   offsite: {
@@ -319,6 +342,103 @@ window.AGENT_TRACES = {
           cta: "Confirm & send to phone",
         },
         cost: { ms: 470, tokens: 300 } },
+    ],
+  },
+  // ─────────────────── 4 · incident triage (a BIG tool menu) ───────────────────
+  // This scenario exists to exercise the rack at scale: 14 tools, so the rack is
+  // TALL, and long reasoning bodies, so the thought bubble is WIDE. Together they
+  // are the layout's worst case — the rack must fit (or scroll) inside the arena
+  // and the bubble must never sit on top of it.
+  oncall: {
+    agent: "oncall-agent",
+    model: "claude-loop",
+    title: "Checkout latency",
+    task: "Checkout p99 latency tripled ten minutes ago. Find out why and stop the bleeding.",
+    asker: "Priya",
+    steps: [
+      { kind: "prompt", title: "Page received",
+        brain: "Checkout p99 went from 400ms to 1.2s about ten minutes ago. Before I touch anything I want to know what is actually firing and what changed — guessing at 2am is how outages get longer.",
+        cost: { ms: 480, tokens: 340 } },
+
+      { kind: "ask", tool: "check_alerts", toolName: "Alert check",
+        input: { service: "checkout", window: "15m" },
+        brain: "Reading the alerts that are firing right now.",
+        toolsSeen: BIG_SAW,
+        cost: { ms: 260, tokens: 130 } },
+      { kind: "return", tool: "check_alerts", toolName: "Alert check", replyType: "data",
+        output: { firing: ["checkout_p99_high", "db_pool_saturated"], since: "10m", pages: 2 },
+        brainMode: "reason",
+        brain: "Two alerts, and they tell a story together: `checkout_p99_high` fired first and `db_pool_saturated` followed ninety seconds later. That ordering matters — a saturated connection pool that appears *after* the latency spike is usually a symptom, not the cause. Something started holding connections longer than it used to, and the pool ran dry behind it. The obvious suspect is a deploy, because nothing else changed on its own at 2am. Let me look at what shipped in the last hour before I start restarting things.",
+        cost: { ms: 1080, tokens: 560 } },
+
+      { kind: "ask", tool: "list_deploys", toolName: "Deploy list",
+        input: { service: "checkout", window: "1h" },
+        brain: "Listing what shipped to checkout in the last hour.",
+        toolsSeen: BIG_SAW,
+        cost: { ms: 240, tokens: 110 } },
+      { kind: "return", tool: "list_deploys", toolName: "Deploy list", replyType: "data",
+        output: { deploys: [{ id: "d-8841", at: "11m ago", author: "release-bot", change: "order lookup query" }], previous: "d-8837" },
+        brainMode: "reason",
+        brain: "One deploy, `d-8841`, eleven minutes ago — one minute before the first alert. It touched the order-lookup query, which is exactly the path that holds a database connection. That is a strong enough match to act on, but rolling back production is not a call I make from a hunch: load the runbook and do what it says.",
+        cost: { ms: 940, tokens: 505 } },
+
+      { kind: "ask", tool: "load_skill", input: { name: "rollback_runbook" },
+        brain: "Loading the rollback runbook before I change anything.",
+        toolsSeen: BIG_SAW,
+        cost: { ms: 220, tokens: 92 } },
+      { kind: "return", tool: "load_skill", replyType: "instruction", skill: "rollback_runbook (how to roll back safely)",
+        output: { steps: [
+          "Open an incident before the first change.",
+          "Roll back only the suspect deploy, never a batch.",
+          "Post a status update within 5 minutes.",
+          "Watch two dashboards for 10 minutes before declaring it over.",
+        ] },
+        brainMode: "act",
+        actChecklist: [
+          { text: "Open the incident channel first" },
+          { text: "Roll back d-8841 → d-8837 only" },
+          { text: "Post a public status update" },
+          { text: "Watch p99 + pool for 10 minutes" },
+        ],
+        brain: "Following the runbook — it is explicit, so there is nothing for me to weigh here.",
+        cost: { ms: 330, tokens: 200 } },
+
+      { kind: "ask", tool: "rollback_deploy", toolName: "Rollback",
+        input: { service: "checkout", from: "d-8841", to: "d-8837" },
+        brain: "Rolling checkout back to the last good deploy.",
+        toolsSeen: BIG_SAW,
+        cost: { ms: 300, tokens: 140 } },
+      { kind: "return", tool: "rollback_deploy", toolName: "Rollback", replyType: "both",
+        output: { rolled_back: true, to: "d-8837", p99_after_3m: "430ms", pool_wait: "0ms" },
+        skill: "incident_closeout (wrap up the incident)",
+        actChecklist: [
+          { text: "Post the all-clear to the status page" },
+          { text: "Hand d-8841 back to its author" },
+          { text: "Keep the incident open for 24h" },
+        ],
+        brain: "Rollback is in — p99 is back to 430ms and the pool is no longer waiting. The deploy was the cause.",
+        actNote: "The reply ALSO carried the close-out policy — nothing to weigh, just follow it: all-clear on the status page, hand the bad deploy back to its author, keep the incident open a day.",
+        cost: { ms: 620, tokens: 330 } },
+
+      { kind: "answer", to: "Priya",
+        brain: "Stopped the bleeding: bad deploy rolled back, latency recovered, incident logged.",
+        answer: {
+          headline: "Checkout recovered — d-8841 rolled back",
+          plan: [
+            "Read the firing alerts and ordered them in time",
+            "Traced the spike to deploy d-8841 (order-lookup query)",
+            "Followed the rollback runbook, not a hunch",
+            "Rolled back to d-8837 and posted the all-clear",
+          ],
+          budget: [
+            ["p99 before", "1.2s"],
+            ["p99 after", "430ms"],
+            ["Time to mitigate", "14 min"],
+            ["Incident", "INC-441 (open 24h)"],
+          ],
+          cta: "Hand d-8841 back to its author",
+        },
+        cost: { ms: 500, tokens: 320 } },
     ],
   },
 };

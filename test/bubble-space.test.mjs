@@ -4,7 +4,7 @@ import path from "node:path";
 import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 import { Stage } from "../src/stage.jsx";
-import { bubbleBoxFor, BUBBLE, BUBBLE_TAIL_X, AF_LAYOUT } from "../src/layout.js";
+import { bubbleBoxFor, BUBBLE, BUBBLE_TAIL_X, AF_LAYOUT, RACK, rackRailLeft, rackIsCompact, rackBoxFor } from "../src/layout.js";
 
 /**
  * SPACE-AWARE THOUGHT BUBBLE.
@@ -107,6 +107,51 @@ describe("bubbleBoxFor — the bubble's size budget, measured from the scene", (
   });
 });
 
+describe("bubbleBoxFor — the BAND: the bubble can never reach the tool rack", () => {
+  it("ends the budget before the rail instead of spending 70% of the scene", () => {
+    const rail = rackRailLeft(880, false);
+    const free = bubbleBoxFor(880, 460);              // card mode: the old budget
+    const banded = bubbleBoxFor(880, 460, AF_LAYOUT.brainY, rail);
+    expect(free.bandRight).toBeGreaterThan(rail);      // …which reaches the rack
+    expect(banded.bandRight).toBeLessThanOrEqual(rail - BUBBLE.rail); // …and this cannot
+  });
+
+  it("holds the gap at EVERY scene width — the invariant behind 'they never overlap'", () => {
+    for (let w = 320; w <= 1600; w += 17) {
+      const compact = rackIsCompact(w);
+      const rail = rackRailLeft(w, compact);
+      const box = bubbleBoxFor(w, 520, AF_LAYOUT.brainY, rail);
+      expect(box.bandRight).toBeLessThanOrEqual(rail - BUBBLE.rail);
+      expect(box.bandLeft).toBe(BUBBLE.edge);          // …spending the free LEFT
+      expect(box.maxW).toBeGreaterThan(0);
+    }
+  });
+
+  it("parks a SHORT bubble on the agent's head (the lead) and lets a long one slide left", () => {
+    const box = bubbleBoxFor(880, 460, AF_LAYOUT.brainY, rackRailLeft(880, false));
+    const bx = 880 * AF_LAYOUT.brainX;
+    // lead = the gap the CSS may shrink: a short bubble starts one tail-width
+    // left of the agent (exactly where it used to hang), a long one eats the lead
+    expect(box.bandLeft + box.lead).toBe(Math.round(bx - BUBBLE_TAIL_X));
+    expect(box.bandLeft + box.lead + BUBBLE_TAIL_X).toBe(box.bandLeft + box.tail);
+    expect(box.lead).toBeGreaterThan(0);
+  });
+
+  it("keeps the old budget when there is no rail to keep clear of (card mode)", () => {
+    expect(bubbleBoxFor(720, 460).maxW).toBe(504);
+    expect(bubbleBoxFor(720, 460, AF_LAYOUT.brainY, 0).maxW).toBe(504);
+  });
+
+  it("drops the rack's labels rather than squeezing the bubble below a readable line", () => {
+    expect(rackIsCompact(1200)).toBe(false);
+    expect(rackIsCompact(380)).toBe(true);              // a phone-width scene
+    const rail = rackRailLeft(380, true);
+    expect(bubbleBoxFor(380, 520, AF_LAYOUT.brainY, rail).maxW)
+      .toBeGreaterThan(bubbleBoxFor(380, 520, AF_LAYOUT.brainY, rackRailLeft(380, false)).maxW);
+    expect(RACK.wCompact).toBeLessThan(RACK.w);
+  });
+});
+
 describe("<Stage> — publishes the measured budget to the bubbles", () => {
   // jsdom reports 0 for every box; stand in for the browser's measurement of
   // the scene element so the component sees a real container size.
@@ -148,7 +193,10 @@ describe("<Stage> — publishes the measured budget to the bubbles", () => {
     expect(v.w).toBe(box.maxW + "px");
     expect(v.wc).toBe(box.compactW + "px");
     expect(v.h).toBe(box.maxBodyH + "px");
-    expect(v.tail).toBe(BUBBLE_TAIL_X + "px");
+    // the tail is published as its x INSIDE the band (the band draws it, not the
+    // bubble — that is what lets a long bubble slide left off its own tail)
+    expect(v.tail).toBe(box.tail + "px");
+    expect(box.bandLeft + box.tail).toBe(720 * AF_LAYOUT.brainX); // …lands on the agent
   });
 
   it("re-measures rather than assuming: a wider panel widens the cap", () => {
@@ -170,6 +218,30 @@ describe("<Stage> — publishes the measured budget to the bubbles", () => {
     const v = vars(LONG);
     expect(v.text).toContain("throttled connection");
     expect(v.text).toContain("compare against last week's baseline");
+  });
+
+  it("RACK MODE: the band it publishes stops before the rack, and the rack sits where the layout says", () => {
+    scene = { w: 880, h: 460 };
+    const tools = Array.from({ length: 14 }, (_, i) => ({ name: "tool_" + i }));
+    const step = { ...beat(LONG), toolsSeen: tools };
+    const { container } = render(React.createElement(Stage, {
+      trace: trace(step), step, index: 0, metaphor: true, toolMenu: "rack", onToolClick: () => {},
+    }));
+    const el = container.querySelector(".scene-inner");
+    const rail = rackRailLeft(880, rackIsCompact(880));
+    const box = bubbleBoxFor(880, 460, AF_LAYOUT.brainY, rail);
+    // the bubble band: published from the rail, and it ENDS before the rack
+    expect(el.style.getPropertyValue("--af-bubble-w")).toBe(box.maxW + "px");
+    const band = container.querySelector(".thoughtpos");
+    expect(parseFloat(band.style.left)).toBe(box.bandLeft);
+    expect(parseFloat(band.style.left) + parseFloat(band.style.width)).toBeLessThanOrEqual(rail - BUBBLE.rail);
+    expect(band.querySelector(".tp-lead").style).toBeTruthy(); // the shrinkable lead is there
+    expect(band.style.getPropertyValue("--af-bubble-lead")).toBe(box.lead + "px");
+    // the rack: centred where rackBoxFor says, with its list capped to the room
+    const rbox = rackBoxFor(460, tools.length, 460 * AF_LAYOUT.brainY, true);
+    expect(parseFloat(container.querySelector(".tool-node.rack").style.top)).toBe(rbox.cy);
+    expect(container.querySelector(".tool-rack").style.getPropertyValue("--tr-list-h")).toBe(rbox.listMaxH + "px");
+    expect(container.querySelectorAll(".tr-item")).toHaveLength(rbox.rowCount); // every tool, scrolling
   });
 
   it("keeps the same budget on the phone layout (narrow scene → smaller cap)", () => {
@@ -197,7 +269,10 @@ describe("the stylesheet honours the budget", () => {
   });
 
   it("keeps the tail on the agent, and eases the width without a jump", () => {
-    expect(css).toMatch(/\.cloud::before \{[^}]*left: var\(--af-bubble-tail/);
+    // the BAND draws the tail (at the agent's x), so it stays on the agent's head
+    // however far the bubble has slid left; the bubble itself draws none
+    expect(css).toMatch(/\.thoughtpos\.tailed::before \{[^}]*left: var\(--af-bubble-tail/);
+    expect(css).not.toMatch(/\.cloud::before \{/);
     expect(css).toMatch(/\.cloud \{[^}]*transition: max-width/s);
     // …and holds still for readers who asked for less motion
     expect(css).toMatch(/prefers-reduced-motion[^@]*\.cloud, [^@]*\.skilldoc \{ transition: none !important; \}/s);

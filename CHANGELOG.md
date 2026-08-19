@@ -1,3 +1,69 @@
+## [Unreleased]
+
+### Changed
+
+- **The rack shows every tool now — the "+N more" fold is retired.** A rack
+  capped itself at 7 rows and summarised the rest as "+N more", which meant the
+  one question it exists to answer — *picked this out of WHAT?* — was the
+  question it wouldn't answer, and on a short arena the fold hid tools the reader
+  never knew were there. Every tool is a row now, in first-seen order, and the
+  list **scrolls** when they outrun the arena (thin scrollbar, momentum, capped
+  at the measured room). `rackView(tools, picked)` no longer takes a cap and no
+  longer returns `moreCount`; `RACK_CAP` is gone.
+
+- **…and the picked tool is PINNED, so scrolling can't lose it.** The picked row
+  is `position: sticky` with insets that describe a band exactly one row tall
+  (`rackPinFor` → `--tr-pin-top`/`--tr-pin-bottom`), so it holds ONE slot at
+  every scroll position while the unpicked tools slide past it; the list is
+  seeded so the row starts on that slot naturally, which also means a pick deep
+  in a long menu (the 14th of 14) is on screen at rest instead of folded away.
+  It wears the picked styling plus a ring, an opaque backing and elevation, and
+  a "picked" corner tag, so it reads as *held because chosen* rather than merely
+  first. Because the slot is computed before anything renders, the "ask" arrow
+  aims at it with **no scroll listener and no DOM measurement** — verified in a
+  browser: the row and the arrowhead hold the same y across the entire scroll
+  range while the rows around them move. A beat with no pick pins nothing and
+  the list scrolls freely.
+
+- **The scrolling list is keyboard-reachable.** When (and only when) it scrolls,
+  the list is a tab stop with an aria label that says so, and takes the arrow
+  keys — scrolling is the primary way to see the whole menu now, so it can't be
+  mouse-only.
+
+### Fixed
+
+- **The tool rack no longer clips.** A rack was a fixed stack of up to 7 rows
+  centred on the agent's line, so any arena shorter than ~540px cut its bottom
+  rows and the whole "Why this tool?" button off (measured: a 710×365 stage drew
+  the rack from y=44 to y=395 and the button to y=433 — 68px of it outside the
+  scene's `overflow: hidden`). The rack's box is **budgeted from the arena** now
+  (`rackBoxFor`): its rows scroll inside the room the scene has, and the frame is
+  slid into the scene when centring would push it out, so neither it nor its
+  button can leave the arena at any height (verified from 140px to 1200px).
+
+- **The thought bubble can no longer sit on the rack.** The bubble used to hang
+  off the agent and grow rightward to ~70% of the scene, straight over the tool
+  column: on an 803×605 stage a long body ran x=157→717 while the rack stood at
+  x=524→649, hiding words behind it. The bubble is a **band** of the scene now —
+  it starts at the scene's left edge and ends 16px short of the rack — so the two
+  cannot occupy the same x at any body length or scene size. Pure CSS: no
+  measuring, no z-index war.
+
+- **The wasted left of the arena is the bubble's room now.** Inside the band a
+  shrinkable lead parks a short bubble on the agent's head exactly where it used
+  to hang; a body that outgrows the room to its RIGHT eats the lead and spends
+  the free space on the LEFT instead of crossing the band. The 803×605 case above
+  now renders 12→492 — 145px of previously dead space in use, and clear of the
+  rack. Card mode keeps its width budget unchanged and gains the same leftward
+  growth. The tail is drawn by the band (at the agent's x), so it stays on the
+  agent's head however far the bubble has slid.
+
+- **A rack on a narrow arena drops its labels instead of squeezing the bubble.**
+  Below the width where a labelled rack would leave the bubble narrower than a
+  readable line, the rack renders icon-only (names stay in the tooltip and the
+  aria label) — on a 364px phone scene that is a 205px bubble instead of a 161px
+  one. The "ask" arrow stops at the rack's edge in both widths.
+
 ## [0.28.0] - 2026-08-13
 
 ### Added
