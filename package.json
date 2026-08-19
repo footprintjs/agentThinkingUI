@@ -1,6 +1,6 @@
 {
   "name": "agentthinkingui",
-  "version": "0.29.0",
+  "version": "0.30.0",
   "description": "Framework-agnostic player that replays an agent's runtime footprint (a recorded trace) as an animated, scrubbable story — the LLM brain calling tools and getting back data (reason), an instruction (act), or both.",
   "keywords": [
     "agent",
@@ -70,7 +70,8 @@
     "lint": "eslint .",
     "hero": "node docs/assets/gen-hero.mjs",
     "serve": "npm run build && python3 -m http.server",
-    "perf": "node scripts/perf.mjs"
+    "perf": "node scripts/perf.mjs",
+    "fixtures": "node scripts/gen-recording-fixture.mjs"
   },
   "peerDependencies": {
     "react": ">=18",
@@ -82,6 +83,7 @@
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@vitest/coverage-v8": "^4.1.8",
+    "agentfootprint": "^9.52.0",
     "esbuild": "^0.28.0",
     "eslint": "^10.4.1",
     "globals": "^17.6.0",

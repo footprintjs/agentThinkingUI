@@ -23,10 +23,22 @@ export interface Trace {
 }
 
 export interface Cost {
-  /** wall-clock latency for the step, in milliseconds */
-  ms: number;
-  /** total tokens (input + output); kept as the headline number */
-  tokens: number;
+  /**
+   * Wall-clock latency for the step, in milliseconds.
+   *
+   * OPTIONAL, and the optionality is load-bearing: a beat whose source recorded
+   * no timing (a prompt beat, a second tool call in one iteration) omits this
+   * rather than claiming `0`. The views render an absent number as "—", so a
+   * replayed run never reports "0.0s" for a step nobody timed.
+   */
+  ms?: number;
+  /**
+   * Total tokens (input + output); the headline number.
+   *
+   * OPTIONAL for the same reason: a tool call is timed but never tokenized, so
+   * its beat carries `ms` and no `tokens` at all — "not recorded", not "free".
+   */
+  tokens?: number;
   /** prompt / input tokens (for cost attribution) */
   tokensIn?: number;
   /** completion / output tokens */
@@ -64,7 +76,8 @@ export type BrainSource = "model" | "framework";
 export interface PromptStep {
   kind: "prompt";
   brain: string;
-  cost: Cost;
+  /** Absent when the source recorded no cost for this beat (see {@link Cost}). */
+  cost?: Cost;
   /** source span id / trace id (set by the adapters — for deep-linking back to your trace store) */
   spanId?: string;
   traceId?: string;
@@ -116,6 +129,16 @@ export interface WhyAttribution {
   note?: string;
 }
 
+/** One progress report filed from INSIDE a still-running tool call — the
+ *  telemetry a long call emits while it works ("hop 3 of 12"), never a beat of
+ *  its own. `payload` is the tool author's own shape, forwarded verbatim and
+ *  rendered as text. */
+export interface ToolProgressReport {
+  payload: unknown;
+  /** ms into the run, when the source stamped one. Absent, never zero-filled. */
+  atMs?: number;
+}
+
 /** The brain reaches for a tool. */
 export interface AskStep {
   kind: "ask";
@@ -129,12 +152,20 @@ export interface AskStep {
    *  "The tool returned its result."): the views render it plain, so one line
    *  never carries two narrators. */
   brainSource?: BrainSource;
-  cost: Cost;
+  /** Absent when the source recorded no cost for this beat (see {@link Cost}). */
+  cost?: Cost;
   /** Model's extended-thinking chain-of-thought for this iteration. */
   thinking?: string;
   /** The tools the model saw (name + description) for this call — expandable in
    *  the inspector to debug tool selection. On the iteration's first ask. */
   toolsSeen?: ToolSeen[];
+  /** Progress reports filed while this call was still running, in call order.
+   *  Absent for every tool that reported nothing. */
+  activity?: ToolProgressReport[];
+  /** The assembled system prompt as the model received it, when the producing
+   *  run opted in to recording it. Absent means it was not recorded — this is
+   *  never reconstructed. */
+  systemPrompt?: string;
   /** Optional per-pick attribution — powers the "What drove it" strategy in
    *  the Why panel (rendered for free when present; with `channels` stamped it
    *  leads with the answer-first verdict card). */
@@ -157,7 +188,8 @@ export interface ReturnStep {
    *  "The tool returned its result."): the views render it plain, so one line
    *  never carries two narrators. */
   brainSource?: BrainSource;
-  cost: Cost;
+  /** Absent when the source recorded no cost for this beat (see {@link Cost}). */
+  cost?: Cost;
   /** data → "reason", instruction → "act" */
   brainMode?: BrainMode;
   /** the skill / steering doc name (for instruction / both) */
@@ -186,13 +218,17 @@ export interface AnswerStep {
    *  "The tool returned its result."): the views render it plain, so one line
    *  never carries two narrators. */
   brainSource?: BrainSource;
-  cost: Cost;
+  /** Absent when the source recorded no cost for this beat (see {@link Cost}). */
+  cost?: Cost;
   /** set when the agent run errored */
   error?: string;
   /** Model's extended-thinking chain-of-thought before the final answer. */
   thinking?: string;
   /** The tools the model saw (name + description) for the final call. */
   toolsSeen?: ToolSeen[];
+  /** The assembled system prompt as the model received it, when the producing
+   *  run opted in to recording it. */
+  systemPrompt?: string;
 }
 
 export type Step = PromptStep | AskStep | ReturnStep | AnswerStep;

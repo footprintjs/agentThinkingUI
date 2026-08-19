@@ -1,3 +1,77 @@
+## [0.30.0] - 2026-08-19
+
+### Added
+
+- **`fromRecording` — replay a saved agentfootprint run.** An agentfootprint run
+  already had one door into this player: its own `agentThinkingTrace()` recorder,
+  which builds the trace live, narrating each beat in the run's own voice. There
+  was no door for a run that is already over. Every team that wanted one wrote
+  the mapping themselves, and the hand-rolled versions all made the same
+  reconstruction: beats stamped `0.0s · 0 tok`, because a tool call has no token
+  count and the mapping filled the hole with a zero. `fromRecording(recording)`
+  is the producer-neutral answer — it reads the versioned envelope
+  (`format` beginning `agentfootprint.recording.`) or the bare
+  `{ snapshot, events, structure }` inside it, and joins the adapter family
+  (zero dependencies, the JSON parsed structurally, agentfootprint never
+  imported).
+
+  The mapping, in one line each: `agent.turn_start` → the prompt beat ·
+  `stream.llm_start` → the model, the tool menu and (opt-in upstream) the
+  assembled system prompt · `stream.llm_end` → the iteration's reasoning + cost
+  on the ask it drove, or the answer beat · `stream.tool_start` / `tool_end` →
+  ask + return (`read_skill` → an `instruction` beat naming the skill; a throw →
+  the recorded failure) · `stream.tool_progress` → **activity** on that call's
+  beat ("hop 3 of 12" — one call is still one beat) ·
+  `context.evaluated.cursorMove` → one skill-routing line leading the next beat ·
+  `agent.turn_end` → closes a turn the events never answered. A recorder left
+  attached across several runs becomes ONE trace **segmented by turn**: a prompt
+  beat per turn, `task` naming the first.
+
+- **Honesty, in the taxonomy the trace already had.** A replay reconstructs the
+  SHAPE of a run, not its narrator, so every sentence the adapter writes is
+  stamped `brainSource: "framework"` and only the model's own recorded words are
+  `"model"` — which is why the notepad's *"LLM reasons — …"* prefix never appears
+  over a derived line. The docs say the rest out loud: for a **live** run prefer
+  the producer's own `agentThinkingTrace()`; this door is for archives.
+
+- **Anything that is not a recording is refused by name.** Three sentences —
+  what this reads, what you passed, where to go — so OTel spans are sent to
+  `fromOTLP`, a JSON string is told to parse itself, a trace is told it already
+  IS one, and a bare footprintjs snapshot is told the beats live in the events
+  beside it. A recording with no beats in it is refused too, rather than handed
+  back as an empty trace: the usual cause is `recordRun(agent)` called after the
+  run instead of before it, and the refusal says so.
+
+- **"While it worked" — progress from inside a running tool call.** An ask beat
+  may carry `activity: { payload, atMs? }[]`; the inspector renders it as a
+  collapsed section listing each report with its time into the run. Untrusted
+  like every other tool payload: it is rendered as text, never as markup. Absent
+  for every tool that reported nothing.
+
+- **"System prompt as sent."** An ask/answer beat may carry `systemPrompt` — the
+  assembled prompt as the model received it, when the producing run opted in to
+  recording it — shown as a collapsed section beside the tool menu. Never
+  reconstructed: a run that did not record it shows no section at all.
+
+### Changed
+
+- **An absent cost is now ABSENT, everywhere.** `Cost.ms` and `Cost.tokens` are
+  optional, and `Step.cost` is optional — a beat whose source recorded no timing
+  (a prompt beat) or no token count (every tool call) carries nothing rather than
+  a zero, and the notepad's meta line and the inspector's cost panel render
+  **"—"**, titled *not recorded in this trace*. Traces that carry the numbers
+  render exactly as before. This is the type-level half of the fix: the old
+  required `ms: number; tokens: number` left an adapter no way to say "nobody
+  measured this" except by lying about it.
+
+### Fixed
+
+- **The shipped types resolve on their own.** `types/index.d.ts` referenced
+  `Step` and `WhyAttribution` without importing them (only `Trace` was), so a
+  consumer type-checking with `skipLibCheck: false` got "Cannot find name"
+  against our own declarations. Both are imported now; a strict TS consumer
+  compiles clean against `types/` with lib checking ON.
+
 ## [0.29.0] - 2026-08-19
 
 ### Changed

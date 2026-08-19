@@ -76,6 +76,53 @@ function ToolsSeen({ tools }) {
   );
 }
 
+// RECORDED NUMBERS ONLY. A beat whose trace never carried a latency (or a token
+// count) shows "—", never 0.0s / 0 tok: a post-hoc adapter that cannot prove a
+// number leaves it absent, and printing a zero would turn "not recorded" into
+// "free and instant" — the reconstruction bug this guards against.
+const costMs = (step) => (step.cost && typeof step.cost.ms === "number" ? step.cost.ms : null);
+const costTokens = (step) => (step.cost && typeof step.cost.tokens === "number" ? step.cost.tokens : null);
+function Unrecorded() {
+  return <span className="unrec" title="not recorded in this trace">—</span>;
+}
+
+// One compact line for an untrusted progress payload (any shape the tool author
+// chose) — text stays text, never markup.
+function oneLine(payload) {
+  const s = typeof payload === "string" ? payload : JSON.stringify(payload === undefined ? null : payload);
+  return s.length > 200 ? s.slice(0, 200) + "…" : s;
+}
+
+// Progress filed from INSIDE a still-running tool call (agentfootprint's
+// `ctx.progress` → `stream.tool_progress`). Not beats of their own — one call is
+// one beat — so the reports hang off the ask that was still open.
+function Activity({ reports }) {
+  if (!reports || !reports.length) return null;
+  return (
+    <Section label={"⏳ While it worked (" + reports.length + ")"} defaultOpen={false}>
+      <ul className="activity">
+        {reports.map((r, i) => (
+          <li key={i}>
+            {typeof r.atMs === "number" ? <span className="act-at" title="into the run">{fmtLatency(r.atMs)}</span> : null}
+            <code className="act-body">{oneLine(r && r.payload)}</code>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
+// The assembled system prompt as the model received it — present only when the
+// producing run opted in to recording it. Untrusted text: rendered as text.
+function SystemPrompt({ text }) {
+  if (!text) return null;
+  return (
+    <Section label={"📜 System prompt as sent (" + text.length + " chars)"} defaultOpen={false}>
+      <pre className="code sysprompt">{text}</pre>
+    </Section>
+  );
+}
+
 // Normalize a per-pick attribution — a stamped `step.attribution` OR an
 // `onAttribute` result — into ranked rows (+ the optional multi-channel
 // verdict) for the "What drove it" strategy. Clamps scores to [0,1], drops
@@ -579,7 +626,11 @@ function NoteEntry({ step, n, active }) {
           {j.voice ? <span className="note-voice">{j.voice + " — "}</span> : null}
           <Prose text={j.note} />
         </div>
-        <div className="note-meta">⏱ {fmtLatency((step.cost && step.cost.ms) || 0)} · ◇ {(step.cost && step.cost.tokens) || 0} tok</div>
+        <div className="note-meta">
+          ⏱ {costMs(step) == null ? <Unrecorded /> : fmtLatency(costMs(step))}
+          {" · ◇ "}
+          {costTokens(step) == null ? <Unrecorded /> : costTokens(step)} tok
+        </div>
       </div>
     </div>
   );
@@ -656,7 +707,9 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
                 <div className="brain-text thinking"><Prose text={step.thinking} /></div>
               </Section>
             )}
+            <Activity reports={step.activity} />
             <ToolsSeen tools={step.toolsSeen} />
+            <SystemPrompt text={step.systemPrompt} />
           </>
         )}
 
@@ -721,6 +774,7 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
               {step.answer.cta && <button className="answer-cta">{step.answer.cta}</button>}
             </div>
             <ToolsSeen tools={step.toolsSeen} />
+            <SystemPrompt text={step.systemPrompt} />
           </Section>
         )}
 
@@ -735,11 +789,11 @@ export function Inspector({ step, index, total, onCollapse, view, setView, link,
         <Section label="This step cost" defaultOpen={false}>
           <div className="cost-row">
             <div className="c-item">
-              <span className="c-val">{(((step.cost && step.cost.ms) || 0) / 1000).toFixed(1)}s</span>
+              <span className="c-val">{costMs(step) == null ? <Unrecorded /> : (costMs(step) / 1000).toFixed(1) + "s"}</span>
               <span className="c-unit">latency</span>
             </div>
             <div className="c-item">
-              <span className="c-val">{(step.cost && step.cost.tokens) || 0}</span>
+              <span className="c-val">{costTokens(step) == null ? <Unrecorded /> : costTokens(step)}</span>
               <span className="c-unit">tokens</span>
             </div>
           </div>

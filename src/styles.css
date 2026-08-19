@@ -624,6 +624,16 @@
 :where(.atui, .atui-swarm) .ts-name { font-family: var(--font-mono); font-size: calc(11px * var(--af-text-scale)); padding: 1px 6px; border-radius: 6px; background: var(--surface-sunken, rgba(127,127,127,0.12)); color: var(--ink); }
 :where(.atui, .atui-swarm) .ts-desc { color: var(--ink-soft, var(--ink-faint)); }
 
+/* "While it worked" — progress filed from inside a still-running tool call. */
+:where(.atui, .atui-swarm) .activity { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+:where(.atui, .atui-swarm) .activity li { display: flex; align-items: baseline; gap: 8px; font-size: calc(11.5px * var(--af-text-scale)); line-height: 1.45; }
+:where(.atui, .atui-swarm) .act-at { font-family: var(--font-mono); font-size: calc(10px * var(--af-text-scale)); color: var(--ink-faint); flex: none; }
+:where(.atui, .atui-swarm) .act-body { font-family: var(--font-mono); font-size: calc(11px * var(--af-text-scale)); color: var(--ink); overflow-wrap: anywhere; }
+/* The assembled system prompt, when the run recorded it (opt-in upstream). */
+:where(.atui, .atui-swarm) .sysprompt { white-space: pre-wrap; }
+/* An absent fact, shown as absent — never as a zero. */
+:where(.atui, .atui-swarm) .unrec { color: var(--ink-faint); }
+
 :where(.atui, .atui-swarm) .reply-banner { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 12px;
   background: var(--accent-tint); border: 1px solid var(--accent); margin: 12px 16px; }
 :where(.atui, .atui-swarm) .err-banner { display: flex; align-items: center; gap: 10px; margin: 12px 16px; padding: 10px 13px; border-radius: 12px;

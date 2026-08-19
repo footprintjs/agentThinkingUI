@@ -47,9 +47,11 @@ src/        theme.js · layout.js · flow-layout.js (pure multi-agent graph layo
             playback.js · context.js · stage.jsx · agent-icons.jsx (agentIcon glyphs) ·
             inspector.jsx · timeline.jsx ·
             footprint.jsx · multi-agent-flow.jsx · adapters/otlp.js ·
+            adapters/recording.js (an archived agentfootprint run → trace) ·
             index.jsx (ESM entry) · global.jsx (UMD entry) · styles.css
 build.mjs   esbuild → dist/ (ESM + UMD + css)
-scripts/    coverage-badge.mjs · perf.mjs (load benchmark → `npm run perf`)
+scripts/    coverage-badge.mjs · perf.mjs (load benchmark → `npm run perf`) ·
+            gen-recording-fixture.mjs (`npm run fixtures`)
 demo/       index.html (responsive; single ⟷ multi switched in-app via the gear) ·
             explorer.html (no-build component explorer: controls + props table) ·
             demo.css (page chrome — body/grain, NOT the library) ·
@@ -114,6 +116,18 @@ name. CSS classes stay `.atui-swarm` / `swarm-*` (internal styling, not the API)
 - Headless browser behind a strict allowlist: vendor React/ReactDOM from npm and
   route the unpkg URLs to local copies; the demo's own UMD bundle is local (`dist`).
 - Regenerate the README hero after editing it: `node docs/assets/gen-hero.mjs`.
+
+## Adapters
+
+`src/adapters/*` have **zero dependencies** and parse their input structurally —
+`fromRecording` reads agentfootprint's typed events without importing
+agentfootprint (it is a devDependency, used only by
+`scripts/gen-recording-fixture.mjs`, which runs a REAL agent on the mock provider
+and freezes `test/fixtures/recording.*.json`). Regenerate with
+`npm run fixtures`; the script fails loudly if a mapped event family stopped
+appearing. Two rules the adapters keep: a fact the source did not record is left
+ABSENT (never zero-filled — see `Cost`), and a sentence the adapter wrote carries
+`brainSource: "framework"` so no view narrates it as the model's.
 
 ## Conventions
 

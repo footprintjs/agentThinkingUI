@@ -33,6 +33,7 @@ const trace = fromOpenInference(spans, { asker: "you" });   // pick the adapter
 | **OpenTelemetry** / **OpenLLMetry** (Traceloop) | OTel GenAI (OTLP) | `fromOTLP` · `fromOTLPMulti` |
 | **Langfuse** (OTLP export) | OTel GenAI | `fromOTLP` |
 | **LangSmith / LangGraph** (OTel export) | OTel GenAI | `fromOTLP` · `fromOTLPMulti` |
+| **agentfootprint** (a saved recording) | typed `agentfootprint.*` events | `fromRecording` |
 
 > Single agent → `from…` → `<AgentThinkingUI>`. A team (a span **tree** with
 > nested `invoke_agent` spans) → `from…Multi` → `<MultiAgentFlow>`.
@@ -71,6 +72,31 @@ const trace = fromOTLP(otlpJson, { asker: "you" });
 These keep their own data model but can emit/export **OpenTelemetry** spans. Point
 their OTLP export at your store, then render with `fromOTLP` (single) or
 `fromOTLPMulti` (a multi-agent span tree → `<MultiAgentFlow>`).
+
+## agentfootprint (a recorded run)
+
+An agentfootprint run does not need OTel to get here — it has its own two doors.
+**Live**, attach the producer's `agentThinkingTrace()` recorder and read
+`getTrace()`: the narration is the run's own voice. **Archived**, hand the
+recording (or the envelope `persistRecording` wrote around it) to
+`fromRecording`:
+
+```jsx
+import { fromRecording } from "agentthinkingui";
+
+// one archived run: { format: "agentfootprint.recording.v1", …, recording: {…} }
+const envelope = await fetch(`/api/runs/${runId}/recording`).then((r) => r.json());
+<AgentThinkingUI trace={fromRecording(envelope, { asker: "you" })} />
+```
+
+Turn starts become prompts, LLM calls become the reasoning + cost on the ask they
+drove, tool calls become ask + return (a `read_skill` becomes an `instruction`
+beat), progress reported from inside a running call becomes activity on that
+beat, and a skill-graph cursor hop becomes one routing line. Read back after the
+fact, it reconstructs the **shape** of the run: derived sentences are stamped
+`brainSource: "framework"` and facts the recording does not carry stay absent —
+the views show "—", never `0.0s`. Full mapping table + the honesty notes:
+[README → Replay a saved agentfootprint run](../README.md#replay-a-saved-agentfootprint-run--fromrecording).
 
 ## Backfill what OTel drops (compose your Trace)
 

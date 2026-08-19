@@ -84,7 +84,7 @@ type Step =
       actNote?: string }
   | { kind: "answer";  to: string; brain: string; answer: Answer; cost: Cost };
 
-type Cost = { ms: number; tokens: number };
+type Cost = { ms?: number; tokens?: number };   // absent = not recorded (the views show "—", never 0.0s)
 ```
 
 - `brain` (and `actNote` / `thinking`) is rendered as **markdown** — headings,
@@ -107,6 +107,35 @@ type Cost = { ms: number; tokens: number };
   `answer` beats it is recorded for downstream consumers; nothing is prefixed
   there. The OTLP / OpenInference adapters stamp it for you (`"framework"` on
   their fallback narration, `"model"` on a real assistant message).
+
+## Replay a saved agentfootprint run
+
+An [agentfootprint](https://footprintjs.github.io/agentfootprint/) run has two
+doors into this player. **Live:** attach its own `agentThinkingTrace()` recorder
+and read `getTrace()` — the narration is the run's own voice. **Archived:** hand
+the recording (or the envelope `persistRecording` wrote around it) to
+`fromRecording`:
+
+```js
+import { fromRecording } from "agentthinkingui";
+
+const trace = fromRecording(envelopeJson, { asker: "you" });   // or the bare { snapshot, events, structure }
+<AgentThinkingUI trace={trace} />
+```
+
+Turn starts → prompt beats · LLM calls → the reasoning + cost on the ask they
+drove (or the answer) · tool calls → ask + return (`read_skill` → an
+`instruction` beat) · `tool_progress` → activity on that call's beat ·
+`context.evaluated.cursorMove` → one skill-routing line · `turn_end` → closes a
+turn nothing answered. A multi-turn recording becomes ONE trace segmented by
+turn.
+
+It is honest about being post-hoc: every sentence it writes carries
+`brainSource: "framework"` (only the model's recorded words are `"model"`), and
+any fact the recording does not carry stays **absent** — no `cost`, no `tokens`,
+and the views render "—" rather than a `0.0s · 0 tok` that nobody measured.
+Anything that is not a recording is refused with a three-sentence message naming
+what you passed and where to go.
 
 ## Bring your existing traces (OpenTelemetry / OpenInference)
 

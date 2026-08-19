@@ -123,24 +123,29 @@ type Trace = {
 };
 
 type Step =
-  | { kind: "prompt";  brain: string; cost: Cost }                       // the task comes in
+  | { kind: "prompt";  brain: string; cost?: Cost }                      // the task comes in
   | { kind: "ask";     tool: string; toolName?: string; input: object;   // brain reaches for a tool
-      brain: string; cost: Cost }
+      brain: string; cost?: Cost }
   | { kind: "return";  tool: string; toolName?: string;                  // the tool replies
       replyType: "data" | "instruction" | "both";
-      output: object; brain: string; cost: Cost;
+      output: object; brain: string; cost?: Cost;
       brainMode?: "reason" | "act";        // data → reason, instruction → act
       skill?: string; actChecklist?: { text: string }[];   // for instruction / both (skill / steering)
       actNote?: string;                     // the "acts on the instruction" note (both)
       error?: string }                      // set when the tool/step failed → rendered red
-  | { kind: "answer";  to: string; brain: string; answer: Answer; cost: Cost; error?: string };
+  | { kind: "answer";  to: string; brain: string; answer: Answer; cost?: Cost; error?: string };
 
 type Cost = {
-  ms: number; tokens: number;              // latency + total tokens
+  ms?: number; tokens?: number;            // latency + total tokens
   tokensIn?: number; tokensOut?: number;   // input / output split (cost attribution)
   tokensCached?: number;                   // cache-read tokens (cache-hit visibility)
 };
 ```
+
+**Every cost field is optional, and that is the point.** A number your recorder
+never measured is left OUT — a beat with no timing carries no `ms` (or no `cost`
+at all), and the views render **"—"**. Writing `0` instead would put `0.0s · 0
+tok` on screen for something nobody measured, which reads as a measurement.
 
 The three `replyType`s are the model from the hero: **data** (reason),
 **instruction** (act on a **skill / steering** doc), and **both** — the mixed
@@ -205,6 +210,7 @@ src/                 # the library — ES modules (import/export, scoped)
   footprint.jsx      <AgentThinkingUI> — ready-made shell wiring all four together
   multi-agent-flow.jsx  <MultiAgentFlow> — multi-agent control-flow map + drill-down
   adapters/otlp.js   fromOTLP · fromOpenInference · fromOTLPMulti · fromOpenInferenceMulti (telemetry → trace/graph)
+  adapters/recording.js  fromRecording (an archived agentfootprint run → trace)
   context.js         the shared React context the views read the theme from
   index.jsx          ESM entry (re-exports)   ·   global.jsx  UMD entry (window.*)
   styles.css         Design tokens + component styles (all keyed off theme variables)
@@ -347,6 +353,7 @@ CrewAI, AutoGen, OpenAI Agents SDK, Google ADK, Pydantic AI, Strands…) and
 | `fromOpenInference(otlp, opts?)` | OpenInference spans | `Trace` — one agent |
 | `fromOTLPMulti(otlp, opts?)` | OpenTelemetry span **tree** | `FlowGraph` — a team |
 | `fromOpenInferenceMulti(otlp, opts?)` | OpenInference span **tree** | `FlowGraph` — a team |
+| `fromRecording(recording, opts?)` | an **agentfootprint recording** (or its envelope) | `Trace` — one agent |
 
 ```js
 import { fromOTLP, fromOpenInference, fromOTLPMulti, fromOpenInferenceMulti } from "agentthinkingui";
@@ -366,6 +373,71 @@ nested `invoke_agent` spans become the agent graph. The **reply type**
 `.skill` span attributes → a heuristic (skill/steering/policy/guardrail → instruction).
 **Errors are universal:** a span with status `ERROR` (or an `exception` event) becomes
 a red error beat (and a red agent node in the flow) — same for both adapters.
+
+### Replay a saved agentfootprint run — `fromRecording`
+
+An [agentfootprint](https://footprintjs.github.io/agentfootprint/) run reaches
+this player through **two doors**:
+
+| | door | who narrates |
+|---|---|---|
+| **live** | the producer's own `agentThinkingTrace()` recorder builds the `Trace` as the run happens | the run's **own voice** — agentfootprint's commentary engine writes each beat |
+| **archived** | `fromRecording(recording)`, here | **derived from the events**, after the fact |
+
+```js
+import { fromRecording } from "agentthinkingui";
+
+// the envelope persistRecording writes, or the bare { snapshot, events, structure }
+const trace = fromRecording(JSON.parse(await fs.readFile("run-archive/run-42.json")), { asker: "Sam" });
+<AgentThinkingUI trace={trace} />
+```
+
+**What maps to what:**
+
+| recorded event | becomes |
+|---|---|
+| `agent.turn_start` | the **prompt** beat (the user's words; a new turn opens a new one) |
+| `stream.llm_start` | no beat — carries the model, the **tool menu** (`toolsSeen`) and, when the run opted in, the assembled **system prompt** |
+| `stream.llm_end` *(tool calls)* | the iteration's reasoning + cost, landing on the **ask** it drove |
+| `stream.llm_end` *(no tool calls)* | the **answer** beat |
+| `stream.tool_start` | an **ask** beat (`read_skill` → the skill it reached for) |
+| `stream.tool_progress` | **activity** on that call's ask beat — "hop 3 of 12", not a beat of its own |
+| `stream.tool_end` | a **return** beat (`read_skill` → `instruction` + `skill`; anything else → `data`; a throw → the recorded error) |
+| `context.evaluated.cursorMove` | one **skill-routing** line leading the next beat (a hop that moved nothing says nothing) |
+| `agent.turn_end` | closes a turn the events never answered (a recording frozen mid-run) |
+
+**Honesty — the known limit of door two.** A replay reconstructs the **shape** of
+a run, not its narrator. So every sentence the adapter writes is stamped
+`brainSource: "framework"` and only the model's own recorded words are `"model"` —
+which is why the notepad's *"LLM reasons — …"* prefix never appears over a
+derived line. **For a live run, prefer the producer's own `agentThinkingTrace()`**;
+for an archive, this is the door.
+
+**Absent facts stay absent.** A `turn_start` carries no timing and a tool call
+carries no token count, so those beats carry **no `cost` / no `tokens` at all**
+and the views render **"—"**. A replay that printed `0.0s · 0 tok` would be
+reporting a measurement nobody took — the bug this door exists to stop repeating.
+
+**Multi-turn.** A recorder left attached across several runs holds several turns.
+They become **one segmented trace**: each turn opens with its own `prompt` beat
+and closes on its own `answer`, and `task` names the first (a `Trace` has one
+headline; the rest are beats).
+
+**Not read (yet):** extended thinking (`stream.thinking_end`), memory and RAG
+events, and the recording's `snapshot` / `structure` — those two draw the
+*chart*, which is [Flow Lens](https://github.com/footprintjs/explainable-ui) and
+[Why Lens](https://github.com/footprintjs/agentfootprint-lens)' reading of the
+same file, not this one's.
+
+**Anything else is refused, by name** — three sentences: what this reads, what
+you passed, where to go.
+
+```
+fromRecording reads an agentfootprint recording — the { snapshot, events, structure }
+recordRun(agent) freezes, or the versioned envelope persistRecording writes around one.
+What you passed looks like an array of OpenTelemetry-style spans.
+OpenTelemetry / OpenInference spans have their own door — use fromOTLP or fromOpenInference.
+```
 
 ### On top of your observability stack
 

@@ -11,6 +11,7 @@ import {
   usePlayback,                                 // hook
   fromOTLP, fromOpenInference,                 // single-agent adapters
   fromOTLPMulti, fromOpenInferenceMulti,       // multi-agent adapters
+  fromRecording,                               // an archived agentfootprint run
   createMonitor,                               // live ingestion
   layoutFlow, countCrossings,                  // graph layout (pure)
   AgentTheme,                                  // theme engine (normalize/toVars/apply)
@@ -101,6 +102,24 @@ All take an optional [`AdapterOptions`](#adapteroptions).
 | `fromOpenInference(otlp, opts?)` | OpenInference spans | [`Trace`](#trace) |
 | `fromOTLPMulti(otlp, opts?)` | OpenTelemetry span **tree** | [`FlowGraph`](#flowgraph) |
 | `fromOpenInferenceMulti(otlp, opts?)` | OpenInference span **tree** | [`FlowGraph`](#flowgraph) |
+| `fromRecording(recording, opts?)` | an agentfootprint **recording** — `{ snapshot, events, structure }` or the envelope around it | [`Trace`](#trace) |
+
+### `fromRecording(recording, opts?)` — an archived run
+
+Door two: the run is over, the recording is on disk. It accepts either spelling
+(the versioned envelope, or the bare recording inside it) and refuses anything
+else with a three-sentence message naming what it received and where to go.
+
+Beyond [`AdapterOptions`](#adapteroptions) it takes `agent` and `model` —
+the two identity facts a recording may not carry.
+
+It is honest about being post-hoc, and the README section
+[Replay a saved agentfootprint run](../README.md#replay-a-saved-agentfootprint-run--fromrecording)
+says how: derived sentences are stamped `brainSource: "framework"` (only the
+model's own recorded words are `"model"`), facts the recording does not carry
+stay **absent** rather than becoming zeroes, and a multi-turn recording becomes
+one trace segmented by turn. For a **live** run, prefer agentfootprint's own
+`agentThinkingTrace()` recorder — its narration is the run's own voice.
 
 ### `createMonitor(opts?)` — live ingestion
 
@@ -173,7 +192,11 @@ each with a [`Cost`](#cost), an optional `error`, and optional `spanId`/`traceId
 (stamped by the adapters — for `linkResolver`/`onSelect` deep-linking).
 
 ### `Cost`
-`{ ms, tokens, tokensIn?, tokensOut?, tokensCached? }`.
+`{ ms?, tokens?, tokensIn?, tokensOut?, tokensCached? }` — every field optional
+**on purpose**: a number the source never recorded is left out, and the views
+render "—" for it. A beat that was never timed carries no `cost` at all. (A tool
+call, for instance, is timed but never tokenized.) Filling an absent measurement
+with `0` would report `0.0s · 0 tok` for something nobody measured.
 
 ### `FlowGraph`
 `{ task, asker?, nodes: FlowNode[], edges: FlowEdge[] }`.

@@ -1,5 +1,5 @@
 import type { FC, ReactNode } from "react";
-import type { Trace } from "./trace.js";
+import type { Step, Trace, WhyAttribution } from "./trace.js";
 
 export * from "./trace.js";
 
@@ -512,6 +512,32 @@ export function fromOpenInference(otlp: unknown, opts?: AdapterOptions): Trace;
 export function fromOTLPMulti(otlp: unknown, opts?: AdapterOptions): FlowGraph;
 /** OpenInference span tree → a multi-agent FlowGraph (for <MultiAgentFlow>). */
 export function fromOpenInferenceMulti(otlp: unknown, opts?: AdapterOptions): FlowGraph;
+
+/**
+ * Options for {@link fromRecording} — the adapter options plus the two identity
+ * facts a recording may not carry (an agent that never named itself, a run with
+ * no LLM call to read a model off).
+ */
+export interface RecordingAdapterOptions extends AdapterOptions {
+  /** Override the agent name (default: the run's own `agentId`, else "agent"). */
+  agent?: string;
+  /** Override the model (default: the first recorded LLM call's, else "unknown"). */
+  model?: string;
+}
+
+/**
+ * An agentfootprint RECORDING → Trace. Accepts the versioned envelope
+ * (`format` beginning `agentfootprint.recording.`) or the bare
+ * `{ snapshot, events, structure }` inside it; anything else throws a
+ * `TypeError` naming what it received and where to go instead.
+ *
+ * Post-hoc by nature: every sentence it writes is stamped
+ * `brainSource: "framework"`, and only the model's own recorded words are
+ * `"model"`. Facts the recording does not carry stay ABSENT (no `cost`, no
+ * `tokens`) rather than becoming zeroes. For a live run prefer the producer's
+ * own `agentThinkingTrace()` recorder, whose narration is the run's own voice.
+ */
+export function fromRecording(recording: unknown, opts?: RecordingAdapterOptions): Trace;
 
 /** Push-based monitor for live sources: feed spans, read the updated Trace/FlowGraph. */
 export interface Monitor<T> {
