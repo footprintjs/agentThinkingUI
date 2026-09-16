@@ -120,6 +120,16 @@ export interface AgentThinkingUIProps {
   style?: Record<string, string | number>;
   /** persist scrub position under this key (default: derived from the trace; null disables) */
   storageKey?: string | null;
+  /**
+   * A CONTROLLED playhead (0.32.0): the beat to show. Pass it and the host
+   * owns the position — every move a person makes here reports through
+   * `onIndexChange` and the host lands it. Omit it and the player keeps its
+   * own position; `onIndexChange` then fires as an observation hook. Out of
+   * range reads at the nearest end.
+   */
+  index?: number;
+  /** Fires on every move a person or autoplay makes — the index it would land on. */
+  onIndexChange?: (index: number) => void;
   /** opt-in UI render metrics (wraps the tree in React's <Profiler>) */
   onRender?: (metric: RenderMetric) => void;
   /** fires on every beat with the current step (carries `spanId`/`traceId`) — for analytics / deep-linking / sync */

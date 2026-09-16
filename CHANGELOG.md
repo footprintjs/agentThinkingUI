@@ -1,3 +1,10 @@
+## [0.32.1] - 2026-09-16
+
+### Fixed
+
+- The type declarations now carry `index` and `onIndexChange` (0.32.0 shipped
+  the behaviour without the types, so a TypeScript host could not pass them).
+
 ## [0.32.0] - 2026-09-16
 
 ### Added
