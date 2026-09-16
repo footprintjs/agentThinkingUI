@@ -19,14 +19,14 @@ import { buildRunSummaryText } from "./copyForLLM.js";
    four components into their own layout (they're each independent).
    (window.AgentFootprint remains as a deprecated alias.)
    ============================================================ */
-export function AgentThinkingUI({ trace, theme, labels, icons, agentIcon, character, brand, metaphor = true, loop = false, live = false, toolMenu = "card", onExplain, onScore, onAttribute, onBacktrack, style, mobile, storageKey, onRender, onSelect, linkResolver, renderDetail }) {
+export function AgentThinkingUI({ trace, theme, labels, icons, agentIcon, character, brand, metaphor = true, loop = false, live = false, toolMenu = "card", onExplain, onScore, onAttribute, onBacktrack, style, mobile, storageKey, onRender, onSelect, linkResolver, renderDetail, index: controlledIndex, onIndexChange }) {
   const { useState, useRef, useMemo, useEffect } = React;
   const rootRef = useRef(null);
   // persist scrub position per-trace so two players on one page don't collide;
   // pass storageKey={null} to disable, or a custom string to override.
   const key = storageKey !== undefined ? storageKey
     : "agentthinkingui.index:" + (trace.title || trace.agent || trace.task || "default");
-  const { index, seek, playing, setPlaying, speed, setSpeed, onKeyDown } = usePlayback(trace, { loop, live, storageKey: key });
+  const { index, seek, playing, setPlaying, speed, setSpeed, onKeyDown } = usePlayback(trace, { loop, live, storageKey: key, index: controlledIndex, onIndexChange });
 
   // Resolve theme/labels/icons and scope them to THIS player's element:
   // CSS variables ride on the .app container (not :root), so multiple players

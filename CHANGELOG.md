@@ -1,3 +1,16 @@
+## [0.32.0] - 2026-09-16
+
+### Added
+
+- **A controlled playhead: `index` + `onIndexChange`.** A host that keeps
+  ONE cursor across several views passes `index` and the player shows that
+  beat; every move a person makes here — the strip, the keys, autoplay —
+  reports through `onIndexChange` and the host lands it. Omit `index` and the
+  player keeps its own position exactly as before; `onIndexChange` then fires
+  as an observation hook. An out-of-range `index` reads at the nearest end.
+  Pairs with agentfootprint 9.99.0's `AttTrace.at` (the stage each beat was
+  recorded under) so a beat can stand on, and move, the run's own cursor.
+
 ## [0.31.0] - 2026-08-19
 
 ### Added

@@ -28,17 +28,27 @@ export function usePlayback(trace, opts) {
     } catch { return 0; }
   };
 
-  const [index, setIndexRaw] = useState(() => (live ? Math.max(0, n - 1) : readStored()));
+  // CONTROLLED (0.32.0): a host that owns the cursor passes `index` and hears
+  // every move through `onIndexChange`; nothing here remembers a position
+  // then. Omit `index` and the hook keeps its own, as it always has —
+  // `onIndexChange` still fires as an observation hook.
+  const controlled = typeof opts.index === "number";
+  const clamp = (i) => Math.min(Math.max(Number.isFinite(i) ? Math.trunc(i) : 0, 0), Math.max(0, n - 1));
+  const [internalIndex, setIndexRaw] = useState(() => (live ? Math.max(0, n - 1) : readStored()));
+  const index = controlled ? clamp(opts.index) : internalIndex;
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
 
   const setIndex = (i) => {
-    setIndexRaw(i);
-    if (persist) { try { localStorage.setItem(storageKey, String(i)); } catch { /* ignore */ } }
+    if (!controlled) {
+      setIndexRaw(i);
+      if (persist) { try { localStorage.setItem(storageKey, String(i)); } catch { /* ignore */ } }
+    }
+    if (typeof opts.onIndexChange === "function" && i !== index) opts.onIndexChange(i);
   };
 
   // live: jump to the newest beat whenever the trace grows (and don't persist)
-  useEffect(() => { if (live) setIndexRaw(Math.max(0, n - 1)); }, [live, n]);
+  useEffect(() => { if (live && !controlled) setIndexRaw(Math.max(0, n - 1)); }, [live, n, controlled]);
 
   // auto-advance, dwell scaled by step kind + speed
   const timer = useRef(null);
