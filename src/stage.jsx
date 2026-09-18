@@ -4,6 +4,7 @@ import { arcLayout, AF_LAYOUT, iconScaleFor, RACK_ITEM_H, RACK, rackArrowY, rack
 import { Prose } from "./prose.jsx";
 import { AgentIconGlyph, isAgentIconName } from "./agent-icons.jsx";
 import { CHARACTERS, characterOf, characterLabel } from "./characters.jsx";
+import { MarkRow, marksAt } from "./marks.jsx";
 
 const { useRef: sUseRef, useState: sUseState, useLayoutEffect } = React;
 
@@ -247,11 +248,16 @@ function afLabels(R) {
 
 function Dots() { return <span className="dots"><i /><i /><i /></span>; }
 
-function Cloud({ tag, text, metaphor, compact, tone }) {
+// `marks` (the host's chips for this beat) sit UNDER the prose. With chips the
+// body is a flex column capped at the same --af-bubble-h, so the row's height
+// comes out of the prose's room (it scrolls a little sooner) — the bubble's
+// budget, and so the rack's, are untouched. Without chips the DOM is the old one.
+function Cloud({ tag, text, metaphor, compact, tone, marks }) {
+  const prose = <div className="ctext"><Prose text={text} /></div>;
   return (
     <div className={"cloud" + (compact ? " compact" : "") + (tone === "data" ? " tone-data" : "")}>
       {metaphor && <span className="ctag">{tag}<Dots /></span>}
-      <div className="ctext"><Prose text={text} /></div>
+      {marks && marks.length ? <div className="cbody">{prose}<MarkRow list={marks} /></div> : prose}
     </div>
   );
 }
@@ -275,10 +281,19 @@ function ThinkingCallout({ text }) {
   );
 }
 
-function SkillDoc({ skill, checklist = [], metaphor, compact }) {
+function SkillDoc({ skill, checklist = [], metaphor, compact, marks }) {
   // `actChecklist` is OPTIONAL in the trace contract — an instruction reply can
   // be a steering doc with no explicit checklist. Default to [] and only render
   // the list when there are items (don't crash on a valid checklist-less trace).
+  const list = checklist.length > 0 && (
+    <ul className="sd-list">
+      {checklist.map((c, i) => (
+        <li key={i} style={{ animationDelay: 0.85 + i * 0.2 + "s" }}>
+          <span className="box">✓</span><span>{c.text}</span>
+        </li>
+      ))}
+    </ul>
+  );
   return (
     <div className={"skilldoc" + (compact ? " compact" : "")}>
       {metaphor && <div className="sd-tag">acting<Dots /></div>}
@@ -287,15 +302,11 @@ function SkillDoc({ skill, checklist = [], metaphor, compact }) {
         <span className="sd-name">{skill}</span>
         <span className="sd-kicker">steering doc</span>
       </div>
-      {checklist.length > 0 && (
-        <ul className="sd-list">
-          {checklist.map((c, i) => (
-            <li key={i} style={{ animationDelay: 0.85 + i * 0.2 + "s" }}>
-              <span className="box">✓</span><span>{c.text}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* the host's chips under the checklist — same law as the cloud: the row's
+          height comes out of the list's room, never the doc's budget */}
+      {marks && marks.length
+        ? <div className="sd-body">{list}<div className="sd-marks"><MarkRow list={marks} /></div></div>
+        : list}
     </div>
   );
 }
@@ -325,7 +336,7 @@ function Toolbox({ active }) {
   );
 }
 
-function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToolClick, agentIcon, character }) {
+function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToolClick, agentIcon, character, marks }) {
   const { w, h } = dims;
   const resolved = React.useContext(AgentThemeContext);
   // who is on stage — defaulted here (an unknown name is the brain) so the
@@ -404,7 +415,7 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
     dualThoughts = (
       <div className="dual-thoughts" style={{ left: dualLeft, bottom: h - by + headroom }}>
         {thinkingEl}
-        <Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} compact tone="data" />
+        <Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} compact tone="data" marks={marks} />
         <SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} compact />
       </div>
     );
@@ -416,8 +427,8 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
         <div className="tp-col">
           {thinkingEl}
           {isAct
-            ? <SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} />
-            : <Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} />}
+            ? <SkillDoc skill={step.skill} checklist={step.actChecklist} metaphor={metaphor} marks={marks} />
+            : <Cloud tag={cloudTag} text={step.brain} metaphor={metaphor} marks={marks} />}
         </div>
       </div>
     );
@@ -516,7 +527,9 @@ function SceneInner({ step, dims, metaphor, straight, toolMenu, rackTools, onToo
   );
 }
 
-export function Stage({ trace, step, index, metaphor, straight, toolMenu, onToolClick, agentIcon, character }) {
+// `marks` is the host's per-beat chip table (indexed like trace.steps) — the
+// scene draws the current beat's row on its bubble; absent = nothing drawn.
+export function Stage({ trace, step, index, metaphor, straight, toolMenu, onToolClick, agentIcon, character, marks }) {
   const sceneRef = sUseRef(null);
   const [dims, setDims] = sUseState({ w: 720, h: 460 });
 
@@ -550,7 +563,7 @@ export function Stage({ trace, step, index, metaphor, straight, toolMenu, onTool
   return (
     <div className={"panel stage " + accentClass}>
       <div className="flowscene" ref={sceneRef}>
-        <SceneInner key={index} step={step} dims={dims} metaphor={metaphor} straight={straight} toolMenu={toolMenu} rackTools={rackTools} onToolClick={onToolClick} agentIcon={agentIcon} character={character} />
+        <SceneInner key={index} step={step} dims={dims} metaphor={metaphor} straight={straight} toolMenu={toolMenu} rackTools={rackTools} onToolClick={onToolClick} agentIcon={agentIcon} character={character} marks={marksAt(marks, Math.min(index, trace.steps.length - 1))} />
       </div>
     </div>
   );

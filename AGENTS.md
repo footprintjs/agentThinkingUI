@@ -58,8 +58,45 @@ exported and can be composed by hand with the state from `usePlayback(trace)`.
 | `mobile` | `boolean` | stacked mobile layout (tabs + footer transport) |
 | `toolMenu` | `'card' \| 'rack'` | tool-menu layout (default `card`). `rack` = a vertical rack of **every** tool the model saw — all of them, always: the rack is sized from the scene (never clipped by it) and the list **scrolls** when the tools outrun the arena, so no tool is summarised away. The picked one is lit and **pinned**: it holds its place while the rest scroll past, so the connector arrow always lands on it. A scrolling list is a keyboard tab stop; a scene too narrow to carry both a labelled rack and a readable thought bubble gets an icons-only rack (names stay in the tooltip) + the **"Why this tool?"** inspector panel (relevance bars, **Copy for LLM**, **Explain (live)**) — see the spec below |
 | `onExplain` | `(ctx) => Promise<string \| { reason, score }>` | rack mode: wire the Why-panel's "✨ Explain (live)" button to YOUR LLM (`ctx = { trace, step, tool, prompt }`). The library makes no LLM calls itself |
+| `index` / `onIndexChange` | `number` / `(i) => void` | a controlled playhead (0.32.0): pass `index` and the host owns the position, every move reports through `onIndexChange`; omit it and the player keeps its own |
+| `marks` | `ReadonlyArray<ReadonlyArray<Mark> \| undefined>` | chips per beat (0.33.0), indexed like `trace.steps` — drawn under the current beat's bubble and on every beat's notepad row, printed in brackets on the triage export. `Mark = { label, tone?, title? }`; the label is text, never markup. Omit it and the DOM/export are byte-identical — see below |
 
 > **Tool-choice explainability + the skill-graph routing it visualizes:** see the consolidated, usage-oriented spec at `agentfootprint/docs/design/skill-graph-spec.md` (rack/Why-panel/Copy-for-LLM/`onExplain` are ✅ shipped here; agentfootprint's declarative `skillGraph()` it draws is ✅ usable v1, v2 hardening ✅ shipped in agentfootprint 8.3–8.5 (cursor-honored picks, build-time refusals, deep checkup)).
+
+## Marks — chips the host hands the player
+
+The player is generic — it knows nothing about ledgers, judges or scores. When
+your run knows something per beat that the trace does not say, hand it in as
+chips: `marks[i]` decorates `trace.steps[i]`.
+
+```jsx
+// a findings-ledger host: what the model declared, then how it stood
+const marks = [];
+marks[1]  = [{ label: "hypothesis", tone: "muted" }, { label: "expect high" }]; // the ask
+marks[2]  = [{ label: "noise", tone: "warn" }];                                 // the return
+marks[13] = [{ label: "stood on 3 · noise 2" }];                                // the answer
+<AgentThinkingUI trace={trace} marks={marks} />
+```
+
+- `Mark = { label: string; tone?: 'neutral' | 'good' | 'warn' | 'bad' | 'muted'; title?: string }`.
+  `label` is TEXT (rendered as a text node — markup stays literal; ~40 chars, a
+  longer one clips and rides whole in the hover title); `title` is your own full
+  text on hover, plain text too; `tone` maps to theme colours that already exist
+  (good = the answer accent, warn = the instruction accent, bad = error, muted =
+  the faint ink), so a custom palette and dark mode need nothing extra.
+- Drawn in two places: under the prose of the **current beat's bubble** on the
+  scene (on an act beat, under the steering doc's checklist; on a data +
+  instruction beat, on the reasoning bubble), and after the title line of that
+  beat's **notepad row** at every playhead. The "Triage with your LLM" export
+  prints them in brackets on the beat's line: `[hypothesis · expect high]`
+  (detailed mode on every beat line; short mode on the answer line).
+- Nothing focusable; the row is a `div.atui-marks[aria-label="marks"]` of
+  `span.atui-mark.tone-*`. Style them through the theme, or target `.atui .atui-mark`.
+- Tolerant: holes, empty lists, a shorter or longer table, entries that are not
+  chips — nothing thrown, nothing drawn for them.
+- **Zero cost:** omit `marks` and the DOM and the export are byte-identical to
+  0.32 (a test pins it). A chip row takes its height from the prose's room,
+  never from the bubble's budget — the bubble still stops before the rack.
 
 ## The trace contract (what to emit)
 

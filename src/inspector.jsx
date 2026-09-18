@@ -4,6 +4,7 @@ import { isSkillName } from "./stage.jsx";
 import { buildToolWhyText, buildDescribeText } from "./copyForLLM.js";
 import { diffWords } from "./descdiff.js";
 import { Prose } from "./prose.jsx";
+import { MarkRow, marksAt } from "./marks.jsx";
 
 const { useState: inspUseState } = React;
 
@@ -609,7 +610,9 @@ function fmtLatency(ms) {
   return m + "m " + Math.round(s % 60) + "s";
 }
 
-function NoteEntry({ step, n, active }) {
+// `marks` = the host's chips for THIS beat (marksAt) — drawn after the title
+// line, present at every playhead like the cost line; [] draws nothing
+function NoteEntry({ step, n, active, marks }) {
   const k = step.kind === "return" ? step.replyType : step.kind;
   const accent = step.error ? "k-error" : k === "data" ? "k-data" : k === "instruction" ? "k-instr" : k === "both" ? "k-both"
     : k === "ask" ? "k-call" : k === "answer" ? "k-answer" : "k-prompt";
@@ -622,6 +625,7 @@ function NoteEntry({ step, n, active }) {
           <span className="note-n">{String(n + 1).padStart(2, "0")}</span>
           <span className="note-title">{j.title}</span>
         </div>
+        {marks && marks.length ? <MarkRow list={marks} /> : null}
         <div className="note-text">
           {j.voice ? <span className="note-voice">{j.voice + " — "}</span> : null}
           <Prose text={j.note} />
@@ -636,7 +640,7 @@ function NoteEntry({ step, n, active }) {
   );
 }
 
-export function Notepad({ trace, index, onCollapse, view, setView }) {
+export function Notepad({ trace, index, onCollapse, view, setView, marks }) {
   const listRef = React.useRef(null);
   React.useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
@@ -650,7 +654,7 @@ export function Notepad({ trace, index, onCollapse, view, setView }) {
         <button className="insp-collapse" onClick={onCollapse} title="Collapse" aria-label="Collapse panel">›</button>
       </div>
       <div className="insp-body note-list" ref={listRef}>
-        {entries.map((s, i) => <NoteEntry key={i} step={s} n={i} active={i === index} />)}
+        {entries.map((s, i) => <NoteEntry key={i} step={s} n={i} active={i === index} marks={marksAt(marks, i)} />)}
       </div>
     </div>
   );

@@ -1,3 +1,32 @@
+## [0.33.0] - 2026-09-18
+
+### Added
+
+- **`marks` — chips the host hands the player, per beat.** A run often knows
+  something about a beat the trace contract does not say: what the model
+  DECLARED before a call (a hypothesis, an expectation), what a return turned
+  out to be (a fact, noise, ruled out), what the answer stood on. The player
+  stays generic — it knows nothing about ledgers — and draws what it is handed:
+  `marks[i]` is the list of chips for `trace.steps[i]`, each
+  `{ label, tone?, title? }`. The label is TEXT (a text node, never markup; a
+  long one clips and rides whole in the hover title), and the five tones —
+  `neutral` · `good` · `warn` · `bad` · `muted` — map to colours the theme
+  already resolves, so a custom palette and dark mode come free.
+
+  Drawn in two places, one chip component: under the prose of the **current
+  beat's bubble** on the scene (under the steering doc's checklist on an act
+  beat) and after the title line of that beat's **notepad row**, at every
+  playhead. The "Triage with your LLM" export prints them in brackets on the
+  beat's line — `[hypothesis · expect high]`. Nothing focusable; the row is a
+  plain `aria-label="marks"` group.
+
+  Zero cost by construction: omit the prop and the DOM and the export are
+  byte-identical to 0.32 (pinned by `test/marks.test.mjs`). A chip row on the
+  bubble takes its height from the prose's room, never from the bubble's
+  budget, so the bubble still cannot reach the tool rack. Holes, empty lists
+  and a table shorter or longer than the trace are tolerated. Types: `Mark`,
+  `MarkTone`, `AgentThinkingUIProps.marks`.
+
 ## [0.32.1] - 2026-09-16
 
 ### Fixed

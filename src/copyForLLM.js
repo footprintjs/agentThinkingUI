@@ -12,6 +12,8 @@
    and explainable-ui's NarrativePanel "Copy for LLM", scoped to a tool choice.
    ============================================================ */
 
+import { marksAt, marksBracket } from "./marks.js";
+
 const CAP = 16000; // clipboard cap — don't dump a 20MB trajectory into a paste
 const isSkill = (n) => n === "load_skill" || /skill/i.test(n || "");
 const compact = (v) => {
@@ -79,10 +81,16 @@ export function buildToolWhyText({ trace, step, ranked, focusName }) {
  *    mode: "detailed" — adds per-step reasoning, inputs, and returns.
  *
  *  This is the agentThinkingUI counterpart to Lens's detailed dump: Lens keeps the ids +
- *  event trace for deep debugging; this is the clean, paste-into-an-LLM triage version. */
-export function buildRunSummaryText({ trace, mode = "short" }) {
+ *  event trace for deep debugging; this is the clean, paste-into-an-LLM triage version.
+ *
+ *  `marks` (0.33.0): the host's per-beat chip table (indexed like trace.steps). A beat
+ *  that carries chips gets their labels in brackets on its line — `[hypothesis · expect
+ *  high]` — in "detailed" mode on every beat line, in "short" mode on the answer line
+ *  (the only per-beat line it prints). No marks → the text is byte-identical. */
+export function buildRunSummaryText({ trace, mode = "short", marks }) {
   const detailed = mode === "detailed";
   const steps = (trace && trace.steps) || [];
+  const tag = (i) => marksBracket(marksAt(marks, i));
   const errStep = steps.find((s) => s && s.error);
   const errMsg = (errStep && errStep.error) || (trace && trace.error);
   const failed = !!errMsg || (trace && (trace.status === "error" || trace.status === "err"));
@@ -111,31 +119,32 @@ export function buildRunSummaryText({ trace, mode = "short" }) {
   if (detailed) {
     L.push("## What it did");
     let n = 0;
-    for (const s of steps) {
-      if (!s) continue;
+    steps.forEach((s, i) => {
+      if (!s) return;
       if (s.kind === "prompt") {
-        L.push(`- **User asked:** ${compact(s.brain)}`);
+        L.push(`- **User asked:** ${compact(s.brain)}${tag(i)}`);
       } else if (s.kind === "ask") {
         n += 1;
         const verb = isSkill(s.tool) ? "activated skill" : "called tool";
         const withInput = s.input != null && compact(s.input) ? ` with ${compact(s.input)}` : "";
-        L.push(`- **Step ${n} — ${verb} \`${s.tool}\`**${withInput}`);
+        L.push(`- **Step ${n} — ${verb} \`${s.tool}\`**${withInput}${tag(i)}`);
         if (s.brain) L.push(`    - reasoning: ${compact(s.brain)}`);
       } else if (s.kind === "return") {
-        L.push(`    - ↳ returned: ${s.error ? `⚠ ERROR — ${compact(s.error)}` : compact(s.output)}`);
+        L.push(`    - ↳ returned: ${s.error ? `⚠ ERROR — ${compact(s.error)}` : compact(s.output)}${tag(i)}`);
       } else if (s.kind === "answer") {
-        L.push(`- **${failed ? "Ended (failed)" : "Final answer"}:** ${compact(s.brain)}`);
+        L.push(`- **${failed ? "Ended (failed)" : "Final answer"}:** ${compact(s.brain)}${tag(i)}`);
       }
-    }
+    });
   } else {
     // SHORT: the tool path on one line + the final outcome — no per-step reasoning/io.
     const path = steps.filter((s) => s && s.kind === "ask").map((s) => `\`${s.tool}\``);
     L.push("## Path");
     L.push(path.length ? path.join(" → ") : "(no tool calls)");
-    const answer = steps.find((s) => s && s.kind === "answer");
+    const answerIdx = steps.findIndex((s) => s && s.kind === "answer");
+    const answer = steps[answerIdx];
     if (answer && compact(answer.brain)) {
       L.push("");
-      L.push(`**${failed ? "Ended (failed)" : "Answer"}:** ${compact(answer.brain)}`);
+      L.push(`**${failed ? "Ended (failed)" : "Answer"}:** ${compact(answer.brain)}${tag(answerIdx)}`);
     }
   }
 

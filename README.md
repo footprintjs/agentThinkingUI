@@ -194,6 +194,44 @@ Nothing to configure — it re-measures when the panel resizes, and the width ea
 rather than jumping as text streams in (and holds still under
 `prefers-reduced-motion`).
 
+### Marks — chips the host hands the player
+
+A run often knows something about a beat that the trace contract does not say —
+what the model *declared* before a call (a hypothesis, an expectation), what a
+return turned out to be (a fact, noise, ruled out), what the answer stood on.
+The player stays generic: it knows nothing about ledgers. It draws what you hand
+it. `marks` is a table indexed exactly like `trace.steps` — `marks[i]` is the
+list of chips for beat i:
+
+```jsx
+const marks = [];
+marks[1]  = [{ label: "hypothesis", tone: "muted" }, { label: "expect high" }]; // on an ask
+marks[2]  = [{ label: "noise", tone: "warn" }];                                 // on a return
+marks[13] = [{ label: "stood on 3 · noise 2" }];                                // on the answer
+
+<AgentThinkingUI trace={trace} marks={marks} />
+```
+
+A `Mark` is `{ label, tone?, title? }`. The label is **text** — it is rendered as
+a text node, never as markup (`<b>x</b>` stays those seven characters) — about
+40 characters is the comfortable length; a longer one clips with an ellipsis and
+rides whole in the chip's hover title (or your own `title`, when you give one).
+`tone` is one of `neutral` (default) · `good` · `warn` · `bad` · `muted`, and each
+maps to a colour the theme already resolves (the answer accent, the instruction
+accent, the error accent, the faint ink) — dark mode and a custom palette come
+free. The chips appear in two places: under the prose of the **current beat's
+bubble** on the scene, and after the title line of that beat's **notepad row**
+(present at every playhead, like the cost line). The "Triage with your LLM"
+export prints them in brackets on the beat's line — `[hypothesis · expect high]`.
+Nothing is focusable; the row is a plain `div.atui-marks[aria-label="marks"]` of `span.atui-mark` chips.
+
+Holes, an empty list, a table shorter or longer than the trace — all tolerated
+(missing = nothing drawn, extra = ignored). **Omit the prop and nothing changes**:
+the DOM and the export are byte-identical to a player that never heard of marks
+(pinned by a test). A chip row on the bubble takes its height out of the prose's
+room (the body scrolls a little sooner), never out of the bubble's budget, so
+the bubble still cannot reach the tool rack.
+
 ## Layout
 
 ```

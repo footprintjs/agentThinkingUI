@@ -47,6 +47,23 @@ export interface ThemeConfig {
   shadows?: { sm?: string; md?: string; lg?: string };
 }
 
+/** The tones a mark may wear — each maps to a theme colour the player already
+ *  resolves (good = the answer accent, warn = the instruction accent, bad = the
+ *  error accent, muted = the faint ink). Anything else reads as `neutral`. */
+export type MarkTone = "neutral" | "good" | "warn" | "bad" | "muted";
+
+/**
+ * One chip the host hands the player for a beat (0.33.0). The player draws it
+ * and never interprets it: `label` is TEXT (rendered as a text node, never
+ * markup; ~40 chars expected — a longer one clips and rides whole in the
+ * chip's title), `title` is the optional full text on hover (plain text too).
+ */
+export interface Mark {
+  label: string;
+  tone?: MarkTone;
+  title?: string;
+}
+
 export interface AgentThinkingUIProps {
   /** the recorded run (steps may grow over time when `live`) */
   trace: Trace;
@@ -130,6 +147,19 @@ export interface AgentThinkingUIProps {
   index?: number;
   /** Fires on every move a person or autoplay makes — the index it would land on. */
   onIndexChange?: (index: number) => void;
+  /**
+   * Chips per beat (0.33.0), indexed exactly like `trace.steps`: `marks[i]`
+   * decorates step i. Drawn in two places — under the prose of the current
+   * beat's bubble on the scene, and after the title line of that beat's notepad
+   * row — and printed in brackets on the beat's line of the "Triage with your
+   * LLM" export. `undefined` / empty = nothing drawn; a longer or shorter array
+   * is tolerated (extra entries ignored, missing = nothing). Omit the prop and
+   * the DOM and the export are byte-identical to a player without it. The
+   * player knows nothing about what a chip means: a findings-ledger host might
+   * pass `[{ label: "hypothesis", tone: "muted" }, { label: "expect high" }]`
+   * on an ask and `[{ label: "noise", tone: "warn" }]` on a return.
+   */
+  marks?: ReadonlyArray<ReadonlyArray<Mark> | undefined>;
   /** opt-in UI render metrics (wraps the tree in React's <Profiler>) */
   onRender?: (metric: RenderMetric) => void;
   /** fires on every beat with the current step (carries `spanId`/`traceId`) — for analytics / deep-linking / sync */

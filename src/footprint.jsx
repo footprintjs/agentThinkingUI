@@ -14,12 +14,14 @@ import { buildRunSummaryText } from "./copyForLLM.js";
      • Stage      (the runtime "thinking" scene)
      • Inspector  (per-step detail)
      • Notepad    (chronological journal)
-   plus playback + a resizable split. Consumers can either render
+   plus playback + a resizable split. `marks` (0.33.0) is a per-beat chip
+   table the host hands in, indexed like trace.steps — the scene and the
+   notepad draw it; the player never interprets it. Consumers can either render
    <AgentThinkingUI trace={...} /> for the full experience, or drop the
    four components into their own layout (they're each independent).
    (window.AgentFootprint remains as a deprecated alias.)
    ============================================================ */
-export function AgentThinkingUI({ trace, theme, labels, icons, agentIcon, character, brand, metaphor = true, loop = false, live = false, toolMenu = "card", onExplain, onScore, onAttribute, onBacktrack, style, mobile, storageKey, onRender, onSelect, linkResolver, renderDetail, index: controlledIndex, onIndexChange }) {
+export function AgentThinkingUI({ trace, theme, labels, icons, agentIcon, character, brand, metaphor = true, loop = false, live = false, toolMenu = "card", onExplain, onScore, onAttribute, onBacktrack, style, mobile, storageKey, onRender, onSelect, linkResolver, renderDetail, index: controlledIndex, onIndexChange, marks }) {
   const { useState, useRef, useMemo, useEffect } = React;
   const rootRef = useRef(null);
   // persist scrub position per-trace so two players on one page don't collide;
@@ -47,7 +49,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, agentIcon, charac
   const [copiedTriage, setCopiedTriage] = useState(null); // "short" | "detailed" | null
   const copyTriage = async (mode) => {
     try {
-      await navigator.clipboard.writeText(buildRunSummaryText({ trace, mode }));
+      await navigator.clipboard.writeText(buildRunSummaryText({ trace, mode, marks }));
       setCopiedTriage(mode);
       setTimeout(() => setCopiedTriage(null), 1500);
     } catch { /* clipboard unavailable (insecure ctx) */ }
@@ -117,8 +119,8 @@ export function AgentThinkingUI({ trace, theme, labels, icons, agentIcon, charac
         </div>
         <div className="m-view">
           {mobileView === "notepad"
-            ? <Notepad trace={trace} index={index} onCollapse={() => {}} view="notepad" setView={() => {}} />
-            : <Stage trace={trace} step={step} index={index} metaphor={metaphor} toolMenu={toolMenu} agentIcon={agentIcon} character={character} straight />}
+            ? <Notepad trace={trace} index={index} onCollapse={() => {}} view="notepad" setView={() => {}} marks={marks} />
+            : <Stage trace={trace} step={step} index={index} metaphor={metaphor} toolMenu={toolMenu} agentIcon={agentIcon} character={character} straight marks={marks} />}
         </div>
         {/* transport pinned in the footer, shared by both tabs */}
         <Timeline trace={trace} index={index} setIndex={seek} playing={playing} setPlaying={setPlaying} speed={speed} setSpeed={setSpeed} minimal />
@@ -168,7 +170,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, agentIcon, charac
 
       <div className={"workspace" + (inspOpen ? "" : " insp-collapsed")} ref={wsRef}>
         <div className="ws-runtime" style={inspOpen ? { flex: `0 0 ${runtimePct}%` } : { flex: "1 1 auto" }}>
-          <Stage trace={trace} step={step} index={index} metaphor={metaphor} toolMenu={toolMenu} agentIcon={agentIcon} character={character} onToolClick={showWhy} />
+          <Stage trace={trace} step={step} index={index} metaphor={metaphor} toolMenu={toolMenu} agentIcon={agentIcon} character={character} onToolClick={showWhy} marks={marks} />
         </div>
 
         {inspOpen ? (
@@ -178,7 +180,7 @@ export function AgentThinkingUI({ trace, theme, labels, icons, agentIcon, charac
             </div>
             <div className="ws-insp">
               {rightView === "notepad"
-                ? <Notepad trace={trace} index={index} onCollapse={() => setInspOpen(false)} view={rightView} setView={setRightView} />
+                ? <Notepad trace={trace} index={index} onCollapse={() => setInspOpen(false)} view={rightView} setView={setRightView} marks={marks} />
                 : <Inspector step={step} index={index} total={trace.steps.length} onCollapse={() => setInspOpen(false)} view={rightView} setView={setRightView} link={stepLink} detail={stepDetail} trace={trace} toolMenu={toolMenu} whyTool={whyTool} onExplain={onExplain} onScore={onScore} onAttribute={onAttribute} onBacktrack={onBacktrack} />}
             </div>
           </>

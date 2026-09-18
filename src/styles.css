@@ -1194,6 +1194,37 @@
   background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
+/* Marks — chips the host hands the player, per beat (0.33.0). One family,
+   `.atui-mark` + a tone modifier; every colour is a theme variable that already
+   exists (good = the answer accent, warn = the instruction accent, bad = error,
+   muted = the faint ink). A label is text: it clips with an ellipsis and rides
+   whole in the chip's title. Nothing here is focusable. */
+:where(.atui, .atui-swarm) .atui-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px; }
+:where(.atui, .atui-swarm) .atui-mark {
+  display: inline-block; vertical-align: middle; max-width: min(100%, 28ch); /* inline-block, not flex: the ellipsis needs a block box */
+  font-family: var(--font-mono); font-size: calc(10.5px * var(--af-text-scale)); line-height: 1.3; letter-spacing: .02em;
+  padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-soft); background: transparent;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+:where(.atui, .atui-swarm) .atui-mark.tone-good { border-color: var(--answer); color: var(--answer-deep); background: var(--answer-tint); }
+:where(.atui, .atui-swarm) .atui-mark.tone-warn { border-color: var(--instr); color: var(--instr-deep); background: var(--instr-tint); }
+:where(.atui, .atui-swarm) .atui-mark.tone-bad { border-color: var(--error); color: var(--error-deep); background: var(--error-tint); }
+:where(.atui, .atui-swarm) .atui-mark.tone-muted { border-style: dashed; border-color: var(--line-soft); color: var(--ink-faint); }
+/* on the scene's bubble the row sits UNDER the prose inside a column capped at
+   the same --af-bubble-h the prose alone had: the chips' height comes out of the
+   prose's room (it scrolls a little sooner), never out of the bubble's budget —
+   so the band, and the rack it stops before, are untouched */
+:where(.atui, .atui-swarm) .cloud .cbody { display: flex; flex-direction: column; max-height: var(--af-bubble-h, 320px); }
+:where(.atui, .atui-swarm) .cloud .cbody .ctext { flex: 1 1 auto; min-height: 0; max-height: none; }
+:where(.atui, .atui-swarm) .cloud .cbody .atui-marks { flex: none; }
+:where(.atui, .atui-swarm) .skilldoc .sd-body { display: flex; flex-direction: column; max-height: var(--af-bubble-h, 320px); }
+:where(.atui, .atui-swarm) .skilldoc .sd-body .sd-list { flex: 1 1 auto; min-height: 0; max-height: none; }
+:where(.atui, .atui-swarm) .skilldoc .sd-marks { flex: none; padding: 0 13px 10px; }
+:where(.atui, .atui-swarm) .skilldoc .sd-marks .atui-marks { margin-top: 0; }
+:where(.atui, .atui-swarm) .skilldoc .sd-body > .sd-marks:first-child { padding-top: 8px; } /* a doc with no checklist */
+/* the notepad row: after the title line, before the commentary */
+:where(.atui, .atui-swarm) .note-head + .atui-marks { margin-top: 4px; }
+
 /* ============================================================
    <InfluenceMap> — "what influenced this answer, and what happens
    without it?" All rules scoped under .atui-influence. Colours/fonts

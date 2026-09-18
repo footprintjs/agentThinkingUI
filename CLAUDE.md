@@ -45,7 +45,8 @@ library; `demo/` is a runnable example.
 src/        theme.js · layout.js · flow-layout.js (pure multi-agent graph layout) ·
             markdown.js (pure beat-prose parser) · prose.jsx (<Prose> renderer) ·
             playback.js · context.js · stage.jsx · agent-icons.jsx (agentIcon glyphs) ·
-            inspector.jsx · timeline.jsx ·
+            inspector.jsx · timeline.jsx · marks.js (pure: marksAt/marksBracket) ·
+            marks.jsx (<MarkRow> — the host's per-beat chips; absent = nothing rendered) ·
             footprint.jsx · multi-agent-flow.jsx · adapters/otlp.js ·
             adapters/recording.js (an archived agentfootprint run → trace) ·
             index.jsx (ESM entry) · global.jsx (UMD entry) · styles.css
