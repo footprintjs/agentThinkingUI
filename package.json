@@ -84,7 +84,7 @@
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@vitest/coverage-v8": "^4.1.8",
-    "agentfootprint": "^9.52.0",
+    "agentfootprint": "^10.0.0",
     "esbuild": "^0.28.0",
     "eslint": "^10.4.1",
     "globals": "^17.6.0",
