@@ -1,19 +1,19 @@
 {
   "name": "agentthinkingui",
   "version": "0.33.0",
-  "description": "Framework-agnostic player that replays an agent's runtime footprint (a recorded trace) as an animated, scrubbable story — the LLM brain calling tools and getting back data (reason), an instruction (act), or both.",
+  "description": "Animated agent trace playback for React: inspect recorded tool calls, context and multi-agent flows.",
   "keywords": [
-    "agent",
-    "ai",
-    "llm",
-    "agentic",
-    "trace",
-    "replay",
-    "observability",
-    "visualization",
     "react",
+    "ai-agent",
+    "llm",
+    "trace-viewer",
+    "trace-replay",
+    "visualization",
+    "agent-debugging",
+    "tool-calling",
+    "observability",
     "context-engineering",
-    "tool-use"
+    "multi-agent"
   ],
   "homepage": "https://footprintjs.github.io/agentThinkingUI/",
   "repository": {
