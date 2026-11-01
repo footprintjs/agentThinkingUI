@@ -4,7 +4,9 @@
 
 <p align="center"><b>the story: explain it to a person</b></p>
 
-<p align="center"><b>Watch any agent think</b> — a drop-in player for an agent's runtime footprint.</p>
+<p align="center"><b>Replay recorded agent runs</b> — a React player for tool calls, context and multi-agent flows.</p>
+
+<p align="center"><a href="#quick-start">Install and quick start</a> · <a href="AGENTS.md">Trace and adapter guide</a></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/agentthinkingui"><img alt="npm version" src="https://img.shields.io/npm/v/agentthinkingui?style=flat-square&color=C0531F&label=npm"></a>
@@ -35,11 +37,13 @@
 > **instruction** — a **skill / steering** doc that says *how to act* — or **both**,
 > and it loops to the answer.
 
-**Watch any agent think.** Story Lens is a drop-in, framework-agnostic player
+**Replay recorded agent runs.** Story Lens is a drop-in, framework-agnostic player
 for an agent's *runtime footprint*: feed it a recorded trace and it replays the
 agent loop as an animated, scrubbable story — the LLM **brain** reaching for
 **tools**, the replies coming back, the reasoning building up, beat by beat. You
 can time-travel through every step.
+
+The player renders the trace your recorder supplies. It does not expose unrecorded model reasoning.
 
 > **Developers can debug what they can see — the failures that hurt look fine in
 > JSON and are only wrong in *meaning*.** ([Who debugs the agent?](docs/blog/who-debugs-the-agent.md))
